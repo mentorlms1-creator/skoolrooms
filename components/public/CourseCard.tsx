@@ -10,7 +10,6 @@ type CourseCardProps = {
   title: string
   description: string | null
   thumbnailUrl: string | null
-  status: string
 }
 
 /**

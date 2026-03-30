@@ -47,7 +47,6 @@ export default async function TeacherPublicPage({ params }: PageProps) {
                 title={course.title}
                 description={course.description}
                 thumbnailUrl={course.thumbnail_url}
-                status={course.status}
               />
             ))}
           </div>
