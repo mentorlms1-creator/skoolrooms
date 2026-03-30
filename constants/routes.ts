@@ -78,7 +78,7 @@ export const ROUTES = {
     dashboard: '/',
     courses: '/courses',
     schedule: '/schedule',
-    payments: '/billing',
+    payments: '/payments',
     messages: '/messages',
     settings: '/settings',
     forgotPassword: '/forgot-password',

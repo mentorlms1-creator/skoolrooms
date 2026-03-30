@@ -41,6 +41,18 @@
 **Fix:** Added canUseFeature('recurring_classes') check before recurring expansion.
 **Rule going forward:** Before implementing any feature that has a plan flag in ARCHITECTURE.md Section 13, add canUseFeature() check in the server action. Review the feature matrix when building new features.
 
+### 2026-03-30 — Enrollment API must check is_registration_open and revoked students
+**What happened:** Enrollment API only checked cohort archived status but not registration closed or revoked student blocks.
+**Root cause:** Focused on the happy path (archived guard) but missed the other enrollment eligibility checks from ARCHITECTURE.md Section 14.
+**Fix:** Added is_registration_open check and per-teacher revoked student check in enrollment route.
+**Rule going forward:** For enrollment/access endpoints, check ALL eligibility: archived, registration open, revoked, course published, cohort full. Don't rely on UI-side checks alone.
+
+### 2026-03-30 — Supabase .in() doesn't accept subqueries — use two-step
+**What happened:** Tried to use `.in('cohort_id', supabase.from('cohorts').select('id')...)` but Supabase JS doesn't support subquery parameters.
+**Root cause:** PostgrestFilterBuilder is not an array — it's a query builder.
+**Fix:** Fetch the IDs first, then use `.in('cohort_id', idArray)`.
+**Rule going forward:** Supabase JS client does not support SQL subqueries. Always fetch IDs first, then use them in .in() as an array.
+
 ### 2026-03-30 — Validate URL fields to prevent stored XSS
 **What happened:** Meet link field accepted any string including javascript: URLs — stored XSS vector.
 **Root cause:** Only checked for non-empty, didn't validate URL format.

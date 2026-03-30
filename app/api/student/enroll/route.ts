@@ -101,6 +101,14 @@ export async function POST(
     )
   }
 
+  // 5b. Check registration is open
+  if (!cohort.is_registration_open) {
+    return NextResponse.json(
+      { success: false, error: 'Registration is closed for this cohort', code: 'REGISTRATION_CLOSED' },
+      { status: 403 },
+    )
+  }
+
   // 6. Check course is published (fetch course via admin client)
   const adminSupabase = createAdminClient()
 
@@ -132,6 +140,33 @@ export async function POST(
     return NextResponse.json(
       { success: false, error: 'You are already enrolled in this cohort', code: 'ALREADY_ENROLLED' },
       { status: 409 },
+    )
+  }
+
+  // 7b. Check if student was revoked by this teacher (blocked from re-enrolling)
+  // Two-step: get teacher's cohort IDs, then check for revoked enrollment
+  const { data: teacherCohorts } = await adminSupabase
+    .from('cohorts')
+    .select('id')
+    .eq('teacher_id', cohort.teacher_id)
+
+  const teacherCohortIds = (teacherCohorts || []).map(c => c.id)
+
+  const { data: revokedEnrollment } = teacherCohortIds.length > 0
+    ? await adminSupabase
+        .from('enrollments')
+        .select('id')
+        .eq('student_id', student.id)
+        .eq('status', 'revoked')
+        .in('cohort_id', teacherCohortIds)
+        .limit(1)
+        .single()
+    : { data: null }
+
+  if (revokedEnrollment) {
+    return NextResponse.json(
+      { success: false, error: 'You are not eligible to enroll with this teacher', code: 'STUDENT_BLOCKED' },
+      { status: 403 },
     )
   }
 

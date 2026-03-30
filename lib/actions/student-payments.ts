@@ -4,7 +4,7 @@
 // lib/actions/student-payments.ts — Server actions for student payment operations
 // =============================================================================
 
-import { createClient } from '@/supabase/server'
+import { createClient, createAdminClient } from '@/supabase/server'
 import { getStudentByAuthId } from '@/lib/db/students'
 import { getEnrollmentById } from '@/lib/db/enrollments'
 import { getPaymentsByEnrollment, updatePaymentStatus } from '@/lib/db/student-payments'
@@ -93,7 +93,6 @@ export async function submitScreenshotAction(
   const cohort = await getCohortById(enrollment.cohort_id)
   if (cohort) {
     // Fetch teacher info via admin client (teacher_id is on cohort)
-    const { createAdminClient } = await import('@/supabase/server')
     const adminSupabase = createAdminClient()
 
     const { data: teacher } = await adminSupabase
