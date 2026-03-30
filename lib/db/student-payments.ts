@@ -159,3 +159,56 @@ export async function updatePaymentStatus(
   if (error || !data) return null
   return data as StudentPaymentRow
 }
+
+// Payment joined with enrollment + cohort + course info (for student billing view)
+export type StudentPaymentWithDetails = StudentPaymentRow & {
+  enrollments: {
+    id: string
+    cohort_id: string
+    reference_code: string
+    cohorts: {
+      id: string
+      name: string
+      fee_pkr: number
+      fee_type: string
+      courses: {
+        id: string
+        title: string
+        teacher_id: string
+      }
+      teachers: {
+        id: string
+        name: string
+      }
+    }
+  }
+}
+
+// -----------------------------------------------------------------------------
+// getPaymentsByStudent — All payments for a student across all enrollments,
+// joined with enrollment → cohort → course → teacher info. Newest first.
+// -----------------------------------------------------------------------------
+export async function getPaymentsByStudent(
+  studentId: string
+): Promise<StudentPaymentWithDetails[]> {
+  const supabase = createAdminClient()
+
+  const { data, error } = await supabase
+    .from('student_payments')
+    .select(`
+      *,
+      enrollments!inner(
+        id, cohort_id, reference_code,
+        cohorts!inner(
+          id, name, fee_pkr, fee_type,
+          courses!inner(id, title, teacher_id),
+          teachers!inner(id, name)
+        )
+      )
+    `)
+    .eq('enrollments.student_id', studentId)
+    .order('created_at', { ascending: false })
+
+  if (error || !data) return []
+  return data as StudentPaymentWithDetails[]
+}

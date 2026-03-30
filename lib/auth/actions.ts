@@ -202,12 +202,21 @@ export async function signIn(
 }
 
 /**
- * Sign out the current user and redirect to login.
+ * Sign out the current user (teacher/admin) and redirect to login.
  */
 export async function signOut(): Promise<never> {
   const supabase = await createClient()
   await supabase.auth.signOut()
   redirect('/login')
+}
+
+/**
+ * Sign out the current student user and redirect to student login.
+ */
+export async function signOutStudent(): Promise<never> {
+  const supabase = await createClient()
+  await supabase.auth.signOut()
+  redirect('/student-login')
 }
 
 /**

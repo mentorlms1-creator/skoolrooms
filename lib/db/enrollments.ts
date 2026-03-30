@@ -47,6 +47,33 @@ export type EnrollmentWithCohortAndCourse = EnrollmentRow & {
   }
 }
 
+// Enrollment joined with cohort + course + teacher info (for student portal views)
+export type EnrollmentWithCohortCourseTeacher = EnrollmentRow & {
+  cohorts: {
+    id: string
+    name: string
+    start_date: string
+    end_date: string
+    fee_type: string
+    fee_pkr: number
+    status: string
+    is_registration_open: boolean
+    pending_can_see_schedule: boolean
+    pending_can_see_announcements: boolean
+    courses: {
+      id: string
+      title: string
+      description: string | null
+      thumbnail_url: string | null
+      teacher_id: string
+    }
+    teachers: {
+      id: string
+      name: string
+    }
+  }
+}
+
 // Enrollment joined with student info (for teacher-facing views)
 export type EnrollmentWithStudent = EnrollmentRow & {
   students: {
@@ -163,6 +190,34 @@ export async function getEnrollmentsByStudent(
 
   if (error || !data) return []
   return data as EnrollmentWithCohortAndCourse[]
+}
+
+// -----------------------------------------------------------------------------
+// getEnrollmentsByStudentWithTeacher — All enrollments for a student, joined
+// with cohort + course + teacher info. Used by student portal pages that need
+// teacher names and cohort visibility settings.
+// -----------------------------------------------------------------------------
+export async function getEnrollmentsByStudentWithTeacher(
+  studentId: string
+): Promise<EnrollmentWithCohortCourseTeacher[]> {
+  const supabase = createAdminClient()
+
+  const { data, error } = await supabase
+    .from('enrollments')
+    .select(`
+      *,
+      cohorts!inner(
+        id, name, start_date, end_date, fee_type, fee_pkr, status, is_registration_open,
+        pending_can_see_schedule, pending_can_see_announcements,
+        courses!inner(id, title, description, thumbnail_url, teacher_id),
+        teachers!inner(id, name)
+      )
+    `)
+    .eq('student_id', studentId)
+    .order('created_at', { ascending: false })
+
+  if (error || !data) return []
+  return data as EnrollmentWithCohortCourseTeacher[]
 }
 
 // -----------------------------------------------------------------------------

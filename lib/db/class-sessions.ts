@@ -216,3 +216,92 @@ export async function deleteFutureSessions(
   if (error) return 0
   return count ?? 0
 }
+
+// -----------------------------------------------------------------------------
+// Student session types — sessions joined with cohort, course, and teacher info
+// for student-facing views
+// -----------------------------------------------------------------------------
+
+export type StudentSessionWithDetails = ClassSessionRow & {
+  cohorts: {
+    id: string
+    name: string
+    course_id: string
+    teacher_id: string
+    pending_can_see_schedule: boolean
+    courses: {
+      id: string
+      title: string
+    }
+    teachers: {
+      id: string
+      name: string
+    }
+  }
+}
+
+// -----------------------------------------------------------------------------
+// getUpcomingSessionsByStudent — Future non-cancelled sessions across all
+// cohorts where the student has an active or pending enrollment.
+// Joins with cohorts → courses → teachers for display info.
+// Respects pending_can_see_schedule: if enrollment is 'pending' and
+// cohort.pending_can_see_schedule is false, those sessions are excluded.
+// Limited to `limit` results, ordered by scheduled_at asc.
+// -----------------------------------------------------------------------------
+export async function getUpcomingSessionsByStudent(
+  studentId: string,
+  limit: number
+): Promise<StudentSessionWithDetails[]> {
+  const supabase = createAdminClient()
+
+  const now = new Date().toISOString()
+
+  // First, get the student's enrollments (active and pending)
+  const { data: enrollments, error: enrollError } = await supabase
+    .from('enrollments')
+    .select('cohort_id, status')
+    .eq('student_id', studentId)
+    .in('status', ['active', 'pending'])
+
+  if (enrollError || !enrollments || enrollments.length === 0) return []
+
+  const cohortIds = enrollments.map((e) => e.cohort_id)
+
+  // Fetch upcoming sessions for those cohorts
+  const { data, error } = await supabase
+    .from('class_sessions')
+    .select(`
+      *,
+      cohorts!inner(
+        id, name, course_id, teacher_id, pending_can_see_schedule,
+        courses!inner(id, title),
+        teachers!inner(id, name)
+      )
+    `)
+    .in('cohort_id', cohortIds)
+    .gt('scheduled_at', now)
+    .is('cancelled_at', null)
+    .is('deleted_at', null)
+    .order('scheduled_at', { ascending: true })
+    .limit(limit)
+
+  if (error || !data) return []
+
+  const sessions = data as StudentSessionWithDetails[]
+
+  // Build a map of enrollment status by cohort_id
+  const enrollmentStatusMap = new Map<string, string>()
+  for (const e of enrollments) {
+    enrollmentStatusMap.set(e.cohort_id, e.status)
+  }
+
+  // Filter out sessions where enrollment is pending and
+  // cohort.pending_can_see_schedule is false
+  return sessions.filter((session) => {
+    const status = enrollmentStatusMap.get(session.cohort_id)
+    if (status === 'pending' && !session.cohorts.pending_can_see_schedule) {
+      return false
+    }
+    return true
+  })
+}
