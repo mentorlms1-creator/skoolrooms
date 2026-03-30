@@ -20,7 +20,7 @@ export const ROUTES = {
     resetPassword: '/auth/reset-password',
     studentForgotPassword: '/student-forgot-password',
     subscribe: '/subscribe',
-    adminLogin: '/admin/login',
+    adminLogin: '/admin-login',
     onboarding: {
       step1: '/onboarding/step-1',
       step2: '/onboarding/step-2',

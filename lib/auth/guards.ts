@@ -75,8 +75,8 @@ export async function requireAdmin(): Promise<User> {
     data: { user },
   } = await supabase.auth.getUser()
 
-  if (!user) redirect('/admin/login')
-  if (user.user_metadata?.role !== 'admin') redirect('/admin/login')
+  if (!user) redirect('/admin-login')
+  if (user.user_metadata?.role !== 'admin') redirect('/admin-login')
 
   return user
 }
