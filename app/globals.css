@@ -1,0 +1,31 @@
+/* app/globals.css — Tailwind CSS v4 (CSS-first config, no tailwind.config.js) */
+/* Theme change = edit THIS ONE FILE. All components use these tokens via Tailwind classes. */
+@import "tailwindcss";
+
+@theme {
+  /* Colors — use: bg-brand-500, text-ink, bg-paper, text-muted, bg-success, etc. */
+  --color-brand-50: #F0F7FF;
+  --color-brand-100: #E0EFFF;
+  --color-brand-500: #2563EB;
+  --color-brand-600: #1D4ED8;
+  --color-brand-900: #1E3A8A;
+  --color-ink: #0D1B2A;
+  --color-muted: #64748B;
+  --color-paper: #FAFAF7;
+  --color-surface: #FFFFFF;
+  --color-border: #E2E8F0;
+  --color-success: #16A34A;
+  --color-warning: #F59E0B;
+  --color-danger: #DC2626;
+
+  /* Typography — use: font-sans (default for all text) */
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  /* Shadows — use: shadow-card, shadow-card-hover */
+  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+  --shadow-card-hover: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+
+/* RULE: Never use raw hex (#2563EB) or Tailwind defaults (bg-blue-500) in components. */
+/* Always use theme tokens: bg-brand-500, text-ink, border-border, text-danger, etc. */
+/* To change the entire look: edit the @theme block above. Zero component changes needed. */
