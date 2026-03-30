@@ -130,6 +130,9 @@ export default async function CohortDetailPage({ params }: CohortDetailPageProps
             <Link href={ROUTES.TEACHER.cohortAnnouncements(courseId, cohortId)}>
               <Button variant="secondary">Announcements</Button>
             </Link>
+            <Link href={ROUTES.TEACHER.cohortAttendance(courseId, cohortId)}>
+              <Button variant="secondary">Attendance</Button>
+            </Link>
           </div>
         </Card>
       </div>
