@@ -20,6 +20,7 @@ import {
 } from '@/lib/db/assignments'
 import { getCohortById } from '@/lib/db/cohorts'
 import { checkExistingEnrollment } from '@/lib/db/enrollments'
+import { checkPlanLock, getPlanLockError } from '@/lib/auth/plan-guard'
 import type { ApiResponse } from '@/types/api'
 
 // -----------------------------------------------------------------------------
@@ -67,6 +68,11 @@ export async function createAssignmentAction(
   const teacher = await getAuthenticatedTeacher()
   if (!teacher) {
     return { success: false, error: 'Not authenticated' }
+  }
+
+  // Hard lock check: block content-write when plan + grace expired
+  if (checkPlanLock(teacher)) {
+    return getPlanLockError()
   }
 
   const cohortId = (formData.get('cohort_id') as string | null)?.trim() ?? ''
@@ -143,6 +149,11 @@ export async function updateAssignmentAction(
     return { success: false, error: 'Not authenticated' }
   }
 
+  // Hard lock check: block content-write when plan + grace expired
+  if (checkPlanLock(teacher)) {
+    return getPlanLockError()
+  }
+
   // Fetch assignment and verify ownership
   const assignment = await getAssignmentById(assignmentId)
   if (!assignment || assignment.teacher_id !== teacher.id) {
@@ -201,6 +212,11 @@ export async function deleteAssignmentAction(
   const teacher = await getAuthenticatedTeacher()
   if (!teacher) {
     return { success: false, error: 'Not authenticated' }
+  }
+
+  // Hard lock check: block content-write when plan + grace expired
+  if (checkPlanLock(teacher)) {
+    return getPlanLockError()
   }
 
   // Fetch assignment and verify ownership

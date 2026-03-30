@@ -2,13 +2,20 @@
  * app/(teacher)/dashboard/layout.tsx — Dashboard layout with sidebar
  *
  * Server Component. Renders Sidebar + main content area.
+ * Wraps children with TeacherProvider for client-side plan/usage context.
+ * Shows ExpiryBanner for plan expiry/grace/lock/trial warnings.
  * Redirects to onboarding wizard if profile setup not complete.
  * The 5-step checklist (OnboardingChecklist) is informational, not a gate.
  */
 
 import { redirect } from 'next/navigation'
 import { requireTeacher } from '@/lib/auth/guards'
+import { getTeacherPlanDetails, getTeacherUsage } from '@/lib/db/teachers'
 import { Sidebar } from '@/components/teacher/Sidebar'
+import { TeacherProvider } from '@/providers/TeacherProvider'
+import type { TeacherData } from '@/providers/TeacherProvider'
+import type { PlanSlug } from '@/types/domain'
+import { ExpiryBanner } from '@/components/teacher/ExpiryBanner'
 import { ROUTES } from '@/constants/routes'
 
 export default async function DashboardLayout({
@@ -27,12 +34,60 @@ export default async function DashboardLayout({
     redirect(ROUTES.PLATFORM.onboarding.step1)
   }
 
+  const teacherId = teacher.id as string
+
+  // Fetch plan details and usage for TeacherProvider
+  const [planDetails, usage] = await Promise.all([
+    getTeacherPlanDetails(teacherId),
+    getTeacherUsage(teacherId),
+  ])
+
+  // Build TeacherData shape for the provider
+  const teacherData: TeacherData = {
+    id: teacherId,
+    name: teacher.name as string,
+    email: teacher.email as string,
+    subdomain: teacher.subdomain as string,
+    plan: (teacher.plan as PlanSlug) ?? 'free',
+    planExpiresAt: (teacher.plan_expires_at as string | null) ?? null,
+    graceUntil: (teacher.grace_until as string | null) ?? null,
+    trialEndsAt: (teacher.trial_ends_at as string | null) ?? null,
+    onboardingCompleted: teacher.onboarding_completed as boolean,
+    onboardingStepsJson: (teacher.onboarding_steps_json || {}) as Record<string, boolean>,
+    isSuspended: teacher.is_suspended as boolean,
+    profilePhotoUrl: (teacher.profile_photo_url as string | null) ?? null,
+    bio: (teacher.bio as string | null) ?? null,
+    subjectTags: (teacher.subject_tags || []) as string[],
+    teachingLevels: (teacher.teaching_levels || []) as string[],
+    city: (teacher.city as string | null) ?? null,
+    isPubliclyListed: teacher.is_publicly_listed as boolean,
+  }
+
+  const defaultPlan = {
+    name: 'Free',
+    slug: 'free' as PlanSlug,
+    pricePerMonth: 0,
+    limits: { max_courses: 1, max_students: 15, max_cohorts_active: 1, max_storage_mb: 500 },
+    features: {},
+  }
+
+  const defaultUsage = { courses: 0, students: 0, cohortsActive: 0, storageMb: 0 }
+
   return (
-    <div className="flex min-h-screen bg-paper">
-      <Sidebar />
-      <main className="ml-64 flex-1">
-        <div className="mx-auto max-w-6xl p-6">{children}</div>
-      </main>
-    </div>
+    <TeacherProvider
+      teacher={teacherData}
+      plan={planDetails ?? defaultPlan}
+      usage={usage ?? defaultUsage}
+    >
+      <div className="flex min-h-screen bg-paper">
+        <Sidebar />
+        <main className="ml-64 flex-1">
+          <div className="mx-auto max-w-6xl p-6">
+            <ExpiryBanner />
+            {children}
+          </div>
+        </main>
+      </div>
+    </TeacherProvider>
   )
 }

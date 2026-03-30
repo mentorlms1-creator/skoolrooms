@@ -17,6 +17,7 @@ import {
 import type { CreateCohortInput } from '@/lib/db/cohorts'
 import { getCourseById } from '@/lib/db/courses'
 import { getLimit } from '@/lib/plans/limits'
+import { checkPlanLock, getPlanLockError } from '@/lib/auth/plan-guard'
 import { completeOnboardingStep } from '@/lib/actions/onboarding'
 import { sendEmail } from '@/lib/email/sender'
 import type { ApiResponse } from '@/types/api'
@@ -54,6 +55,11 @@ export async function createCohortAction(
 
   if (!teacher) {
     return { success: false, error: 'Not authenticated' }
+  }
+
+  // Hard lock check: block content-write when plan + grace expired
+  if (checkPlanLock(teacher)) {
+    return getPlanLockError()
   }
 
   // Extract fields from FormData
@@ -202,6 +208,11 @@ export async function updateCohortAction(
 
   if (!teacher) {
     return { success: false, error: 'Not authenticated' }
+  }
+
+  // Hard lock check: block content-write when plan + grace expired
+  if (checkPlanLock(teacher)) {
+    return getPlanLockError()
   }
 
   // Verify ownership

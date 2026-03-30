@@ -14,6 +14,7 @@ import {
   isAttendanceEditable,
   getAttendanceByCohortSession,
 } from '@/lib/db/attendance'
+import { checkPlanLock, getPlanLockError } from '@/lib/auth/plan-guard'
 import type { ApiResponse } from '@/types/api'
 
 // -----------------------------------------------------------------------------
@@ -42,6 +43,11 @@ export async function markAttendanceAction(
   const teacher = await getAuthenticatedTeacher()
   if (!teacher) {
     return { success: false, error: 'Not authenticated' }
+  }
+
+  // Hard lock check: block content-write when plan + grace expired
+  if (checkPlanLock(teacher)) {
+    return getPlanLockError()
   }
 
   const sessionId = formData.get('session_id') as string | null
@@ -114,6 +120,11 @@ export async function updateAttendanceAction(
   const teacher = await getAuthenticatedTeacher()
   if (!teacher) {
     return { success: false, error: 'Not authenticated' }
+  }
+
+  // Hard lock check: block content-write when plan + grace expired
+  if (checkPlanLock(teacher)) {
+    return getPlanLockError()
   }
 
   // Fetch session

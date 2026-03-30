@@ -14,6 +14,7 @@ import {
   countPublishedCourses,
 } from '@/lib/db/courses'
 import { getLimit } from '@/lib/plans/limits'
+import { checkPlanLock, getPlanLockError } from '@/lib/auth/plan-guard'
 import { completeOnboardingStep } from '@/lib/actions/onboarding'
 import type { ApiResponse } from '@/types/api'
 
@@ -47,6 +48,11 @@ export async function createCourseAction(
 
   if (!teacher) {
     return { success: false, error: 'Not authenticated' }
+  }
+
+  // Hard lock check: block content-write when plan + grace expired
+  if (checkPlanLock(teacher)) {
+    return getPlanLockError()
   }
 
   const title = (formData.get('title') as string | null)?.trim() ?? ''
@@ -83,6 +89,11 @@ export async function updateCourseAction(
 
   if (!teacher) {
     return { success: false, error: 'Not authenticated' }
+  }
+
+  // Hard lock check: block content-write when plan + grace expired
+  if (checkPlanLock(teacher)) {
+    return getPlanLockError()
   }
 
   // Verify ownership
@@ -159,6 +170,11 @@ export async function deleteCourseAction(
 
   if (!teacher) {
     return { success: false, error: 'Not authenticated' }
+  }
+
+  // Hard lock check: block content-write when plan + grace expired
+  if (checkPlanLock(teacher)) {
+    return getPlanLockError()
   }
 
   // Verify ownership
