@@ -37,6 +37,7 @@ const statusColorMap: Record<string, StatusColor> = {
   overdue: 'danger',
   expired: 'danger',
   refunded: 'danger',
+  cancelled: 'danger',
 
   // Muted states
   draft: 'muted',
