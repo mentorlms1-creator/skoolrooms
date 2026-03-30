@@ -2,7 +2,9 @@
 
 import { createClient, createAdminClient } from '@/supabase/server'
 import { redirect } from 'next/navigation'
+import { headers } from 'next/headers'
 import { platformUrl } from '@/lib/platform/domain'
+import { rateLimit } from '@/lib/rate-limit'
 import type { ApiResponse } from '@/types/api'
 
 // =============================================================================
@@ -20,6 +22,14 @@ import type { ApiResponse } from '@/types/api'
 export async function signUpTeacher(
   formData: FormData
 ): Promise<ApiResponse<{ teacherId: string }>> {
+  // Rate limit: 10 teacher signups per IP per hour
+  const headersList = await headers()
+  const ip = headersList.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+  const { allowed } = rateLimit(`teacher-signup:${ip}`, 10, 60 * 60 * 1000)
+  if (!allowed) {
+    return { success: false, error: 'Too many signup attempts. Please try again later.' }
+  }
+
   const name = formData.get('name') as string
   const email = formData.get('email') as string
   const password = formData.get('password') as string
@@ -102,6 +112,14 @@ export async function signUpTeacher(
 export async function signUpStudent(
   formData: FormData
 ): Promise<ApiResponse<{ studentId: string }>> {
+  // Rate limit: 3 student signups per IP per hour
+  const headersList = await headers()
+  const ip = headersList.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+  const { allowed } = rateLimit(`student-signup:${ip}`, 3, 60 * 60 * 1000)
+  if (!allowed) {
+    return { success: false, error: 'Too many signup attempts. Please try again later.' }
+  }
+
   const name = formData.get('name') as string
   const email = formData.get('email') as string
   const phone = formData.get('phone') as string

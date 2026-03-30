@@ -18,6 +18,7 @@ import {
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { StatusBadge } from '@/components/ui/StatusBadge'
+import { WaitlistForm } from '@/components/public/WaitlistForm'
 import { formatPKT } from '@/lib/time/pkt'
 
 type PageProps = {
@@ -84,18 +85,26 @@ export default async function JoinCohortPage({ params }: PageProps) {
   // --- Cohort Full ---
   if (displayStatus === 'full') {
     return (
-      <div className="mx-auto max-w-lg px-4 py-16">
+      <div className="mx-auto max-w-lg px-4 py-16 space-y-6">
         <Card className="p-8 text-center">
           <h1 className="text-2xl font-bold text-ink">Cohort Full</h1>
           <p className="mt-2 text-sm text-muted">
             All spots in <span className="font-medium">{cohort.name}</span> are taken.
           </p>
-          {cohort.waitlist_enabled && (
+          {!cohort.waitlist_enabled && (
             <p className="mt-3 text-sm text-muted">
-              You can join the waitlist to be notified when a spot opens up.
+              Check back later or contact the teacher for availability.
             </p>
           )}
         </Card>
+
+        {cohort.waitlist_enabled && (
+          <WaitlistForm
+            cohortId={cohort.id}
+            cohortName={cohort.name}
+            courseName={course.title}
+          />
+        )}
       </div>
     )
   }

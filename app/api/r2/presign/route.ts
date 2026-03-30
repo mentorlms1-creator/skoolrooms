@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/supabase/server'
 import { getPresignedUploadUrl } from '@/lib/r2/upload'
 import { UPLOAD_ALLOWED_FORMATS, UPLOAD_LIMITS, UPLOAD_LIMIT_LABELS } from '@/constants/plans'
+import { rateLimit } from '@/lib/rate-limit'
 import type { FileType } from '@/types/domain'
 import type { ApiResponse, PresignOutput } from '@/types/api'
 
@@ -78,6 +79,15 @@ export async function POST(
     return NextResponse.json(
       { success: false, error: 'Unauthorized' },
       { status: 401 },
+    )
+  }
+
+  // 1b. Rate limit: 20 presign requests per user per minute
+  const { allowed } = rateLimit(`presign:${user.id}`, 20, 60_000)
+  if (!allowed) {
+    return NextResponse.json(
+      { success: false, error: 'Too many upload requests. Please wait a moment.' },
+      { status: 429 },
     )
   }
 
