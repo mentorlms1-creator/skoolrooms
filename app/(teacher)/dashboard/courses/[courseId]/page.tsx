@@ -2,7 +2,7 @@
  * app/(teacher)/dashboard/courses/[courseId]/page.tsx — Course detail page
  *
  * Server Component. Displays course info with thumbnail, description,
- * status badge, and edit link.
+ * status badge, edit link, and cohort list.
  * HTML content is sanitized before rendering to prevent XSS.
  */
 
@@ -10,10 +10,17 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { requireTeacher } from '@/lib/auth/guards'
 import { getCourseById } from '@/lib/db/courses'
+import {
+  getCohortsByCourse,
+  getActiveEnrollmentCount,
+  computeCohortDisplayStatus,
+} from '@/lib/db/cohorts'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Card } from '@/components/ui/Card'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { Button } from '@/components/ui/Button'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { CohortCard } from '@/components/teacher/CohortCard'
 import { ROUTES } from '@/constants/routes'
 import sanitizeHtml from 'sanitize-html'
 
@@ -29,6 +36,17 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
   if (!course || course.teacher_id !== teacher.id) {
     notFound()
   }
+
+  const cohorts = await getCohortsByCourse(courseId)
+
+  // Compute display status and enrollment count for each cohort
+  const cohortDisplayData = await Promise.all(
+    cohorts.map(async (cohort) => {
+      const enrollmentCount = await getActiveEnrollmentCount(cohort.id)
+      const displayStatus = computeCohortDisplayStatus(cohort, enrollmentCount)
+      return { cohort, enrollmentCount, displayStatus }
+    }),
+  )
 
   return (
     <>
@@ -69,6 +87,42 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
           )}
         </div>
       </Card>
+
+      {/* Cohorts section */}
+      <div className="mt-8">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-ink">Cohorts</h2>
+          <Link href={ROUTES.TEACHER.cohortNew(courseId)}>
+            <Button size="sm">Create Cohort</Button>
+          </Link>
+        </div>
+
+        {cohortDisplayData.length > 0 ? (
+          <div className="flex flex-col gap-3">
+            {cohortDisplayData.map(({ cohort, enrollmentCount, displayStatus }) => (
+              <CohortCard
+                key={cohort.id}
+                cohort={cohort}
+                courseId={courseId}
+                displayStatus={displayStatus}
+                enrollmentCount={enrollmentCount}
+              />
+            ))}
+          </div>
+        ) : (
+          <Card>
+            <EmptyState
+              title="No cohorts yet"
+              description="Create your first cohort to start enrolling students in this course."
+              action={
+                <Link href={ROUTES.TEACHER.cohortNew(courseId)}>
+                  <Button>Create Cohort</Button>
+                </Link>
+              }
+            />
+          </Card>
+        )}
+      </div>
     </>
   )
 }

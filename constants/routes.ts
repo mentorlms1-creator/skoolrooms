@@ -40,6 +40,8 @@ export const ROUTES = {
     cohortNew: (courseId: string) => `/dashboard/courses/${courseId}/cohorts/new` as const,
     cohortDetail: (courseId: string, cohortId: string) =>
       `/dashboard/courses/${courseId}/cohorts/${cohortId}` as const,
+    cohortEdit: (courseId: string, cohortId: string) =>
+      `/dashboard/courses/${courseId}/cohorts/${cohortId}/edit` as const,
     cohortStudents: (courseId: string, cohortId: string) =>
       `/dashboard/courses/${courseId}/cohorts/${cohortId}/students` as const,
     cohortSchedule: (courseId: string, cohortId: string) =>
