@@ -145,6 +145,7 @@ CREATE TABLE IF NOT EXISTS class_sessions (
   cancelled_at timestamptz,
   rescheduled_to_id uuid REFERENCES class_sessions(id),
   deleted_at timestamptz,
+  created_at timestamptz DEFAULT now(),
   updated_at timestamptz DEFAULT now()
 );
 

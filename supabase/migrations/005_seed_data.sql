@@ -1,15 +1,16 @@
 -- ============================================================================
 -- 005_seed_data.sql
 -- Seed data for plans, feature_registry, plan_features, and platform_settings.
+-- Values match ARCHITECTURE.md Section 13 exactly.
 -- ============================================================================
 
 -- ============================================================================
--- PLANS
+-- PLANS (limits match ARCHITECTURE.md Section 13)
 -- ============================================================================
 INSERT INTO plans (name, slug, price_pkr, trial_days, transaction_cut_percent, max_courses, max_students, max_cohorts_active, max_storage_mb, max_teachers, display_order, is_active, is_visible) VALUES
-  ('Free',    'free',    0,    0,  15.00, 3,  20,  5,  5000,   1, 1, true, true),
-  ('Solo',    'solo',    1999, 14, 10.00, 10, 100, 10, 25000,  1, 2, true, true),
-  ('Academy', 'academy', 3999, 14, 8.00,  50, 500, 25, 100000, 3, 3, true, true);
+  ('Free',    'free',    0,    0,  15.00, 1,    15,  1,    500,   1, 1, true, true),
+  ('Solo',    'solo',    1999, 14, 10.00, 5,    50,  9999, 2048,  1, 2, true, true),
+  ('Academy', 'academy', 3999, 14, 8.00,  9999, 200, 9999, 10240, 3, 3, true, true);
 
 -- ============================================================================
 -- FEATURE REGISTRY (17 features)
@@ -34,37 +35,24 @@ INSERT INTO feature_registry (feature_key, display_name, description, category, 
   ('custom_domain',           'Custom Domain',               'Use your own .com domain instead of subdomain',                   'branding',       false);
 
 -- ============================================================================
--- PLAN FEATURES MATRIX
+-- PLAN FEATURES MATRIX (matches ARCHITECTURE.md Section 13)
 -- ============================================================================
 
--- Free plan: basic features only (student_portal, attendance_tracking,
--- assignment_submission, cohort_archive_history)
+-- Free plan: ALL features disabled
 INSERT INTO plan_features (plan_id, feature_key, is_enabled)
-SELECT p.id, fr.feature_key,
-  CASE
-    WHEN fr.feature_key IN (
-      'student_portal',
-      'attendance_tracking',
-      'assignment_submission',
-      'cohort_archive_history'
-    ) THEN true
-    ELSE false
-  END
+SELECT p.id, fr.feature_key, false
 FROM plans p
 CROSS JOIN feature_registry fr
 WHERE p.slug = 'free';
 
--- Solo plan: most features except multi_teacher, remove_branding,
--- custom_domain, whatsapp_notifications, progress_report_pdf
+-- Solo plan: all except multi_teacher, whatsapp_notifications, custom_domain
 INSERT INTO plan_features (plan_id, feature_key, is_enabled)
 SELECT p.id, fr.feature_key,
   CASE
     WHEN fr.feature_key IN (
       'multi_teacher',
-      'remove_branding',
-      'custom_domain',
       'whatsapp_notifications',
-      'progress_report_pdf'
+      'custom_domain'
     ) THEN false
     ELSE true
   END
@@ -72,7 +60,7 @@ FROM plans p
 CROSS JOIN feature_registry fr
 WHERE p.slug = 'solo';
 
--- Academy plan: all features except custom_domain
+-- Academy plan: all except custom_domain
 INSERT INTO plan_features (plan_id, feature_key, is_enabled)
 SELECT p.id, fr.feature_key,
   CASE
@@ -87,7 +75,7 @@ WHERE p.slug = 'academy';
 -- PLATFORM SETTINGS (13 keys)
 -- ============================================================================
 INSERT INTO platform_settings (key, value, description) VALUES
-  ('screenshot_payments_enabled',      'true',  'Show screenshot upload on payment pages'),
+  ('screenshot_payments_enabled',      'false', 'Show screenshot upload on payment pages'),
   ('payment_gateway_enabled',          'false', 'Enable gateway checkout'),
   ('active_gateway',                   'mock',  'safepay or payfast'),
   ('gateway_processing_fee_percent',   '2.50',  'Gateway fee % shown on payout breakdowns'),

@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { signIn } from '@/lib/auth/actions'
+import { createClient } from '@/supabase/client'
 import { ROUTES } from '@/constants/routes'
 
 type LoginFormProps = {
@@ -36,11 +37,15 @@ export function LoginForm({ action, redirectTo }: LoginFormProps) {
 
     // Verify the user is logging into the correct portal
     if (action === 'teacher' && role === 'student') {
+      const supabase = createClient()
+      await supabase.auth.signOut()
       setError('This is the teacher login. Please use the student portal to sign in.')
       setLoading(false)
       return
     }
     if (action === 'student' && role === 'teacher') {
+      const supabase = createClient()
+      await supabase.auth.signOut()
       setError('This is the student portal. Please use the teacher login to sign in.')
       setLoading(false)
       return

@@ -9,8 +9,9 @@
  * This provider is thin — no fetching, just passes through server data.
  */
 
-import { createContext, useContext } from 'react'
+import { createContext, useContext, useCallback } from 'react'
 import type { PlanSlug } from '@/types/domain'
+import { USAGE_THRESHOLDS } from '@/constants/plans'
 
 // -----------------------------------------------------------------------------
 // Types
@@ -58,6 +59,8 @@ type TeacherContextType = {
   isLocked: boolean
   isInGrace: boolean
   isTrialing: boolean
+  isNearLimit: (key: string) => boolean
+  isAtLimit: (key: string) => boolean
 }
 
 // -----------------------------------------------------------------------------
@@ -111,9 +114,36 @@ export function TeacherProvider({
     ? new Date(teacher.trialEndsAt) > now
     : false
 
+  const usageMap: Record<string, number> = {
+    max_courses: usage.courses,
+    max_students: usage.students,
+    max_cohorts_active: usage.cohortsActive,
+    max_storage_mb: usage.storageMb,
+  }
+
+  const isNearLimit = useCallback(
+    (key: string) => {
+      const limit = plan.limits[key]
+      if (limit === null || limit === undefined) return false
+      const current = usageMap[key] ?? 0
+      return current / limit >= USAGE_THRESHOLDS.WARNING_PERCENT / 100
+    },
+    [plan.limits, usage]
+  )
+
+  const isAtLimit = useCallback(
+    (key: string) => {
+      const limit = plan.limits[key]
+      if (limit === null || limit === undefined) return false
+      const current = usageMap[key] ?? 0
+      return current >= limit
+    },
+    [plan.limits, usage]
+  )
+
   return (
     <TeacherContext.Provider
-      value={{ teacher, plan, usage, isLocked, isInGrace, isTrialing }}
+      value={{ teacher, plan, usage, isLocked, isInGrace, isTrialing, isNearLimit, isAtLimit }}
     >
       {children}
     </TeacherContext.Provider>

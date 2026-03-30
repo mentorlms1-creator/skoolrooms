@@ -23,7 +23,7 @@ export async function canUseFeature(
   teacherId: string,
   featureKey: FeatureKey,
 ): Promise<boolean> {
-  const supabase = await createAdminClient()
+  const supabase = createAdminClient()
 
   // Step 1: Check snapshot (grandfathered features)
   const { data: snapshot } = await supabase

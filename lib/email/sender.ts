@@ -52,7 +52,7 @@ export async function sendEmail(params: {
   data: Record<string, unknown>
 }): Promise<void> {
   const { to, type, recipientId, recipientType, data } = params
-  const supabase = await createAdminClient()
+  const supabase = createAdminClient()
 
   // Step 1: Check notification preferences (teacher only)
   if (recipientType === 'teacher' && !TRANSACTIONAL_TYPES.has(type)) {

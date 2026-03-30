@@ -10,7 +10,7 @@
 import { type ButtonHTMLAttributes } from 'react'
 import { Spinner } from '@/components/ui/Spinner'
 
-type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost'
+type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'danger' | 'ghost'
 type ButtonSize = 'sm' | 'md' | 'lg'
 
 type ButtonProps = {
@@ -25,6 +25,8 @@ const variantClasses: Record<ButtonVariant, string> = {
     'bg-brand-600 hover:bg-brand-500 text-white focus-visible:ring-brand-500',
   secondary:
     'bg-surface border border-border text-ink hover:bg-paper focus-visible:ring-brand-500',
+  outline:
+    'bg-transparent border border-brand-600 text-brand-600 hover:bg-brand-50 focus-visible:ring-brand-500',
   danger:
     'bg-danger hover:bg-danger/90 text-white focus-visible:ring-danger',
   ghost:

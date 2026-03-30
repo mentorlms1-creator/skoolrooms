@@ -24,7 +24,7 @@ export async function getLimit(
   teacherId: string,
   limitKey: LimitKey,
 ): Promise<number> {
-  const supabase = await createAdminClient()
+  const supabase = createAdminClient()
 
   // Get the teacher's current plan
   const { data: teacher } = await supabase

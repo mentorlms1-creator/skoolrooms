@@ -31,7 +31,7 @@ export async function signUpTeacher(
     return { success: false, error: 'Password must be at least 8 characters' }
   }
 
-  const supabaseAdmin = await createAdminClient()
+  const supabaseAdmin = createAdminClient()
 
   // Create auth user with teacher role metadata
   const { data: authData, error: authError } =
@@ -114,7 +114,7 @@ export async function signUpStudent(
     return { success: false, error: 'Password must be at least 8 characters' }
   }
 
-  const supabaseAdmin = await createAdminClient()
+  const supabaseAdmin = createAdminClient()
 
   // Check if student with this email already exists in students table
   const { data: existing } = await supabaseAdmin
@@ -265,6 +265,7 @@ export async function updatePassword(
 
 /**
  * Resend the verification email for a teacher who hasn't confirmed yet.
+ * Uses Supabase Auth resend method for email verification.
  */
 export async function resendVerificationEmail(
   formData: FormData
@@ -275,12 +276,12 @@ export async function resendVerificationEmail(
     return { success: false, error: 'Email is required' }
   }
 
-  const supabaseAdmin = await createAdminClient()
+  const supabase = await createClient()
 
-  const { error } = await supabaseAdmin.auth.admin.generateLink({
-    type: 'magiclink',
+  const { error } = await supabase.auth.resend({
+    type: 'signup',
     email,
-    options: { redirectTo: platformUrl('/auth/callback') },
+    options: { emailRedirectTo: platformUrl('/auth/callback') },
   })
 
   if (error) {

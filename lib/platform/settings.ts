@@ -50,7 +50,7 @@ export async function getPlatformSetting(key: string): Promise<string | null> {
   const cached = getCached(key)
   if (cached !== undefined) return cached
 
-  const supabase = await createAdminClient()
+  const supabase = createAdminClient()
   const { data, error } = await supabase
     .from('platform_settings')
     .select('value')

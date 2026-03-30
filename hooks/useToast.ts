@@ -1,3 +1,5 @@
+'use client'
+
 /**
  * hooks/useToast.ts — Toast notification hook
  * Convenience wrapper around UIProvider context.
