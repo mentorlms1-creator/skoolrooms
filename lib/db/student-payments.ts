@@ -1,10 +1,10 @@
 // =============================================================================
 // lib/db/student-payments.ts — Student payment CRUD queries (service layer)
-// All database queries for student payments go through this file.
+// All database queries for student_payments go through this file.
 // =============================================================================
 
 import { createAdminClient } from '@/supabase/server'
-import type { PaymentMethod, PaymentStatus } from '@/types/domain'
+import type { PaymentStatus, PaymentMethod } from '@/types/domain'
 
 // -----------------------------------------------------------------------------
 // Row types (mirrors the student_payments table from 001_initial_schema.sql)
@@ -37,8 +37,8 @@ export type StudentPaymentRow = {
   updated_at: string
 }
 
-// Input type for creating a payment
-export type CreatePaymentInput = {
+// Input type for creating a student payment
+export type CreateStudentPaymentInput = {
   enrollmentId: string
   amountPkr: number
   discountedAmountPkr: number
@@ -46,73 +46,9 @@ export type CreatePaymentInput = {
   teacherPayoutAmountPkr: number
   paymentMethod: PaymentMethod
   referenceCode: string
-  screenshotUrl?: string
-  status: PaymentStatus
   idempotencyKey: string
-}
-
-// Payment joined with enrollment + student info (for teacher verification views)
-export type PendingPaymentWithDetails = StudentPaymentRow & {
-  enrollments: {
-    id: string
-    student_id: string
-    cohort_id: string
-    reference_code: string
-    status: string
-    students: {
-      id: string
-      name: string
-      email: string
-      phone: string
-    }
-    cohorts: {
-      id: string
-      name: string
-      course_id: string
-      fee_pkr: number
-      fee_type: string
-    }
-  }
-}
-
-// Optional extras when updating payment status
-export type PaymentStatusExtras = {
-  verifiedAt?: string
-  rejectionReason?: string
-  refundedAt?: string
-  refundNote?: string
-  platformAbsorbedRefund?: boolean
-}
-
-// -----------------------------------------------------------------------------
-// createPayment — Insert a new student_payments row
-// All money values are integers in PKR.
-// Platform cut is calculated and stored at payment time — never re-derived.
-// -----------------------------------------------------------------------------
-export async function createPayment(
-  input: CreatePaymentInput
-): Promise<StudentPaymentRow | null> {
-  const supabase = createAdminClient()
-
-  const { data, error } = await supabase
-    .from('student_payments')
-    .insert({
-      enrollment_id: input.enrollmentId,
-      amount_pkr: input.amountPkr,
-      discounted_amount_pkr: input.discountedAmountPkr,
-      platform_cut_pkr: input.platformCutPkr,
-      teacher_payout_amount_pkr: input.teacherPayoutAmountPkr,
-      payment_method: input.paymentMethod,
-      reference_code: input.referenceCode,
-      screenshot_url: input.screenshotUrl ?? null,
-      status: input.status,
-      idempotency_key: input.idempotencyKey,
-    })
-    .select('*')
-    .single()
-
-  if (error || !data) return null
-  return data as StudentPaymentRow
+  status: PaymentStatus
+  paymentMonth?: string
 }
 
 // -----------------------------------------------------------------------------
@@ -134,12 +70,30 @@ export async function getPaymentById(
 }
 
 // -----------------------------------------------------------------------------
-// getPaymentByEnrollment — Payment(s) for an enrollment, newest first
-// Returns the most recent payment for the enrollment
+// getPaymentByIdempotencyKey — Look up payment by idempotency key
+// Used to prevent duplicate payment creation
 // -----------------------------------------------------------------------------
-export async function getPaymentByEnrollment(
-  enrollmentId: string
+export async function getPaymentByIdempotencyKey(
+  idempotencyKey: string
 ): Promise<StudentPaymentRow | null> {
+  const supabase = createAdminClient()
+
+  const { data, error } = await supabase
+    .from('student_payments')
+    .select('*')
+    .eq('idempotency_key', idempotencyKey)
+    .single()
+
+  if (error || !data) return null
+  return data as StudentPaymentRow
+}
+
+// -----------------------------------------------------------------------------
+// getPaymentsByEnrollment — All payments for an enrollment, newest first
+// -----------------------------------------------------------------------------
+export async function getPaymentsByEnrollment(
+  enrollmentId: string
+): Promise<StudentPaymentRow[]> {
   const supabase = createAdminClient()
 
   const { data, error } = await supabase
@@ -147,7 +101,34 @@ export async function getPaymentByEnrollment(
     .select('*')
     .eq('enrollment_id', enrollmentId)
     .order('created_at', { ascending: false })
-    .limit(1)
+
+  if (error || !data) return []
+  return data as StudentPaymentRow[]
+}
+
+// -----------------------------------------------------------------------------
+// createPayment — Insert a new student payment record
+// -----------------------------------------------------------------------------
+export async function createPayment(
+  input: CreateStudentPaymentInput
+): Promise<StudentPaymentRow | null> {
+  const supabase = createAdminClient()
+
+  const { data, error } = await supabase
+    .from('student_payments')
+    .insert({
+      enrollment_id: input.enrollmentId,
+      amount_pkr: input.amountPkr,
+      discounted_amount_pkr: input.discountedAmountPkr,
+      platform_cut_pkr: input.platformCutPkr,
+      teacher_payout_amount_pkr: input.teacherPayoutAmountPkr,
+      payment_method: input.paymentMethod,
+      reference_code: input.referenceCode,
+      idempotency_key: input.idempotencyKey,
+      status: input.status,
+      payment_month: input.paymentMonth ?? null,
+    })
+    .select('*')
     .single()
 
   if (error || !data) return null
@@ -155,88 +136,24 @@ export async function getPaymentByEnrollment(
 }
 
 // -----------------------------------------------------------------------------
-// getPendingPaymentsByTeacher — Pending verification payments across all
-// teacher's cohorts, joined with enrollment + student info
-// -----------------------------------------------------------------------------
-export async function getPendingPaymentsByTeacher(
-  teacherId: string
-): Promise<PendingPaymentWithDetails[]> {
-  const supabase = createAdminClient()
-
-  const { data, error } = await supabase
-    .from('student_payments')
-    .select(`
-      *,
-      enrollments!inner(
-        id, student_id, cohort_id, reference_code, status,
-        students!inner(id, name, email, phone),
-        cohorts!inner(id, name, course_id, fee_pkr, fee_type)
-      )
-    `)
-    .eq('status', 'pending_verification')
-    .eq('enrollments.cohorts.teacher_id', teacherId)
-    .order('created_at', { ascending: false })
-
-  if (error || !data) return []
-  return data as PendingPaymentWithDetails[]
-}
-
-// -----------------------------------------------------------------------------
-// updatePaymentStatus — Update payment status with optional extra fields
-// (verified_at, rejection_reason, refunded_at, refund_note)
+// updatePaymentStatus — Update payment status + updated_at
 // -----------------------------------------------------------------------------
 export async function updatePaymentStatus(
   paymentId: string,
   status: PaymentStatus,
-  extras?: PaymentStatusExtras
+  extras?: Record<string, unknown>
 ): Promise<StudentPaymentRow | null> {
   const supabase = createAdminClient()
 
-  const updateFields: Record<string, unknown> = {
-    status,
-    updated_at: new Date().toISOString(),
-  }
-
-  if (extras?.verifiedAt !== undefined) {
-    updateFields.verified_at = extras.verifiedAt
-  }
-  if (extras?.rejectionReason !== undefined) {
-    updateFields.rejection_reason = extras.rejectionReason
-  }
-  if (extras?.refundedAt !== undefined) {
-    updateFields.refunded_at = extras.refundedAt
-  }
-  if (extras?.refundNote !== undefined) {
-    updateFields.refund_note = extras.refundNote
-  }
-  if (extras?.platformAbsorbedRefund !== undefined) {
-    updateFields.platform_absorbed_refund = extras.platformAbsorbedRefund
-  }
-
   const { data, error } = await supabase
     .from('student_payments')
-    .update(updateFields)
+    .update({
+      status,
+      ...extras,
+      updated_at: new Date().toISOString(),
+    })
     .eq('id', paymentId)
     .select('*')
-    .single()
-
-  if (error || !data) return null
-  return data as StudentPaymentRow
-}
-
-// -----------------------------------------------------------------------------
-// getPaymentByIdempotencyKey — Check for duplicate payment (idempotency)
-// Returns existing payment if one was already created with this key
-// -----------------------------------------------------------------------------
-export async function getPaymentByIdempotencyKey(
-  key: string
-): Promise<StudentPaymentRow | null> {
-  const supabase = createAdminClient()
-
-  const { data, error } = await supabase
-    .from('student_payments')
-    .select('*')
-    .eq('idempotency_key', key)
     .single()
 
   if (error || !data) return null

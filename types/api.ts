@@ -24,6 +24,7 @@ export type EnrollInput = {
 export type EnrollOutput = {
   checkoutUrl?: string
   enrollmentId: string
+  referenceCode?: string
   status: 'active' | 'pending_verification' | 'waitlisted'
 }
 
