@@ -12,6 +12,7 @@ import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { useUIContext } from '@/providers/UIProvider'
+import sanitizeHtml from 'sanitize-html'
 import { deleteAssignmentAction, reviewSubmissionAction } from '@/lib/actions/assignments'
 import { formatPKT } from '@/lib/time/pkt'
 
@@ -161,7 +162,7 @@ export function AssignmentList({ assignments, isArchived }: AssignmentListProps)
                   <h4 className="text-sm font-medium text-muted mb-1">Description</h4>
                   <div
                     className="prose prose-sm max-w-none text-ink"
-                    dangerouslySetInnerHTML={{ __html: assignment.description }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(assignment.description) }}
                   />
                   {assignment.fileUrl && (
                     <a

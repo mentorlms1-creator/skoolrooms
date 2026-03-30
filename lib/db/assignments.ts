@@ -277,14 +277,14 @@ export async function createSubmission(
 // -----------------------------------------------------------------------------
 export async function updateSubmission(
   submissionId: string,
-  updates: { textAnswer?: string; fileUrl?: string | null }
+  updates: { textAnswer?: string; fileUrl?: string | null; status?: string }
 ): Promise<SubmissionRow | null> {
   const supabase = createAdminClient()
 
   const updatePayload: Record<string, unknown> = {
     reviewed_at: null,
     submitted_at: new Date().toISOString(),
-    status: 'submitted',
+    status: updates.status ?? 'submitted',
   }
   if (updates.textAnswer !== undefined)
     updatePayload.text_answer = updates.textAnswer

@@ -94,6 +94,9 @@ export async function createAssignmentAction(
   if (!dueDate) {
     return { success: false, error: 'Due date is required.' }
   }
+  if (fileUrl && !fileUrl.startsWith('https://')) {
+    return { success: false, error: 'File URL must use HTTPS.' }
+  }
 
   // Verify cohort ownership
   const cohort = await getCohortById(cohortId)
@@ -180,6 +183,9 @@ export async function updateAssignmentAction(
 
   if (title !== null && title !== undefined && title.length < 3) {
     return { success: false, error: 'Title must be at least 3 characters.' }
+  }
+  if (fileUrl && !fileUrl.startsWith('https://')) {
+    return { success: false, error: 'File URL must use HTTPS.' }
   }
 
   const updates: {
@@ -271,6 +277,9 @@ export async function submitAssignmentAction(
   if (!textAnswer && !fileUrl) {
     return { success: false, error: 'Please provide a text answer or upload a file.' }
   }
+  if (fileUrl && !fileUrl.startsWith('https://')) {
+    return { success: false, error: 'File URL must use HTTPS.' }
+  }
 
   // Fetch assignment
   const assignment = await getAssignmentById(assignmentId)
@@ -304,10 +313,15 @@ export async function submitAssignmentAction(
   const existing = await getSubmissionByStudent(assignmentId, student.id)
 
   if (existing) {
-    // Re-submission: update existing
+    // Re-submission: update existing — determine overdue status
+    const now = new Date()
+    const dueDate = new Date(assignment.due_date)
+    const resubmitStatus = now > dueDate ? 'overdue' : 'submitted'
+
     const updated = await updateSubmission(existing.id, {
       textAnswer: textAnswer ?? undefined,
       fileUrl: fileUrl ?? undefined,
+      status: resubmitStatus,
     })
     if (!updated) {
       return { success: false, error: 'Failed to update submission. Please try again.' }

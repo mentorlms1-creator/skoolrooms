@@ -10,6 +10,7 @@ import { getStudentByAuthId } from '@/lib/db/students'
 import { getCohortById } from '@/lib/db/cohorts'
 import {
   getAnnouncementById,
+  getCommentById,
   createAnnouncement,
   pinAnnouncement,
   deleteAnnouncement,
@@ -77,6 +78,9 @@ export async function createAnnouncementAction(
   if (!body) {
     return { success: false, error: 'Announcement body is required' }
   }
+  if (fileUrl && !fileUrl.startsWith('https://')) {
+    return { success: false, error: 'File URL must use HTTPS.' }
+  }
 
   // Verify cohort ownership
   const cohort = await getCohortById(cohortId)
@@ -139,6 +143,11 @@ export async function pinAnnouncementAction(
     return { success: false, error: 'Not authenticated' }
   }
 
+  // Hard lock check: block content-write when plan + grace expired
+  if (checkPlanLock(teacher)) {
+    return getPlanLockError()
+  }
+
   // Verify ownership via announcement.teacher_id
   const announcement = await getAnnouncementById(announcementId)
   if (!announcement || announcement.teacher_id !== teacher.id) {
@@ -187,6 +196,19 @@ export async function deleteAnnouncementAction(
   const announcement = await getAnnouncementById(announcementId)
   if (!announcement || announcement.teacher_id !== teacher.id) {
     return { success: false, error: 'Announcement not found' }
+  }
+
+  // Archived cohort write guard
+  const cohort = await getCohortById(announcement.cohort_id)
+  if (!cohort) {
+    return { success: false, error: 'Cohort not found' }
+  }
+  if (cohort.status === 'archived') {
+    return {
+      success: false,
+      error: 'This cohort is archived. No changes allowed.',
+      code: 'COHORT_ARCHIVED',
+    }
   }
 
   const success = await deleteAnnouncement(announcementId, teacher.id)
@@ -321,21 +343,12 @@ export async function deleteCommentAction(
   }
 
   // Fetch the comment to get its announcement_id for archived cohort check
-  const supabase = await createClient()
-  const { data: commentRow, error: commentFetchError } = await supabase
-    .from('announcement_comments')
-    .select('announcement_id')
-    .eq('id', commentId)
-    .is('deleted_at', null)
-    .single()
-
-  if (commentFetchError || !commentRow) {
+  const comment = await getCommentById(commentId)
+  if (!comment) {
     return { success: false, error: 'Comment not found' }
   }
 
-  const announcement = await getAnnouncementById(
-    (commentRow as { announcement_id: string }).announcement_id
-  )
+  const announcement = await getAnnouncementById(comment.announcement_id)
   if (!announcement || announcement.teacher_id !== teacher.id) {
     return { success: false, error: 'Announcement not found' }
   }

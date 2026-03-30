@@ -235,6 +235,25 @@ export async function pinAnnouncement(
 // =============================================================================
 
 // -----------------------------------------------------------------------------
+// getCommentById — Single comment by ID (must not be soft-deleted)
+// -----------------------------------------------------------------------------
+export async function getCommentById(
+  id: string
+): Promise<AnnouncementCommentRow | null> {
+  const supabase = createAdminClient()
+
+  const { data, error } = await supabase
+    .from('announcement_comments')
+    .select('*')
+    .eq('id', id)
+    .is('deleted_at', null)
+    .single()
+
+  if (error || !data) return null
+  return data as AnnouncementCommentRow
+}
+
+// -----------------------------------------------------------------------------
 // getCommentsByAnnouncement — All non-deleted comments, oldest first
 // -----------------------------------------------------------------------------
 export async function getCommentsByAnnouncement(

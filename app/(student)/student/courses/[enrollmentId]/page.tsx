@@ -222,6 +222,7 @@ export default async function EnrollmentDetailPage({ params }: PageParams) {
               teacherName={teacher.name}
               isArchived={isArchived}
               canComment={isActive}
+              studentId={student.id}
             />
           )}
         </section>

@@ -46,6 +46,7 @@ type StudentAnnouncementListProps = {
   teacherName: string
   isArchived: boolean
   canComment: boolean
+  studentId: string
 }
 
 export function StudentAnnouncementList({
@@ -53,6 +54,7 @@ export function StudentAnnouncementList({
   teacherName,
   isArchived,
   canComment,
+  studentId,
 }: StudentAnnouncementListProps) {
   return (
     <div className="flex flex-col gap-4">
@@ -63,6 +65,7 @@ export function StudentAnnouncementList({
           teacherName={teacherName}
           isArchived={isArchived}
           canComment={canComment}
+          studentId={studentId}
         />
       ))}
     </div>
@@ -78,11 +81,13 @@ function StudentAnnouncementCard({
   teacherName,
   isArchived,
   canComment,
+  studentId,
 }: {
   announcement: AnnouncementData
   teacherName: string
   isArchived: boolean
   canComment: boolean
+  studentId: string
 }) {
   const [isPending, startTransition] = useTransition()
   const [showComments, setShowComments] = useState(false)
@@ -170,7 +175,11 @@ function StudentAnnouncementCard({
               >
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium text-ink">
-                    {comment.authorType === 'teacher' ? teacherName : 'You'}
+                    {comment.authorType === 'teacher'
+                      ? teacherName
+                      : comment.authorId === studentId
+                        ? 'You'
+                        : 'Student'}
                   </span>
                   <span className="rounded-full bg-surface px-1.5 py-0.5 text-xs text-muted">
                     {comment.authorType === 'teacher' ? 'Teacher' : 'Student'}
