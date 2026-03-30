@@ -41,6 +41,18 @@
 **Fix:** Added canUseFeature('recurring_classes') check before recurring expansion.
 **Rule going forward:** Before implementing any feature that has a plan flag in ARCHITECTURE.md Section 13, add canUseFeature() check in the server action. Review the feature matrix when building new features.
 
+### 2026-03-30 — Every dangerouslySetInnerHTML needs sanitize-html, no exceptions
+**What happened:** Assignment descriptions from TipTap were rendered with dangerouslySetInnerHTML without sanitization (XSS), while announcement bodies were correctly sanitized. Inconsistent application of the rule.
+**Root cause:** Different subagents implemented announcements vs assignments, one remembered the rule and the other didn't.
+**Fix:** Added sanitize-html to assignment-list.tsx. Checked all other dangerouslySetInnerHTML uses.
+**Rule going forward:** grep for dangerouslySetInnerHTML after every week. EVERY instance must use sanitizeHtml(). No exceptions.
+
+### 2026-03-30 — Duplicate server actions across files cause bugs
+**What happened:** approveSubscriptionAction existed in both admin.ts and subscriptions.ts. The admin.ts version was incomplete (no snapshot, no grace clearing), but was the one imported by the UI component.
+**Root cause:** Week 7 agent created duplicate actions without checking Week 6 already had them.
+**Fix:** Removed duplicates from admin.ts, updated imports to use the canonical subscriptions.ts versions.
+**Rule going forward:** Before creating a new server action, grep the codebase to check if it already exists. One action, one source.
+
 ### 2026-03-30 — Enrollment API must check is_registration_open and revoked students
 **What happened:** Enrollment API only checked cohort archived status but not registration closed or revoked student blocks.
 **Root cause:** Focused on the happy path (archived guard) but missed the other enrollment eligibility checks from ARCHITECTURE.md Section 14.
