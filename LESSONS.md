@@ -35,6 +35,18 @@
 **Fix:** Added sanitize-html package, sanitize before rendering.
 **Rule going forward:** Always sanitize HTML from user input before dangerouslySetInnerHTML. Use sanitize-html on the server side.
 
+### 2026-03-30 — Always check canUseFeature for plan-gated features
+**What happened:** createSessionAction allowed Free-plan teachers to create recurring sessions. The recurring_classes feature flag was never checked.
+**Root cause:** The feature gate was only in the plan but not enforced in the server action code.
+**Fix:** Added canUseFeature('recurring_classes') check before recurring expansion.
+**Rule going forward:** Before implementing any feature that has a plan flag in ARCHITECTURE.md Section 13, add canUseFeature() check in the server action. Review the feature matrix when building new features.
+
+### 2026-03-30 — Validate URL fields to prevent stored XSS
+**What happened:** Meet link field accepted any string including javascript: URLs — stored XSS vector.
+**Root cause:** Only checked for non-empty, didn't validate URL format.
+**Fix:** Added https:// prefix validation on meet_link.
+**Rule going forward:** All URL fields (meet_link, any user-provided URLs) must validate they start with https://. Never render user-provided URLs without validation.
+
 ### 2026-03-30 — Wrong-portal login leaves session dangling
 **What happened:** When a teacher logged in on the student portal, signIn succeeded and created a session, but the portal mismatch check only showed an error — the session persisted.
 **Root cause:** The signIn server action authenticates before the client-side role check runs.

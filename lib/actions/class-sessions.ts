@@ -14,6 +14,7 @@ import {
   getSessionById,
 } from '@/lib/db/class-sessions'
 import { RRule } from 'rrule'
+import { canUseFeature } from '@/lib/plans/features'
 import type { ApiResponse } from '@/types/api'
 
 // -----------------------------------------------------------------------------
@@ -64,6 +65,9 @@ export async function createSessionAction(
   if (!meetLink) {
     return { success: false, error: 'Meet link is required' }
   }
+  if (!meetLink.startsWith('https://')) {
+    return { success: false, error: 'Meet link must be a valid HTTPS URL' }
+  }
   if (!scheduledAt) {
     return { success: false, error: 'Date and time is required' }
   }
@@ -85,6 +89,16 @@ export async function createSessionAction(
 
   // --- Recurring session expansion ---
   if (isRecurring && recurrenceRule) {
+    // Plan feature check: recurring_classes disabled on Free plan
+    const canRecur = await canUseFeature(teacher.id, 'recurring_classes')
+    if (!canRecur) {
+      return {
+        success: false,
+        error: 'Recurring classes are not available on your current plan. Upgrade to use this feature.',
+        code: 'FEATURE_NOT_AVAILABLE',
+      }
+    }
+
     try {
       // Parse the recurrence rule string and merge with dtstart/until
       const parsedOptions = RRule.parseString(recurrenceRule)
