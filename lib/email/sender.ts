@@ -26,6 +26,7 @@ const TRANSACTIONAL_TYPES: ReadonlySet<string> = new Set([
   'refund_debit_recovered',
   'enrollment_confirmed',
   'enrollment_rejected',
+  'enrollment_revoked',
   'cohort_archived',
 ])
 
@@ -210,6 +211,7 @@ function buildSubject(type: EmailType, data: Record<string, unknown>): string {
     enrollment_confirmed: `${platformName} — Enrollment Confirmed`,
     enrollment_pending: `${platformName} — Enrollment Pending Verification`,
     enrollment_rejected: `${platformName} — Enrollment Update`,
+    enrollment_revoked: `${platformName} — Enrollment Revoked`,
     enrollment_refunded_cohort_full: `${platformName} — Cohort Full, Refund Issued`,
     waitlist_joined_after_payment_refund: `${platformName} — Added to Waitlist`,
     student_withdrawal_requested: `${platformName} — Withdrawal Request`,

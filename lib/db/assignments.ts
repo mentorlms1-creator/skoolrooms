@@ -324,6 +324,49 @@ export async function markSubmissionReviewed(
 }
 
 // -----------------------------------------------------------------------------
+// getSubmissionById — Single submission by ID
+// -----------------------------------------------------------------------------
+export async function getSubmissionById(
+  id: string
+): Promise<SubmissionRow | null> {
+  const supabase = createAdminClient()
+
+  const { data, error } = await supabase
+    .from('assignment_submissions')
+    .select('*')
+    .eq('id', id)
+    .single()
+
+  if (error || !data) return null
+  return data as SubmissionRow
+}
+
+// -----------------------------------------------------------------------------
+// getSubmissionCountsByAssignment — Count total, submitted, reviewed, overdue
+// for an assignment
+// -----------------------------------------------------------------------------
+export async function getSubmissionCountsByAssignment(
+  assignmentId: string
+): Promise<{ total: number; submitted: number; reviewed: number; overdue: number }> {
+  const supabase = createAdminClient()
+
+  const { data, error } = await supabase
+    .from('assignment_submissions')
+    .select('status')
+    .eq('assignment_id', assignmentId)
+
+  if (error || !data) return { total: 0, submitted: 0, reviewed: 0, overdue: 0 }
+
+  const rows = data as Array<{ status: string }>
+  return {
+    total: rows.length,
+    submitted: rows.filter((r) => r.status === 'submitted').length,
+    reviewed: rows.filter((r) => r.status === 'reviewed').length,
+    overdue: rows.filter((r) => r.status === 'overdue').length,
+  }
+}
+
+// -----------------------------------------------------------------------------
 // getOverdueSubmissions — Students who haven't submitted past due_date.
 // Uses two-step approach: fetch past-due assignments, then find enrolled
 // students without submissions.

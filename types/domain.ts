@@ -13,7 +13,8 @@ export const EmailType = {
   ENROLLMENT_REFUNDED_COHORT_FULL: 'enrollment_refunded_cohort_full',
   WAITLIST_JOINED_AFTER_PAYMENT_REFUND: 'waitlist_joined_after_payment_refund',
 
-  // Withdrawal
+  // Revocation + Withdrawal
+  ENROLLMENT_REVOKED: 'enrollment_revoked',
   STUDENT_WITHDRAWAL_REQUESTED: 'student_withdrawal_requested',
   WITHDRAWAL_APPROVED: 'withdrawal_approved',
   WITHDRAWAL_REJECTED: 'withdrawal_rejected',
