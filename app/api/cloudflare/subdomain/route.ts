@@ -164,7 +164,7 @@ export async function POST(
   const { data: teacher, error: teacherError } = await adminClient
     .from('teachers')
     .select('id, subdomain')
-    .eq('user_id', user.id)
+    .eq('supabase_auth_id', user.id)
     .single()
 
   if (teacherError || !teacher) {

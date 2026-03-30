@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { RESERVED_SUBDOMAINS } from '@/constants/plans'
 import { ROUTES } from '@/constants/routes'
-import { completeOnboardingStep } from '@/lib/actions/onboarding'
 
 // -----------------------------------------------------------------------------
 // Constants
@@ -121,9 +120,9 @@ export function Step2Form({ defaultSubdomain, domain }: Step2FormProps) {
           return
         }
 
-        // Mark onboarding step complete
-        await completeOnboardingStep('subdomain_set')
-
+        // Subdomain is set — proceed to profile step.
+        // This doesn't complete a checklist step (the 5 checklist steps are
+        // profile_complete, payment_details_set, course_created, cohort_created, link_shared).
         router.push(ROUTES.PLATFORM.onboarding.step3)
       } catch {
         setError('Something went wrong. Please try again.')

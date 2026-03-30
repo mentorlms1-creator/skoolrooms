@@ -12,13 +12,16 @@ import type { ApiResponse } from '@/types/api'
 // Helpers
 // -----------------------------------------------------------------------------
 
-/** All 5 onboarding steps that must be true for onboarding_completed */
+/** All 5 onboarding steps that must be true for onboarding_completed.
+ * Must match the keys in teachers.onboarding_steps_json default:
+ * {"profile_complete": false, "payment_details_set": false, "course_created": false, "cohort_created": false, "link_shared": false}
+ */
 const ONBOARDING_STEPS = [
-  'email_verified',
-  'subjects_selected',
-  'subdomain_set',
   'profile_complete',
-  'payment_setup',
+  'payment_details_set',
+  'course_created',
+  'cohort_created',
+  'link_shared',
 ] as const
 
 type OnboardingStep = (typeof ONBOARDING_STEPS)[number]
@@ -66,16 +69,12 @@ export async function saveOnboardingStep1(
     return { success: false, error: 'Please select at least one teaching level.' }
   }
 
-  const stepsJson: Record<string, boolean> = {
-    ...teacher.onboarding_steps_json,
-    subjects_selected: true,
-  }
-
+  // Saving subjects/levels is wizard data, not a checklist step.
+  // The 5 checklist steps are: profile_complete, payment_details_set,
+  // course_created, cohort_created, link_shared.
   const updated = await updateTeacher(teacher.id, {
     subject_tags: subjectTags,
     teaching_levels: teachingLevels,
-    onboarding_steps_json: stepsJson,
-    onboarding_completed: allStepsComplete(stepsJson),
   })
 
   if (!updated) {

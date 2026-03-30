@@ -8,11 +8,13 @@ import { createClient } from '@/supabase/server'
 import { getTeacherByAuthId, hasPaymentSettings } from '@/lib/db/teachers'
 import {
   createCourse,
+  getCourseById,
   updateCourse,
   softDeleteCourse,
   countPublishedCourses,
 } from '@/lib/db/courses'
 import { getLimit } from '@/lib/plans/limits'
+import { completeOnboardingStep } from '@/lib/actions/onboarding'
 import type { ApiResponse } from '@/types/api'
 
 // -----------------------------------------------------------------------------
@@ -57,22 +59,9 @@ export async function createCourseAction(
     }
   }
 
-  // Plan limit check: only count published courses against the limit.
-  // We still check here to prevent creating drafts when already at limit
-  // and planning to publish (belt-and-suspenders with the publish check).
-  const [publishedCount, maxCourses] = await Promise.all([
-    countPublishedCourses(teacher.id),
-    getLimit(teacher.id, 'max_courses'),
-  ])
-
-  if (publishedCount >= maxCourses) {
-    return {
-      success: false,
-      error: `You have reached your plan limit of ${maxCourses} published course${maxCourses === 1 ? '' : 's'}. Upgrade your plan to create more.`,
-      code: 'PLAN_LIMIT_REACHED',
-    }
-  }
-
+  // No plan limit check on draft creation — only published courses count
+  // toward max_courses. The limit is enforced in updateCourseAction when
+  // status is set to 'published'.
   const course = await createCourse(teacher.id, title, description)
 
   if (!course) {
@@ -94,6 +83,12 @@ export async function updateCourseAction(
 
   if (!teacher) {
     return { success: false, error: 'Not authenticated' }
+  }
+
+  // Verify ownership
+  const course = await getCourseById(courseId)
+  if (!course || course.teacher_id !== teacher.id) {
+    return { success: false, error: 'Course not found' }
   }
 
   const title = (formData.get('title') as string | null)?.trim()
@@ -132,6 +127,9 @@ export async function updateCourseAction(
         code: 'PLAN_LIMIT_REACHED',
       }
     }
+
+    // Mark onboarding step complete on first publish
+    await completeOnboardingStep('course_created')
   }
 
   // Build update fields
@@ -161,6 +159,12 @@ export async function deleteCourseAction(
 
   if (!teacher) {
     return { success: false, error: 'Not authenticated' }
+  }
+
+  // Verify ownership
+  const course = await getCourseById(courseId)
+  if (!course || course.teacher_id !== teacher.id) {
+    return { success: false, error: 'Course not found' }
   }
 
   const result = await softDeleteCourse(courseId)

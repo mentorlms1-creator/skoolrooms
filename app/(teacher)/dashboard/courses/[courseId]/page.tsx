@@ -3,6 +3,7 @@
  *
  * Server Component. Displays course info with thumbnail, description,
  * status badge, and edit link.
+ * HTML content is sanitized before rendering to prevent XSS.
  */
 
 import Link from 'next/link'
@@ -14,6 +15,7 @@ import { Card } from '@/components/ui/Card'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { Button } from '@/components/ui/Button'
 import { ROUTES } from '@/constants/routes'
+import sanitizeHtml from 'sanitize-html'
 
 type CourseDetailPageProps = {
   params: Promise<{ courseId: string }>
@@ -58,7 +60,7 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
           {course.description ? (
             <div
               className="prose prose-sm max-w-none text-ink"
-              dangerouslySetInnerHTML={{ __html: course.description }}
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(course.description) }}
             />
           ) : (
             <p className="text-sm text-muted">

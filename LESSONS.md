@@ -17,6 +17,24 @@
 **Fix:** Made createAdminClient return empty cookies (no-op getAll/setAll). Changed from async to sync since it no longer needs `await cookies()`.
 **Rule going forward:** Admin/service-role clients never touch cookies. They operate independently of user sessions.
 
+### 2026-03-30 — Onboarding wizard steps vs checklist steps are different concepts
+**What happened:** The onboarding_steps_json used wrong step names (email_verified, subjects_selected, subdomain_set) instead of the 5 checklist steps from ARCHITECTURE.md (profile_complete, payment_details_set, course_created, cohort_created, link_shared).
+**Root cause:** Confused the 3-step UI wizard with the 5-step business checklist. The wizard (subjects → subdomain → profile) is a one-time flow. The checklist (profile → payment → course → cohort → link) tracks milestones over time.
+**Fix:** Use correct step names. Only step 3 (profile) of the wizard marks a checklist step. Dashboard redirect checks profile_complete, not onboarding_completed (which requires all 5 steps).
+**Rule going forward:** Wizard = UI flow (3 steps). Checklist = business milestones (5 steps). They are separate concepts. The checklist is informational on the dashboard, not a gate.
+
+### 2026-03-30 — Course mutations must verify teacher ownership
+**What happened:** updateCourseAction and deleteCourseAction accepted courseId without checking it belongs to the authenticated teacher. Since lib/db uses createAdminClient (bypasses RLS), any teacher could modify any course.
+**Root cause:** Admin client bypasses RLS by design, so ownership checks must be explicit in Server Actions.
+**Fix:** Fetch the course first, verify course.teacher_id === teacher.id before mutating.
+**Rule going forward:** Every Server Action that mutates a resource must verify ownership. Never assume RLS protects you when using createAdminClient.
+
+### 2026-03-30 — Always sanitize user-generated HTML before rendering
+**What happened:** Course descriptions (user-generated HTML from TipTap) were rendered with dangerouslySetInnerHTML without sanitization — XSS vulnerability.
+**Root cause:** TipTap limits input in the editor UI, but users can bypass the editor and submit raw HTML via FormData.
+**Fix:** Added sanitize-html package, sanitize before rendering.
+**Rule going forward:** Always sanitize HTML from user input before dangerouslySetInnerHTML. Use sanitize-html on the server side.
+
 ### 2026-03-30 — Wrong-portal login leaves session dangling
 **What happened:** When a teacher logged in on the student portal, signIn succeeded and created a session, but the portal mismatch check only showed an error — the session persisted.
 **Root cause:** The signIn server action authenticates before the client-side role check runs.
