@@ -225,6 +225,19 @@ export async function deleteAssignmentAction(
     return { success: false, error: 'Assignment not found' }
   }
 
+  // Archived cohort write guard
+  const cohort = await getCohortById(assignment.cohort_id)
+  if (!cohort) {
+    return { success: false, error: 'Cohort not found' }
+  }
+  if (cohort.status === 'archived') {
+    return {
+      success: false,
+      error: 'This cohort has been archived. No changes can be made.',
+      code: 'COHORT_ARCHIVED',
+    }
+  }
+
   const deleted = await deleteAssignment(assignmentId, teacher.id)
   if (!deleted) {
     return { success: false, error: 'Failed to delete assignment. Please try again.' }

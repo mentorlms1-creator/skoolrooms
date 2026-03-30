@@ -145,6 +145,19 @@ export async function pinAnnouncementAction(
     return { success: false, error: 'Announcement not found' }
   }
 
+  // Archived cohort write guard
+  const cohort = await getCohortById(announcement.cohort_id)
+  if (!cohort) {
+    return { success: false, error: 'Cohort not found' }
+  }
+  if (cohort.status === 'archived') {
+    return {
+      success: false,
+      error: 'This cohort is archived. No changes allowed.',
+      code: 'COHORT_ARCHIVED',
+    }
+  }
+
   const result = await pinAnnouncement(announcementId, teacher.id, pinned)
   if (!result) {
     return { success: false, error: 'Failed to update pin status. Please try again.' }
@@ -211,6 +224,19 @@ export async function createCommentAction(
     return { success: false, error: 'Announcement not found' }
   }
 
+  // Archived cohort write guard
+  const cohort = await getCohortById(announcement.cohort_id)
+  if (!cohort) {
+    return { success: false, error: 'Cohort not found' }
+  }
+  if (cohort.status === 'archived') {
+    return {
+      success: false,
+      error: 'This cohort is archived. No changes allowed.',
+      code: 'COHORT_ARCHIVED',
+    }
+  }
+
   // Try teacher auth first
   const teacher = await getAuthenticatedTeacher()
   if (teacher) {
@@ -261,24 +287,22 @@ export async function createCommentAction(
   }
 
   // Send student_comment email to the teacher (non-blocking)
-  const cohort = await getCohortById(announcement.cohort_id)
-  if (cohort) {
-    const { getTeacherById } = await import('@/lib/db/teachers')
-    const announcementTeacher = await getTeacherById(announcement.teacher_id)
-    if (announcementTeacher) {
-      void sendEmail({
-        to: announcementTeacher.email,
-        type: 'student_comment',
-        recipientId: announcementTeacher.id,
-        recipientType: 'teacher',
-        data: {
-          teacherName: announcementTeacher.name,
-          studentName: student.name,
-          cohortName: cohort.name,
-          commentBody: body.substring(0, 200),
-        },
-      })
-    }
+  // cohort was already fetched above for the archived guard
+  const { getTeacherById } = await import('@/lib/db/teachers')
+  const announcementTeacher = await getTeacherById(announcement.teacher_id)
+  if (announcementTeacher) {
+    void sendEmail({
+      to: announcementTeacher.email,
+      type: 'student_comment',
+      recipientId: announcementTeacher.id,
+      recipientType: 'teacher',
+      data: {
+        teacherName: announcementTeacher.name,
+        studentName: student.name,
+        cohortName: cohort.name,
+        commentBody: body.substring(0, 200),
+      },
+    })
   }
 
   return { success: true, data: { commentId: comment.id } }
@@ -294,6 +318,39 @@ export async function deleteCommentAction(
   const teacher = await getAuthenticatedTeacher()
   if (!teacher) {
     return { success: false, error: 'Not authenticated' }
+  }
+
+  // Fetch the comment to get its announcement_id for archived cohort check
+  const supabase = await createClient()
+  const { data: commentRow, error: commentFetchError } = await supabase
+    .from('announcement_comments')
+    .select('announcement_id')
+    .eq('id', commentId)
+    .is('deleted_at', null)
+    .single()
+
+  if (commentFetchError || !commentRow) {
+    return { success: false, error: 'Comment not found' }
+  }
+
+  const announcement = await getAnnouncementById(
+    (commentRow as { announcement_id: string }).announcement_id
+  )
+  if (!announcement || announcement.teacher_id !== teacher.id) {
+    return { success: false, error: 'Announcement not found' }
+  }
+
+  // Archived cohort write guard
+  const cohort = await getCohortById(announcement.cohort_id)
+  if (!cohort) {
+    return { success: false, error: 'Cohort not found' }
+  }
+  if (cohort.status === 'archived') {
+    return {
+      success: false,
+      error: 'This cohort is archived. No changes allowed.',
+      code: 'COHORT_ARCHIVED',
+    }
   }
 
   const success = await deleteComment(commentId, teacher.id)

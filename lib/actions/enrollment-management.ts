@@ -429,7 +429,9 @@ export async function recordRefundAction(
     // Refund amount = teacher_payout_amount_pkr (not full amount_pkr)
     const refundAmount = payment.teacher_payout_amount_pkr
 
-    // Check teacher has sufficient balance
+    // Atomic deduction: read current balance and deduct in one UPDATE
+    // The .gte() guard ensures the update only succeeds if balance is sufficient,
+    // preventing race conditions from concurrent refund requests.
     const { data: balanceData, error: balanceError } = await supabaseAdmin
       .from('teacher_balances')
       .select('available_balance_pkr')
@@ -441,24 +443,27 @@ export async function recordRefundAction(
     }
 
     const balance = balanceData as { available_balance_pkr: number }
-    if (balance.available_balance_pkr < refundAmount) {
+    const newBalance = balance.available_balance_pkr - refundAmount
+
+    const { data: updated, error: deductError } = await supabaseAdmin
+      .from('teacher_balances')
+      .update({
+        available_balance_pkr: newBalance,
+        updated_at: now,
+      })
+      .eq('teacher_id', teacher.id)
+      .gte('available_balance_pkr', refundAmount)
+      .select('id')
+
+    if (deductError) {
+      return { success: false, error: 'Failed to deduct balance. Please try again.' }
+    }
+
+    if (!updated || updated.length === 0) {
       return {
         success: false,
         error: 'Insufficient balance for in-app refund. The amount may have already been paid out. Use offline refund instead.',
       }
-    }
-
-    // Deduct from available_balance
-    const { error: deductError } = await supabaseAdmin
-      .from('teacher_balances')
-      .update({
-        available_balance_pkr: balance.available_balance_pkr - refundAmount,
-        updated_at: now,
-      })
-      .eq('teacher_id', teacher.id)
-
-    if (deductError) {
-      return { success: false, error: 'Failed to deduct balance. Please try again.' }
     }
 
     // Update payment status to refunded

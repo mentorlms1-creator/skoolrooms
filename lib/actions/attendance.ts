@@ -97,8 +97,30 @@ export async function markAttendanceAction(
     }
   }
 
-  // Bulk upsert
-  const result = await bulkUpsertAttendance(sessionId, records)
+  // Check 24h edit window for existing records
+  const existingRecords = await getAttendanceByCohortSession(sessionId)
+  const existingByStudent = new Map(
+    existingRecords.map((r) => [r.student_id, r])
+  )
+
+  // Filter out records that are past the 24h edit window
+  const editableRecords = records.filter((record) => {
+    const existing = existingByStudent.get(record.studentId)
+    // New records (no existing entry) are always allowed
+    if (!existing) return true
+    // Existing records must be within the 24h edit window
+    return isAttendanceEditable(existing.marked_at)
+  })
+
+  if (editableRecords.length === 0) {
+    return {
+      success: false,
+      error: 'All attendance records are past the 24-hour edit window.',
+    }
+  }
+
+  // Bulk upsert only the editable records
+  const result = await bulkUpsertAttendance(sessionId, editableRecords)
 
   if (!result.success) {
     return { success: false, error: 'Failed to save attendance. Please try again.' }
