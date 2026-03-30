@@ -75,13 +75,13 @@ export const ROUTES = {
   // STUDENT — students.lumscribe.com/*
   // ═══════════════════════════════════════════
   STUDENT: {
-    dashboard: '/',
-    courses: '/courses',
-    enrollmentDetail: (enrollmentId: string) => `/courses/${enrollmentId}` as const,
-    schedule: '/schedule',
-    payments: '/payments',
-    messages: '/messages',
-    settings: '/settings',
+    dashboard: '/student',
+    courses: '/student/courses',
+    enrollmentDetail: (enrollmentId: string) => `/student/courses/${enrollmentId}` as const,
+    schedule: '/student/schedule',
+    payments: '/student/payments',
+    messages: '/student/messages',
+    settings: '/student/settings',
     forgotPassword: '/forgot-password',
   },
 
