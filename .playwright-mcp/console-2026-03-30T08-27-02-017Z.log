@@ -1,5 +1,0 @@
-[   72382ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/admin/login:0
-[   89948ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/admin/login?_rsc=1nkcf:0
-[   90175ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/admin/login?_rsc=1nkcf:0
-[   90732ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/admin/login?_rsc=1nkcf:0
-[   90969ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/admin/login?_rsc=1nkcf:0
