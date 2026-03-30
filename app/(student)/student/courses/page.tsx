@@ -5,6 +5,7 @@
  * For each enrollment: course title, cohort name, status badge, teacher name.
  */
 
+import Link from 'next/link'
 import { requireStudent } from '@/lib/auth/guards'
 import { getEnrollmentsByStudentWithTeacher } from '@/lib/db/enrollments'
 import type { EnrollmentWithCohortCourseTeacher } from '@/lib/db/enrollments'
@@ -13,6 +14,7 @@ import { Card } from '@/components/ui/Card'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { formatPKT } from '@/lib/time/pkt'
+import { ROUTES } from '@/constants/routes'
 
 export default async function StudentCoursesPage() {
   const student = await requireStudent()
@@ -62,46 +64,51 @@ export default async function StudentCoursesPage() {
                 </h2>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   {teacherEnrollments.map((enrollment) => (
-                    <Card key={enrollment.id} className="p-5">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0 flex-1">
-                          <h3 className="font-medium text-ink truncate">
-                            {enrollment.cohorts.courses.title}
-                          </h3>
-                          <p className="mt-1 text-sm text-muted">
-                            {enrollment.cohorts.name}
+                    <Link
+                      key={enrollment.id}
+                      href={ROUTES.STUDENT.enrollmentDetail(enrollment.id)}
+                    >
+                      <Card className="p-5" hover>
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0 flex-1">
+                            <h3 className="font-medium text-ink truncate">
+                              {enrollment.cohorts.courses.title}
+                            </h3>
+                            <p className="mt-1 text-sm text-muted">
+                              {enrollment.cohorts.name}
+                            </p>
+                          </div>
+                          <StatusBadge status={enrollment.status} size="sm" />
+                        </div>
+
+                        <div className="mt-4 space-y-1.5 text-sm text-muted">
+                          <p>
+                            {formatPKT(enrollment.cohorts.start_date, 'date')} &ndash;{' '}
+                            {formatPKT(enrollment.cohorts.end_date, 'date')}
+                          </p>
+                          <p>
+                            Fee: PKR {enrollment.cohorts.fee_pkr.toLocaleString()} (
+                            {enrollment.cohorts.fee_type === 'monthly'
+                              ? 'Monthly'
+                              : 'One-time'}
+                            )
+                          </p>
+                          <p>
+                            Cohort status:{' '}
+                            <StatusBadge
+                              status={enrollment.cohorts.status}
+                              size="sm"
+                            />
                           </p>
                         </div>
-                        <StatusBadge status={enrollment.status} size="sm" />
-                      </div>
 
-                      <div className="mt-4 space-y-1.5 text-sm text-muted">
-                        <p>
-                          {formatPKT(enrollment.cohorts.start_date, 'date')} &ndash;{' '}
-                          {formatPKT(enrollment.cohorts.end_date, 'date')}
-                        </p>
-                        <p>
-                          Fee: PKR {enrollment.cohorts.fee_pkr.toLocaleString()} (
-                          {enrollment.cohorts.fee_type === 'monthly'
-                            ? 'Monthly'
-                            : 'One-time'}
-                          )
-                        </p>
-                        <p>
-                          Cohort status:{' '}
-                          <StatusBadge
-                            status={enrollment.cohorts.status}
-                            size="sm"
-                          />
-                        </p>
-                      </div>
-
-                      {enrollment.cohorts.courses.description && (
-                        <p className="mt-3 text-sm text-muted line-clamp-2">
-                          {enrollment.cohorts.courses.description}
-                        </p>
-                      )}
-                    </Card>
+                        {enrollment.cohorts.courses.description && (
+                          <p className="mt-3 text-sm text-muted line-clamp-2">
+                            {enrollment.cohorts.courses.description}
+                          </p>
+                        )}
+                      </Card>
+                    </Link>
                   ))}
                 </div>
               </div>

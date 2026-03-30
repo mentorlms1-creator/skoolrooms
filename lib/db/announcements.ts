@@ -383,6 +383,30 @@ export async function getSeenByCount(
 }
 
 // -----------------------------------------------------------------------------
+// getAnnouncementReadsByStudent — Set of announcement IDs that a student
+// has read in a given cohort. Used by student announcement view.
+// -----------------------------------------------------------------------------
+export async function getAnnouncementReadsByStudent(
+  studentId: string,
+  announcementIds: string[]
+): Promise<Set<string>> {
+  if (announcementIds.length === 0) return new Set()
+
+  const supabase = createAdminClient()
+
+  const { data, error } = await supabase
+    .from('announcement_reads')
+    .select('announcement_id')
+    .eq('student_id', studentId)
+    .in('announcement_id', announcementIds)
+
+  if (error || !data) return new Set()
+  return new Set(
+    (data as Array<{ announcement_id: string }>).map((r) => r.announcement_id)
+  )
+}
+
+// -----------------------------------------------------------------------------
 // getUnseenStudents — Students enrolled in cohort who haven't read the
 // announcement. Uses two-step approach (Supabase .in() doesn't accept
 // subqueries — fetch IDs first, then filter).

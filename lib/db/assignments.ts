@@ -367,6 +367,34 @@ export async function getSubmissionCountsByAssignment(
 }
 
 // -----------------------------------------------------------------------------
+// getSubmissionsByStudentForCohort — All submissions by a student for
+// assignments in a given cohort. Returns a Map keyed by assignment_id.
+// Used by student assignment view to show submission status.
+// -----------------------------------------------------------------------------
+export async function getSubmissionsByStudentForCohort(
+  studentId: string,
+  assignmentIds: string[]
+): Promise<Map<string, SubmissionRow>> {
+  if (assignmentIds.length === 0) return new Map()
+
+  const supabase = createAdminClient()
+
+  const { data, error } = await supabase
+    .from('assignment_submissions')
+    .select('*')
+    .eq('student_id', studentId)
+    .in('assignment_id', assignmentIds)
+
+  if (error || !data) return new Map()
+
+  const map = new Map<string, SubmissionRow>()
+  for (const row of data as SubmissionRow[]) {
+    map.set(row.assignment_id, row)
+  }
+  return map
+}
+
+// -----------------------------------------------------------------------------
 // getOverdueSubmissions — Students who haven't submitted past due_date.
 // Uses two-step approach: fetch past-due assignments, then find enrolled
 // students without submissions.

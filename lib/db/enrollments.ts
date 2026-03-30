@@ -334,3 +334,30 @@ export async function checkExistingEnrollment(
   if (error || !data) return null
   return data as EnrollmentRow
 }
+
+// -----------------------------------------------------------------------------
+// getEnrollmentByIdWithDetails — Single enrollment joined with cohort + course +
+// teacher info. Used by student enrollment detail page.
+// -----------------------------------------------------------------------------
+export async function getEnrollmentByIdWithDetails(
+  enrollmentId: string
+): Promise<EnrollmentWithCohortCourseTeacher | null> {
+  const supabase = createAdminClient()
+
+  const { data, error } = await supabase
+    .from('enrollments')
+    .select(`
+      *,
+      cohorts!inner(
+        id, name, start_date, end_date, fee_type, fee_pkr, status, is_registration_open,
+        pending_can_see_schedule, pending_can_see_announcements,
+        courses!inner(id, title, description, thumbnail_url, teacher_id),
+        teachers!inner(id, name)
+      )
+    `)
+    .eq('id', enrollmentId)
+    .single()
+
+  if (error || !data) return null
+  return data as EnrollmentWithCohortCourseTeacher
+}

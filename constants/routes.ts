@@ -77,6 +77,7 @@ export const ROUTES = {
   STUDENT: {
     dashboard: '/',
     courses: '/courses',
+    enrollmentDetail: (enrollmentId: string) => `/courses/${enrollmentId}` as const,
     schedule: '/schedule',
     payments: '/payments',
     messages: '/messages',
