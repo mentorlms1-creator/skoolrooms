@@ -20,6 +20,7 @@ import {
 import { getCohortById } from '@/lib/db/cohorts'
 import { getStudentById, getStudentByEmail, createStudent } from '@/lib/db/students'
 import { sendEmail } from '@/lib/email/sender'
+import { checkPlanLock, getPlanLockError } from '@/lib/auth/plan-guard'
 import type { ApiResponse } from '@/types/api'
 import type { EnrollmentStatus, PaymentMethod, PaymentStatus } from '@/types/domain'
 
@@ -72,6 +73,11 @@ export async function approveEnrollmentAction(
   const teacher = await getAuthenticatedTeacher()
   if (!teacher) {
     return { success: false, error: 'Not authenticated' }
+  }
+
+  // Hard lock check: block content-write when plan + grace expired
+  if (checkPlanLock(teacher)) {
+    return getPlanLockError()
   }
 
   // Fetch enrollment
@@ -283,6 +289,11 @@ export async function manualEnrollAction(
   const teacher = await getAuthenticatedTeacher()
   if (!teacher) {
     return { success: false, error: 'Not authenticated' }
+  }
+
+  // Hard lock check: block content-write when plan + grace expired
+  if (checkPlanLock(teacher)) {
+    return getPlanLockError()
   }
 
   const cohortId = (formData.get('cohort_id') as string | null)?.trim() ?? ''

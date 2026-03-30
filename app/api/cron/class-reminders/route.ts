@@ -111,12 +111,13 @@ async function sendReminders(
     }
   }
 
-  // Get teacher names
+  // Get teacher names — filter out suspended teachers
   const teacherIds = [...new Set([...cohortMap.values()].map((c) => c.teacher_id))]
   const { data: teachers } = await supabase
     .from('teachers')
     .select('id, name')
     .in('id', teacherIds)
+    .eq('is_suspended', false)
 
   const teacherNameMap = new Map<string, string>()
   if (teachers) {
@@ -124,6 +125,9 @@ async function sendReminders(
       teacherNameMap.set(t.id as string, t.name as string)
     }
   }
+
+  // Build set of non-suspended teacher IDs for filtering
+  const activeTeacherIds = new Set(teacherNameMap.keys())
 
   // Get active enrollments for these cohorts
   const { data: enrollments } = await supabase
@@ -145,6 +149,9 @@ async function sendReminders(
 
     const cohortInfo = cohortMap.get(typedSession.cohort_id)
     if (!cohortInfo) continue
+
+    // Skip sessions belonging to suspended teachers
+    if (!activeTeacherIds.has(cohortInfo.teacher_id)) continue
 
     const teacherName = teacherNameMap.get(cohortInfo.teacher_id) ?? 'Your Teacher'
 

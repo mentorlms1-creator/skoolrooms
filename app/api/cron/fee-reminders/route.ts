@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
     // Get active enrollments for these cohorts with student info
     const { data: enrollments, error: enrollError } = await supabase
       .from('enrollments')
-      .select('cohort_id, student_id, students!inner(id, name, email)')
+      .select('id, cohort_id, student_id, students!inner(id, name, email)')
       .in('cohort_id', cohortIds)
       .eq('status', 'active')
 
@@ -75,12 +75,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: true, sent: 0, reason: 'No active enrollments' })
     }
 
-    // Get teacher names for email content
+    // Get teacher names for email content — filter out suspended teachers
     const teacherIds = [...new Set(cohorts.map((c) => c.teacher_id as string))]
     const { data: teachers } = await supabase
       .from('teachers')
       .select('id, name')
       .in('id', teacherIds)
+      .eq('is_suspended', false)
 
     const teacherNameMap = new Map<string, string>()
     if (teachers) {
@@ -88,6 +89,14 @@ export async function GET(request: NextRequest) {
         teacherNameMap.set(t.id as string, t.name as string)
       }
     }
+
+    // Filter out cohorts belonging to suspended teachers
+    const activeTeacherIds = new Set(teacherNameMap.keys())
+    const filteredCohortIds = new Set(
+      cohorts
+        .filter((c) => activeTeacherIds.has(c.teacher_id as string))
+        .map((c) => c.id as string)
+    )
 
     // Build cohort info map
     const cohortMap = new Map<string, { name: string; fee_pkr: number; billing_day: number; teacher_id: string }>()
@@ -99,6 +108,9 @@ export async function GET(request: NextRequest) {
         teacher_id: c.teacher_id as string,
       })
     }
+
+    // Calculate the current billing month (YYYY-MM-01 format for the target date)
+    const billingMonth = `${targetDate.getFullYear()}-${String(targetDate.getMonth() + 1).padStart(2, '0')}-01`
 
     // Multi-teacher batching: group by student email
     type StudentReminder = {
@@ -117,8 +129,28 @@ export async function GET(request: NextRequest) {
 
     for (const enrollment of enrollments) {
       const student = enrollment.students as unknown as { id: string; name: string; email: string }
-      const cohortInfo = cohortMap.get(enrollment.cohort_id as string)
+      const cohortId = enrollment.cohort_id as string
+      const cohortInfo = cohortMap.get(cohortId)
       if (!cohortInfo || !student) continue
+
+      // Skip cohorts belonging to suspended teachers
+      if (!filteredCohortIds.has(cohortId)) continue
+
+      // Check if payment already made for this billing month
+      const enrollmentId = enrollment.id as string
+      const { data: existingPayment } = await supabase
+        .from('student_payments')
+        .select('id')
+        .eq('enrollment_id', enrollmentId)
+        .eq('payment_month', billingMonth)
+        .in('status', ['confirmed', 'pending_verification'])
+        .limit(1)
+        .maybeSingle()
+
+      if (existingPayment) {
+        // Payment already made or pending for this month — skip
+        continue
+      }
 
       const email = student.email
       if (!studentReminders.has(email)) {

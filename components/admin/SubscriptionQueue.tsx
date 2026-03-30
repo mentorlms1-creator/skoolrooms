@@ -13,7 +13,7 @@ import { formatPKT } from '@/lib/time/pkt'
 import {
   approveSubscriptionAction,
   rejectSubscriptionAction,
-} from '@/lib/actions/admin'
+} from '@/lib/actions/subscriptions'
 import type { PendingSubscriptionRow } from '@/lib/db/admin'
 
 type SubscriptionQueueProps = {
@@ -41,7 +41,9 @@ export function SubscriptionQueue({ subscriptions }: SubscriptionQueueProps) {
   async function handleReject(id: string) {
     setLoadingId(id)
     setMessage(null)
-    const result = await rejectSubscriptionAction(id)
+    const formData = new FormData()
+    formData.set('reason', 'Rejected by admin')
+    const result = await rejectSubscriptionAction(id, formData)
     if (result.success) {
       setMessage({ type: 'success', text: 'Subscription rejected.' })
       router.refresh()

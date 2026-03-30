@@ -90,6 +90,27 @@ export async function updatePaymentSettingsAction(
 // -----------------------------------------------------------------------------
 // updateNotificationPreferencesAction — Save notification toggles
 // -----------------------------------------------------------------------------
+
+/**
+ * Business-critical email types that CANNOT be opted out.
+ * These are forced to true before saving preferences.
+ */
+const MANDATORY_EMAIL_TYPES: readonly string[] = [
+  'payment_approved',
+  'payment_rejected',
+  'enrollment_confirmed',
+  'enrollment_rejected',
+  'enrollment_revoked',
+  'subscription_approved',
+  'subscription_rejected',
+  'plan_downgraded',
+  'payout_processed',
+  'payout_failed',
+  'refund_debit_recorded',
+  'refund_debit_recovered',
+  'cohort_archived',
+] as const
+
 export async function updateNotificationPreferencesAction(
   formData: FormData
 ): Promise<ApiResponse<null>> {
@@ -109,6 +130,11 @@ export async function updateNotificationPreferencesAction(
     class_reminder: formData.get('class_reminder') === 'on',
     fee_reminder: formData.get('fee_reminder') === 'on',
     payout_processed: formData.get('payout_processed') === 'on',
+  }
+
+  // Enforce business-critical email types — force to true regardless of input
+  for (const key of MANDATORY_EMAIL_TYPES) {
+    preferences[key] = true
   }
 
   const updated = await updateTeacher(teacher.id, {

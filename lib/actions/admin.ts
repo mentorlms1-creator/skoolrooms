@@ -8,6 +8,7 @@
 import { requireAdmin } from '@/lib/auth/guards'
 import { createAdminClient } from '@/supabase/server'
 import { logAdminActivity, updatePlatformSetting } from '@/lib/db/admin'
+import { createPlanSnapshot } from '@/lib/db/subscriptions'
 import { revalidatePath } from 'next/cache'
 import type { ApiResponse } from '@/types/api'
 
@@ -44,17 +45,65 @@ export async function changePlanAction(
     return { success: false, error: 'Teacher is already on this plan.' }
   }
 
-  // Update plan
+  // For paid plans, set plan_expires_at to now + 30 days. For free, set to null.
+  const isPaidPlan = newPlan !== 'free'
+  const planExpiresAt = isPaidPlan
+    ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+    : null
+
+  // Update plan, clear grace/trial, set expiry
   const { error: updateError } = await supabase
     .from('teachers')
     .update({
       plan: newPlan,
+      plan_expires_at: planExpiresAt,
+      grace_until: null,
+      trial_ends_at: null,
       updated_at: new Date().toISOString(),
     })
     .eq('id', teacherId)
 
   if (updateError) {
     return { success: false, error: 'Failed to update plan.' }
+  }
+
+  // Create plan snapshot
+  const { data: planRow } = await supabase
+    .from('plans')
+    .select('id, max_courses, max_students, max_cohorts_active, max_storage_mb, max_teachers, name, slug, price_pkr, transaction_cut_percent')
+    .eq('slug', newPlan)
+    .single()
+
+  if (planRow) {
+    const { data: features } = await supabase
+      .from('plan_features')
+      .select('feature_key, is_enabled')
+      .eq('plan_id', planRow.id as string)
+
+    const featuresMap: Record<string, boolean> = {}
+    if (features) {
+      for (const f of features) {
+        featuresMap[f.feature_key as string] = f.is_enabled as boolean
+      }
+    }
+
+    await createPlanSnapshot(teacherId, planRow.id as string, {
+      planName: planRow.name,
+      planSlug: planRow.slug,
+      pricePkr: planRow.price_pkr,
+      transactionCutPercent: planRow.transaction_cut_percent,
+      limits: {
+        max_courses: planRow.max_courses,
+        max_students: planRow.max_students,
+        max_cohorts_active: planRow.max_cohorts_active,
+        max_storage_mb: planRow.max_storage_mb,
+        max_teachers: planRow.max_teachers,
+      },
+      features: featuresMap,
+      changedAt: new Date().toISOString(),
+      changedBy: admin.email ?? admin.id,
+      oldPlan: oldPlan,
+    })
   }
 
   await logAdminActivity({
@@ -102,10 +151,12 @@ export async function extendExpiryAction(
 
   const newExpiry = new Date(currentExpiry.getTime() + days * 24 * 60 * 60 * 1000)
 
+  // Extend plan_expires_at and clear grace_until (unlocks hard-locked teacher)
   const { error: updateError } = await supabase
     .from('teachers')
     .update({
       plan_expires_at: newExpiry.toISOString(),
+      grace_until: null,
       updated_at: new Date().toISOString(),
     })
     .eq('id', teacherId)
@@ -118,7 +169,7 @@ export async function extendExpiryAction(
     teacherId,
     actionType: 'extend_expiry',
     performedBy: admin.email ?? admin.id,
-    metadata: { days, new_expiry: newExpiry.toISOString() },
+    metadata: { days, new_expiry: newExpiry.toISOString(), grace_cleared: true },
   })
 
   revalidatePath(`/admin/teachers/${teacherId}`)
@@ -152,9 +203,15 @@ export async function extendTrialAction(
     return { success: false, error: 'Teacher not found.' }
   }
 
-  const currentTrialEnd = teacher.trial_ends_at
-    ? new Date(teacher.trial_ends_at as string)
-    : new Date()
+  // Check that trial is actually active (trial_ends_at exists and is in the future)
+  if (!teacher.trial_ends_at) {
+    return { success: false, error: 'Teacher is not on an active trial.' }
+  }
+
+  const currentTrialEnd = new Date(teacher.trial_ends_at as string)
+  if (currentTrialEnd < new Date()) {
+    return { success: false, error: 'Teacher is not on an active trial.' }
+  }
 
   const newTrialEnd = new Date(currentTrialEnd.getTime() + days * 24 * 60 * 60 * 1000)
 
@@ -274,109 +331,6 @@ export async function updatePlatformSettingsAction(
   return { success: true, data: null }
 }
 
-// -----------------------------------------------------------------------------
-// approveSubscriptionAction — Approve a pending subscription
-// -----------------------------------------------------------------------------
-export async function approveSubscriptionAction(
-  subscriptionId: string
-): Promise<ApiResponse<null>> {
-  const admin = await requireAdmin()
-  const supabase = createAdminClient()
-
-  // Get subscription
-  const { data: sub, error: fetchError } = await supabase
-    .from('teacher_subscriptions')
-    .select('*')
-    .eq('id', subscriptionId)
-    .single()
-
-  if (fetchError || !sub) {
-    return { success: false, error: 'Subscription not found.' }
-  }
-
-  if ((sub.status as string) !== 'pending_verification') {
-    return { success: false, error: 'Subscription is not pending verification.' }
-  }
-
-  // Approve
-  const { error: updateError } = await supabase
-    .from('teacher_subscriptions')
-    .update({
-      status: 'active',
-      approved_at: new Date().toISOString(),
-    })
-    .eq('id', subscriptionId)
-
-  if (updateError) {
-    return { success: false, error: 'Failed to approve subscription.' }
-  }
-
-  // Update teacher plan and expiry
-  const teacherId = sub.teacher_id as string
-  const { error: teacherError } = await supabase
-    .from('teachers')
-    .update({
-      plan: sub.plan as string,
-      plan_expires_at: (sub.period_end as string) + 'T23:59:59.999Z',
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', teacherId)
-
-  if (teacherError) {
-    return { success: false, error: 'Failed to update teacher plan.' }
-  }
-
-  await logAdminActivity({
-    teacherId,
-    actionType: 'approve_subscription',
-    performedBy: admin.email ?? admin.id,
-    metadata: { subscription_id: subscriptionId, plan: sub.plan },
-  })
-
-  revalidatePath('/admin/payments')
-  revalidatePath(`/admin/teachers/${teacherId}`)
-  return { success: true, data: null }
-}
-
-// -----------------------------------------------------------------------------
-// rejectSubscriptionAction — Reject a pending subscription
-// -----------------------------------------------------------------------------
-export async function rejectSubscriptionAction(
-  subscriptionId: string
-): Promise<ApiResponse<null>> {
-  const admin = await requireAdmin()
-  const supabase = createAdminClient()
-
-  const { data: sub, error: fetchError } = await supabase
-    .from('teacher_subscriptions')
-    .select('teacher_id, status')
-    .eq('id', subscriptionId)
-    .single()
-
-  if (fetchError || !sub) {
-    return { success: false, error: 'Subscription not found.' }
-  }
-
-  if ((sub.status as string) !== 'pending_verification') {
-    return { success: false, error: 'Subscription is not pending verification.' }
-  }
-
-  const { error: updateError } = await supabase
-    .from('teacher_subscriptions')
-    .update({ status: 'rejected' })
-    .eq('id', subscriptionId)
-
-  if (updateError) {
-    return { success: false, error: 'Failed to reject subscription.' }
-  }
-
-  await logAdminActivity({
-    teacherId: sub.teacher_id as string,
-    actionType: 'reject_subscription',
-    performedBy: admin.email ?? admin.id,
-    metadata: { subscription_id: subscriptionId },
-  })
-
-  revalidatePath('/admin/payments')
-  return { success: true, data: null }
-}
+// NOTE: approveSubscriptionAction and rejectSubscriptionAction live in
+// lib/actions/subscriptions.ts — they are the canonical versions that
+// create snapshots, clear grace/trial, and send emails.
