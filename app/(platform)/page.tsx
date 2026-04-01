@@ -13,6 +13,7 @@ export default function HomePage() {
       {/* ── Header ── */}
       <PublicNavbar />
 
+      <main>
       {/* ── Hero ── */}
       <section className="mx-auto max-w-4xl px-4 py-24 text-center">
         <h1 className="text-4xl font-bold tracking-tight text-ink sm:text-5xl">
@@ -67,6 +68,7 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+      </main>
 
       {/* ── Footer ── */}
       <footer className="border-t border-border bg-paper py-8 text-center text-sm text-muted">

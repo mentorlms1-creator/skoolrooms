@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard/
+Disallow: /admin/
+Disallow: /student/
+Disallow: /api/
+
+Sitemap: https://lumscribe.com/sitemap.xml

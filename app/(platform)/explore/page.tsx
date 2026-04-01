@@ -41,7 +41,7 @@ export default async function ExplorePage() {
   return (
     <div>
       <PublicNavbar />
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+      <main className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
       {/* Page header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-ink">Find a Teacher</h1>
@@ -57,7 +57,7 @@ export default async function ExplorePage() {
         allLevels={allLevels}
         platformDomain={domain}
       />
-      </div>
+      </main>
     </div>
   )
 }

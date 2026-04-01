@@ -20,6 +20,7 @@ export default function PricingPage() {
       {/* ── Header ── */}
       <PublicNavbar />
 
+      <main>
       {/* ── Pricing section ── */}
       <section className="mx-auto max-w-5xl px-4 py-20">
         <div className="text-center">
@@ -93,6 +94,7 @@ export default function PricingPage() {
           ))}
         </div>
       </section>
+      </main>
 
       {/* ── Footer ── */}
       <footer className="border-t border-border bg-paper py-8 text-center text-sm text-muted">
