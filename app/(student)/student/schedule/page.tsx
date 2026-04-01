@@ -5,12 +5,17 @@
  * in chronological order with date/time, course, teacher, and Meet link.
  */
 
+import type { Metadata } from 'next'
 import { requireStudent } from '@/lib/auth/guards'
 import { getUpcomingSessionsByStudent } from '@/lib/db/class-sessions'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Card } from '@/components/ui/Card'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { formatPKT } from '@/lib/time/pkt'
+
+export const metadata: Metadata = {
+  title: 'Schedule \u2014 Lumscribe Student',
+}
 
 export default async function StudentSchedulePage() {
   const student = await requireStudent()

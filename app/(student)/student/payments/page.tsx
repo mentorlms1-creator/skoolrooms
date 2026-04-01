@@ -5,6 +5,7 @@
  * For each payment: course, cohort, amount, payment status badge, reference code.
  */
 
+import type { Metadata } from 'next'
 import { requireStudent } from '@/lib/auth/guards'
 import { getPaymentsByStudent } from '@/lib/db/student-payments'
 import { getEnrollmentsByStudentWithTeacher } from '@/lib/db/enrollments'
@@ -13,6 +14,10 @@ import { Card } from '@/components/ui/Card'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { formatPKT } from '@/lib/time/pkt'
+
+export const metadata: Metadata = {
+  title: 'Payments \u2014 Lumscribe Student',
+}
 
 export default async function StudentBillingPage() {
   const student = await requireStudent()

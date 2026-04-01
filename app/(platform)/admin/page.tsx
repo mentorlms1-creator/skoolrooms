@@ -4,9 +4,14 @@
  * Server Component. Displays MRR, signup counts, plan distribution.
  */
 
+import type { Metadata } from 'next'
 import { getAdminDashboardStats, getOperationsStats } from '@/lib/db/admin'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Card } from '@/components/ui/Card'
+
+export const metadata: Metadata = {
+  title: 'Admin Dashboard \u2014 Lumscribe',
+}
 
 export default async function AdminDashboardPage() {
   const [stats, ops] = await Promise.all([

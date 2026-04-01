@@ -5,6 +5,7 @@
  * Uses usePathname() for active state highlighting.
  */
 
+import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { ROUTES } from '@/constants/routes'
@@ -68,6 +69,7 @@ const NAV_ITEMS: NavItem[] = [
 
 export function AdminSidebar() {
   const pathname = usePathname()
+  const [mobileOpen, setMobileOpen] = useState(false)
 
   function isActive(href: string): boolean {
     if (href === ROUTES.ADMIN.dashboard) {
@@ -76,18 +78,8 @@ export function AdminSidebar() {
     return pathname.startsWith(href)
   }
 
-  return (
-    <aside className="fixed left-0 top-0 z-30 flex h-full w-64 flex-col border-r border-border bg-surface">
-      {/* Brand */}
-      <div className="flex h-16 items-center border-b border-border px-6">
-        <Link href={ROUTES.ADMIN.dashboard} className="flex items-center gap-2">
-          <span className="text-xl font-bold text-brand-600">Lumscribe</span>
-          <span className="rounded bg-brand-100 px-2 py-0.5 text-xs font-medium text-brand-600">
-            Admin
-          </span>
-        </Link>
-      </div>
-
+  const sidebarContent = (
+    <>
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto px-3 py-4">
         <ul className="flex flex-col gap-1">
@@ -97,6 +89,7 @@ export function AdminSidebar() {
               <li key={item.href}>
                 <Link
                   href={item.href}
+                  onClick={() => setMobileOpen(false)}
                   className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
                     active
                       ? 'bg-brand-50 text-brand-600'
@@ -127,6 +120,63 @@ export function AdminSidebar() {
           </button>
         </form>
       </div>
-    </aside>
+    </>
+  )
+
+  return (
+    <>
+      {/* Mobile top bar */}
+      <div className="fixed left-0 right-0 top-0 z-40 flex h-14 items-center justify-between border-b border-border bg-surface px-4 md:hidden">
+        <Link href={ROUTES.ADMIN.dashboard} className="flex items-center gap-2">
+          <span className="text-xl font-bold text-brand-600">Lumscribe</span>
+          <span className="rounded bg-brand-100 px-2 py-0.5 text-xs font-medium text-brand-600">Admin</span>
+        </Link>
+        <button
+          type="button"
+          onClick={() => setMobileOpen(!mobileOpen)}
+          className="rounded-md p-2 text-muted hover:text-ink"
+          aria-label="Toggle sidebar"
+        >
+          {mobileOpen ? (
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          ) : (
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          )}
+        </button>
+      </div>
+
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/30 md:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      {/* Mobile slide-out sidebar */}
+      <aside
+        className={`fixed left-0 top-14 z-50 flex h-[calc(100%-3.5rem)] w-64 flex-col border-r border-border bg-surface transition-transform md:hidden ${
+          mobileOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        {sidebarContent}
+      </aside>
+
+      {/* Desktop sidebar */}
+      <aside className="fixed left-0 top-0 z-30 hidden h-full w-64 flex-col border-r border-border bg-surface md:flex">
+        {/* Brand */}
+        <div className="flex h-16 items-center border-b border-border px-6">
+          <Link href={ROUTES.ADMIN.dashboard} className="flex items-center gap-2">
+            <span className="text-xl font-bold text-brand-600">Lumscribe</span>
+            <span className="rounded bg-brand-100 px-2 py-0.5 text-xs font-medium text-brand-600">Admin</span>
+          </Link>
+        </div>
+        {sidebarContent}
+      </aside>
+    </>
   )
 }

@@ -5,6 +5,7 @@
  * For each enrollment: course title, cohort name, status badge, teacher name.
  */
 
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { requireStudent } from '@/lib/auth/guards'
 import { getEnrollmentsByStudentWithTeacher } from '@/lib/db/enrollments'
@@ -15,6 +16,10 @@ import { StatusBadge } from '@/components/ui/StatusBadge'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { formatPKT } from '@/lib/time/pkt'
 import { ROUTES } from '@/constants/routes'
+
+export const metadata: Metadata = {
+  title: 'My Courses \u2014 Lumscribe Student',
+}
 
 export default async function StudentCoursesPage() {
   const student = await requireStudent()

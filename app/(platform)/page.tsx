@@ -5,45 +5,13 @@
 
 import Link from 'next/link'
 import { ROUTES } from '@/constants/routes'
+import { PublicNavbar } from '@/components/public/PublicNavbar'
 
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-paper">
       {/* ── Header ── */}
-      <header className="border-b border-border bg-surface">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-          <Link href={ROUTES.PLATFORM.home} className="text-xl font-bold text-brand-600">
-            Lumscribe
-          </Link>
-
-          <nav className="flex items-center gap-6">
-            <Link
-              href={ROUTES.PLATFORM.explore}
-              className="text-sm font-medium text-muted hover:text-ink"
-            >
-              Find a Teacher
-            </Link>
-            <Link
-              href={ROUTES.PLATFORM.pricing}
-              className="text-sm font-medium text-muted hover:text-ink"
-            >
-              Pricing
-            </Link>
-            <Link
-              href={ROUTES.PLATFORM.login}
-              className="text-sm font-medium text-muted hover:text-ink"
-            >
-              Log In
-            </Link>
-            <Link
-              href={ROUTES.PLATFORM.signup}
-              className="inline-flex items-center rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-500 transition-colors"
-            >
-              Start Free
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <PublicNavbar />
 
       {/* ── Hero ── */}
       <section className="mx-auto max-w-4xl px-4 py-24 text-center">

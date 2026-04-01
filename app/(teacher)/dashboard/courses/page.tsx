@@ -5,6 +5,7 @@
  * with links to create, view, and edit courses.
  */
 
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { requireTeacher } from '@/lib/auth/guards'
 import { getTeacherCourses } from '@/lib/db/courses'
@@ -14,6 +15,10 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { Button } from '@/components/ui/Button'
 import { ROUTES } from '@/constants/routes'
+
+export const metadata: Metadata = {
+  title: 'Courses \u2014 Lumscribe',
+}
 
 /** Strip HTML tags from a string for plain-text preview */
 function stripHtmlTags(html: string): string {

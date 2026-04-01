@@ -4,11 +4,16 @@
  * Server Component wrapper. Auth check, then renders client form.
  */
 
+import type { Metadata } from 'next'
 import { requireTeacher } from '@/lib/auth/guards'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Card } from '@/components/ui/Card'
 import { ROUTES } from '@/constants/routes'
 import { CreateCourseForm } from './form'
+
+export const metadata: Metadata = {
+  title: 'Create Course \u2014 Lumscribe',
+}
 
 export default async function NewCoursePage() {
   await requireTeacher()

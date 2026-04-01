@@ -4,12 +4,17 @@
  * Server Component. Displays all teachers with sorting and search.
  */
 
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getAllTeachers } from '@/lib/db/admin'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { ROUTES } from '@/constants/routes'
 import { TeacherListTable } from '@/components/admin/TeacherListTable'
+
+export const metadata: Metadata = {
+  title: 'Teachers \u2014 Lumscribe Admin',
+}
 
 export default async function AdminTeachersPage() {
   const teachers = await getAllTeachers()

@@ -9,6 +9,7 @@
  * - Subscription history
  */
 
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { requireTeacher } from '@/lib/auth/guards'
 import { getTeacherPlanDetails, getTeacherUsage } from '@/lib/db/teachers'
@@ -21,6 +22,10 @@ import { ROUTES } from '@/constants/routes'
 import { PLANS, UNLIMITED_VALUE } from '@/constants/plans'
 import { formatPKT } from '@/lib/time/pkt'
 import type { PlanSlug } from '@/types/domain'
+
+export const metadata: Metadata = {
+  title: 'Plan & Subscription \u2014 Lumscribe',
+}
 
 // Feature display names for the feature list
 const FEATURE_DISPLAY_NAMES: Record<string, string> = {
@@ -187,7 +192,7 @@ export default async function PlanSettingsPage() {
                 </li>
               ))}
               {enabledFeatures.length === 0 && (
-                <li className="text-sm text-muted">No features enabled</li>
+                <li className="text-sm text-muted">Core features (courses, cohorts, payments, subdomain) are included with every plan.</li>
               )}
             </ul>
           </div>

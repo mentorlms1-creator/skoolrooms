@@ -3,11 +3,16 @@
  * Fetches pending enrollments and renders the verification panel.
  */
 
+import type { Metadata } from 'next'
 import { requireTeacher } from '@/lib/auth/guards'
 import { getPendingEnrollmentsByTeacher } from '@/lib/db/enrollments'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { PaymentVerificationPanel } from './panel'
+
+export const metadata: Metadata = {
+  title: 'Payments \u2014 Lumscribe',
+}
 
 export default async function PaymentVerificationPage() {
   const teacher = await requireTeacher()

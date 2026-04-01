@@ -7,6 +7,7 @@
 
 import { getExplorableTeachers } from '@/lib/db/explore'
 import { ExploreFilters } from '@/components/public/ExploreFilters'
+import { PublicNavbar } from '@/components/public/PublicNavbar'
 import { platformDomain } from '@/lib/platform/domain'
 
 // ISR: revalidate every hour
@@ -38,7 +39,9 @@ export default async function ExplorePage() {
   const allLevels = [...levelSet].sort()
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+    <div>
+      <PublicNavbar />
+      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
       {/* Page header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-ink">Find a Teacher</h1>
@@ -54,6 +57,7 @@ export default async function ExplorePage() {
         allLevels={allLevels}
         platformDomain={domain}
       />
+      </div>
     </div>
   )
 }

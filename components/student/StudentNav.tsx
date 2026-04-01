@@ -8,9 +8,9 @@
  * Brand name on left, Sign Out on right.
  */
 
+import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useTransition } from 'react'
 import { ROUTES } from '@/constants/routes'
 import { signOutStudent } from '@/lib/auth/actions'
 
@@ -38,6 +38,7 @@ const NAV_ITEMS: NavItem[] = [
 export function StudentNav() {
   const pathname = usePathname()
   const [isPending, startTransition] = useTransition()
+  const [menuOpen, setMenuOpen] = useState(false)
 
   function isActive(href: string): boolean {
     if (href === ROUTES.STUDENT.dashboard) {
@@ -63,8 +64,8 @@ export function StudentNav() {
           Lumscribe
         </Link>
 
-        {/* Nav items */}
-        <nav className="flex items-center gap-1">
+        {/* Desktop nav items */}
+        <nav className="hidden items-center gap-1 sm:flex">
           {NAV_ITEMS.map((item) => {
             const active = isActive(item.href)
             return (
@@ -86,16 +87,67 @@ export function StudentNav() {
           })}
         </nav>
 
-        {/* Sign Out */}
+        {/* Desktop Sign Out */}
         <button
           type="button"
           onClick={handleSignOut}
           disabled={isPending}
-          className="text-sm font-medium text-muted hover:text-ink transition-colors disabled:opacity-50"
+          className="hidden text-sm font-medium text-muted hover:text-ink transition-colors disabled:opacity-50 sm:block"
         >
           {isPending ? 'Signing out...' : 'Sign Out'}
         </button>
+
+        {/* Mobile hamburger */}
+        <button
+          type="button"
+          className="rounded-md p-2 text-muted hover:text-ink sm:hidden"
+          onClick={() => setMenuOpen(!menuOpen)}
+          aria-label="Toggle navigation menu"
+        >
+          {menuOpen ? (
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          ) : (
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          )}
+        </button>
       </div>
+
+      {/* Mobile menu */}
+      {menuOpen && (
+        <nav className="border-t border-border px-4 pb-4 pt-2 sm:hidden">
+          <div className="flex flex-col gap-1">
+            {NAV_ITEMS.map((item) => {
+              const active = isActive(item.href)
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setMenuOpen(false)}
+                  className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                    active
+                      ? 'bg-brand-50 text-brand-600'
+                      : 'text-muted hover:text-ink'
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              )
+            })}
+            <button
+              type="button"
+              onClick={handleSignOut}
+              disabled={isPending}
+              className="rounded-md px-3 py-2 text-left text-sm font-medium text-muted hover:text-ink transition-colors disabled:opacity-50"
+            >
+              {isPending ? 'Signing out...' : 'Sign Out'}
+            </button>
+          </div>
+        </nav>
+      )}
     </header>
   )
 }

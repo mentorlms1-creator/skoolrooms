@@ -4,11 +4,16 @@
  * Server Component with client form for editing profile.
  */
 
+import type { Metadata } from 'next'
 import { requireStudent } from '@/lib/auth/guards'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Card } from '@/components/ui/Card'
 import { formatPKT } from '@/lib/time/pkt'
 import { StudentSettingsForm } from './form'
+
+export const metadata: Metadata = {
+  title: 'Settings \u2014 Lumscribe Student',
+}
 
 export default async function StudentSettingsPage() {
   const student = await requireStudent()

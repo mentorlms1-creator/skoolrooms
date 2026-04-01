@@ -104,10 +104,17 @@ export function AssignmentList({ assignments, isArchived }: AssignmentListProps)
         return (
           <Card key={assignment.id} className="overflow-hidden">
             {/* Assignment header */}
-            <button
-              type="button"
+            <div
+              role="button"
+              tabIndex={0}
               onClick={() => toggleExpanded(assignment.id)}
-              className="flex w-full items-start justify-between gap-4 p-4 text-left hover:bg-paper transition-colors"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  toggleExpanded(assignment.id)
+                }
+              }}
+              className="flex w-full cursor-pointer items-start justify-between gap-4 p-4 text-left hover:bg-paper transition-colors"
             >
               <div className="flex-1 min-w-0">
                 <h3 className="font-semibold text-ink">{assignment.title}</h3>
@@ -152,7 +159,7 @@ export function AssignmentList({ assignments, isArchived }: AssignmentListProps)
                   />
                 </svg>
               </div>
-            </button>
+            </div>
 
             {/* Expanded section: description + submissions */}
             {isExpanded && (

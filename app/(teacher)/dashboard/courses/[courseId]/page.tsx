@@ -6,6 +6,7 @@
  * HTML content is sanitized before rendering to prevent XSS.
  */
 
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { requireTeacher } from '@/lib/auth/guards'
@@ -23,6 +24,10 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { CohortCard } from '@/components/teacher/CohortCard'
 import { ROUTES } from '@/constants/routes'
 import sanitizeHtml from 'sanitize-html'
+
+export const metadata: Metadata = {
+  title: 'Course Details \u2014 Lumscribe',
+}
 
 type CourseDetailPageProps = {
   params: Promise<{ courseId: string }>

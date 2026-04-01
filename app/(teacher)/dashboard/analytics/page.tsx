@@ -5,11 +5,16 @@
  * recently joined students.
  */
 
+import type { Metadata } from 'next'
 import { requireTeacher } from '@/lib/auth/guards'
 import { getTeacherAnalytics } from '@/lib/db/admin'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Card } from '@/components/ui/Card'
 import { formatPKT } from '@/lib/time/pkt'
+
+export const metadata: Metadata = {
+  title: 'Analytics \u2014 Lumscribe',
+}
 
 export default async function TeacherAnalyticsPage() {
   const teacher = await requireTeacher()

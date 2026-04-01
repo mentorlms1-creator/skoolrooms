@@ -4,9 +4,14 @@
  * Server Component. Displays editable profile form.
  */
 
+import type { Metadata } from 'next'
 import { requireTeacher } from '@/lib/auth/guards'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { ProfileSettingsForm } from '@/components/teacher/ProfileSettingsForm'
+
+export const metadata: Metadata = {
+  title: 'Settings \u2014 Lumscribe',
+}
 
 export default async function TeacherSettingsPage() {
   const teacher = await requireTeacher()

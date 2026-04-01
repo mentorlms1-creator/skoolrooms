@@ -4,11 +4,16 @@
  * Server Component. Displays bank/wallet details for teacher payouts.
  */
 
+import type { Metadata } from 'next'
 import { requireTeacher } from '@/lib/auth/guards'
 import { getTeacherPaymentSettings } from '@/lib/db/admin'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { PaymentSettingsForm } from '@/components/teacher/PaymentSettingsForm'
 import { ROUTES } from '@/constants/routes'
+
+export const metadata: Metadata = {
+  title: 'Payment Settings \u2014 Lumscribe',
+}
 
 export default async function TeacherPaymentSettingsPage() {
   const teacher = await requireTeacher()

@@ -6,6 +6,7 @@
  * Uses getUpcomingSessionsByStudent from lib/db/class-sessions.ts.
  */
 
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { requireStudent } from '@/lib/auth/guards'
 import { getUpcomingSessionsByStudent } from '@/lib/db/class-sessions'
@@ -16,6 +17,10 @@ import { Card } from '@/components/ui/Card'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { formatPKT } from '@/lib/time/pkt'
 import { ROUTES } from '@/constants/routes'
+
+export const metadata: Metadata = {
+  title: 'Dashboard \u2014 Lumscribe Student',
+}
 
 export default async function StudentDashboardPage() {
   const student = await requireStudent()

@@ -5,6 +5,7 @@
  * Client Component (uses hooks). For course descriptions, announcements, etc.
  */
 
+import { useRef, useEffect } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
@@ -102,7 +103,11 @@ export function RichTextEditor({
   label,
   error,
 }: RichTextEditorProps) {
+  // Track whether the latest content change came from the editor itself
+  const isInternalUpdate = useRef(false)
+
   const editor = useEditor({
+    immediatelyRender: false,
     extensions: [
       StarterKit,
       Placeholder.configure({
@@ -117,9 +122,23 @@ export function RichTextEditor({
     ],
     content,
     onUpdate: ({ editor: updatedEditor }) => {
+      isInternalUpdate.current = true
       onChange(updatedEditor.getHTML())
     },
   })
+
+  // Sync editor content when the content prop changes externally (e.g. form reset)
+  useEffect(() => {
+    if (!editor) return
+    if (isInternalUpdate.current) {
+      isInternalUpdate.current = false
+      return
+    }
+    // Only update if the editor content actually differs from the prop
+    if (editor.getHTML() !== content) {
+      editor.commands.setContent(content)
+    }
+  }, [content, editor])
 
   const editorId = label ? label.toLowerCase().replace(/\s+/g, '-') : undefined
 

@@ -29,12 +29,6 @@ export default function StudentLoginPage() {
           {/* Footer links */}
           <div className="mt-6 flex flex-col items-center gap-3 text-sm">
             <Link
-              href={ROUTES.PLATFORM.forgotPassword}
-              className="text-muted hover:text-ink"
-            >
-              Forgot your password?
-            </Link>
-            <Link
               href={ROUTES.PLATFORM.login}
               className="text-muted hover:text-ink"
             >

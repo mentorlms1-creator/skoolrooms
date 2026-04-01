@@ -3,27 +3,22 @@
  * Server Component. Displays Free / Solo / Academy plan cards.
  */
 
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Card } from '@/components/ui/Card'
 import { ROUTES } from '@/constants/routes'
+import { PublicNavbar } from '@/components/public/PublicNavbar'
+
+export const metadata: Metadata = {
+  title: 'Pricing — Lumscribe',
+  description: 'Simple, transparent pricing for Lumscribe. Start free, upgrade when you grow.',
+}
 
 export default function PricingPage() {
   return (
     <div className="min-h-screen bg-paper">
       {/* ── Header ── */}
-      <header className="border-b border-border bg-surface">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-          <Link href={ROUTES.PLATFORM.home} className="text-xl font-bold text-brand-600">
-            Lumscribe
-          </Link>
-          <Link
-            href={ROUTES.PLATFORM.login}
-            className="text-sm font-medium text-muted hover:text-ink"
-          >
-            Log In
-          </Link>
-        </div>
-      </header>
+      <PublicNavbar />
 
       {/* ── Pricing section ── */}
       <section className="mx-auto max-w-5xl px-4 py-20">

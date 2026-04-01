@@ -20,6 +20,7 @@ type PlatformSettingsFormProps = {
 const TOGGLE_SETTINGS = [
   'screenshot_payments_enabled',
   'payment_gateway_enabled',
+  'refund_debit_recovery_enabled',
 ]
 
 export function PlatformSettingsForm({ settings }: PlatformSettingsFormProps) {

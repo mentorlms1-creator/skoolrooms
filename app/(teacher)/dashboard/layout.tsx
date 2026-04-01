@@ -81,7 +81,7 @@ export default async function DashboardLayout({
     >
       <div className="flex min-h-screen bg-paper">
         <Sidebar />
-        <main className="ml-64 flex-1">
+        <main className="flex-1 pt-14 md:ml-64 md:pt-0">
           <div className="mx-auto max-w-6xl p-6">
             <ExpiryBanner />
             {children}

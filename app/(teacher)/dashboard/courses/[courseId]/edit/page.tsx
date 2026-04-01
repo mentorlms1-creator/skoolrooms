@@ -4,6 +4,7 @@
  * Server Component. Loads course data and renders client edit form.
  */
 
+import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { requireTeacher } from '@/lib/auth/guards'
 import { getCourseById } from '@/lib/db/courses'
@@ -11,6 +12,10 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { Card } from '@/components/ui/Card'
 import { ROUTES } from '@/constants/routes'
 import { EditCourseForm } from './form'
+
+export const metadata: Metadata = {
+  title: 'Edit Course \u2014 Lumscribe',
+}
 
 type EditCoursePageProps = {
   params: Promise<{ courseId: string }>

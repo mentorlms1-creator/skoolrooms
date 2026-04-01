@@ -5,12 +5,17 @@
  * and plan usage overview.
  */
 
+import type { Metadata } from 'next'
 import { requireTeacher } from '@/lib/auth/guards'
 import { getTeacherPlanDetails, getTeacherUsage } from '@/lib/db/teachers'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Card } from '@/components/ui/Card'
 import { OnboardingChecklist } from '@/components/teacher/OnboardingChecklist'
 import { UsageBars } from '@/components/ui/UsageBars'
+
+export const metadata: Metadata = {
+  title: 'Dashboard \u2014 Lumscribe',
+}
 
 export default async function DashboardPage() {
   const teacher = await requireTeacher()
