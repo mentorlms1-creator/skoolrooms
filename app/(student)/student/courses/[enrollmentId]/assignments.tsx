@@ -276,14 +276,12 @@ function SubmissionForm({
           type="button"
           onClick={handleSubmit}
           loading={isPending}
-          size="sm"
         >
           {existingSubmission ? 'Re-submit' : 'Submit'}
         </Button>
         <Button
           type="button"
           variant="ghost"
-          size="sm"
           onClick={onCancel}
           disabled={isPending}
         >

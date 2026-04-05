@@ -65,36 +65,53 @@ export default async function CohortStudentsPage({ params }: StudentsPageProps) 
           {activeEnrollments.length === 0 ? (
             <p className="text-sm text-muted">No active students yet.</p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border text-left">
-                    <th className="pb-2 font-medium text-muted">Name</th>
-                    <th className="pb-2 font-medium text-muted">Email</th>
-                    <th className="pb-2 font-medium text-muted">Phone</th>
-                    <th className="pb-2 font-medium text-muted">Enrolled</th>
-                    <th className="pb-2 font-medium text-muted">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {activeEnrollments.map((enrollment) => (
-                    <tr key={enrollment.id} className="border-b border-border/50">
-                      <td className="py-3 font-medium text-ink">
-                        {enrollment.students.name}
-                      </td>
-                      <td className="py-3 text-muted">{enrollment.students.email}</td>
-                      <td className="py-3 text-muted">{enrollment.students.phone}</td>
-                      <td className="py-3 text-muted">
-                        {formatPKT(enrollment.created_at, 'date')}
-                      </td>
-                      <td className="py-3">
-                        <StatusBadge status={enrollment.status} size="sm" />
-                      </td>
+            <>
+              {/* Mobile card view */}
+              <div className="md:hidden flex flex-col gap-3">
+                {activeEnrollments.map((enrollment) => (
+                  <div key={enrollment.id} className="rounded-md border border-border p-3 text-sm">
+                    <p className="font-medium text-ink">{enrollment.students.name}</p>
+                    <p className="text-muted">{enrollment.students.email}</p>
+                    <p className="text-muted">{enrollment.students.phone}</p>
+                    <div className="mt-2 flex items-center justify-between">
+                      <span className="text-muted">{formatPKT(enrollment.created_at, 'date')}</span>
+                      <StatusBadge status={enrollment.status} size="sm" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {/* Desktop table view */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border text-left">
+                      <th className="pb-2 font-medium text-muted">Name</th>
+                      <th className="pb-2 font-medium text-muted">Email</th>
+                      <th className="pb-2 font-medium text-muted">Phone</th>
+                      <th className="pb-2 font-medium text-muted">Enrolled</th>
+                      <th className="pb-2 font-medium text-muted">Status</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {activeEnrollments.map((enrollment) => (
+                      <tr key={enrollment.id} className="border-b border-border/50">
+                        <td className="py-3 font-medium text-ink">
+                          {enrollment.students.name}
+                        </td>
+                        <td className="py-3 text-muted">{enrollment.students.email}</td>
+                        <td className="py-3 text-muted">{enrollment.students.phone}</td>
+                        <td className="py-3 text-muted">
+                          {formatPKT(enrollment.created_at, 'date')}
+                        </td>
+                        <td className="py-3">
+                          <StatusBadge status={enrollment.status} size="sm" />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </Card>
 
@@ -105,36 +122,53 @@ export default async function CohortStudentsPage({ params }: StudentsPageProps) 
               Pending Enrollments ({pendingEnrollments.length})
             </h2>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border text-left">
-                    <th className="pb-2 font-medium text-muted">Name</th>
-                    <th className="pb-2 font-medium text-muted">Email</th>
-                    <th className="pb-2 font-medium text-muted">Phone</th>
-                    <th className="pb-2 font-medium text-muted">Date</th>
-                    <th className="pb-2 font-medium text-muted">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pendingEnrollments.map((enrollment) => (
-                    <tr key={enrollment.id} className="border-b border-border/50">
-                      <td className="py-3 font-medium text-ink">
-                        {enrollment.students.name}
-                      </td>
-                      <td className="py-3 text-muted">{enrollment.students.email}</td>
-                      <td className="py-3 text-muted">{enrollment.students.phone}</td>
-                      <td className="py-3 text-muted">
-                        {formatPKT(enrollment.created_at, 'date')}
-                      </td>
-                      <td className="py-3">
-                        <StatusBadge status={enrollment.status} size="sm" />
-                      </td>
+            <>
+              {/* Mobile card view */}
+              <div className="md:hidden flex flex-col gap-3">
+                {pendingEnrollments.map((enrollment) => (
+                  <div key={enrollment.id} className="rounded-md border border-border p-3 text-sm">
+                    <p className="font-medium text-ink">{enrollment.students.name}</p>
+                    <p className="text-muted">{enrollment.students.email}</p>
+                    <p className="text-muted">{enrollment.students.phone}</p>
+                    <div className="mt-2 flex items-center justify-between">
+                      <span className="text-muted">{formatPKT(enrollment.created_at, 'date')}</span>
+                      <StatusBadge status={enrollment.status} size="sm" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {/* Desktop table view */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border text-left">
+                      <th className="pb-2 font-medium text-muted">Name</th>
+                      <th className="pb-2 font-medium text-muted">Email</th>
+                      <th className="pb-2 font-medium text-muted">Phone</th>
+                      <th className="pb-2 font-medium text-muted">Date</th>
+                      <th className="pb-2 font-medium text-muted">Status</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {pendingEnrollments.map((enrollment) => (
+                      <tr key={enrollment.id} className="border-b border-border/50">
+                        <td className="py-3 font-medium text-ink">
+                          {enrollment.students.name}
+                        </td>
+                        <td className="py-3 text-muted">{enrollment.students.email}</td>
+                        <td className="py-3 text-muted">{enrollment.students.phone}</td>
+                        <td className="py-3 text-muted">
+                          {formatPKT(enrollment.created_at, 'date')}
+                        </td>
+                        <td className="py-3">
+                          <StatusBadge status={enrollment.status} size="sm" />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           </Card>
         )}
 
@@ -154,34 +188,51 @@ export default async function CohortStudentsPage({ params }: StudentsPageProps) 
                 : 'Waitlist is disabled for this cohort. Enable it in cohort settings.'}
             </p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border text-left">
-                    <th className="pb-2 font-medium text-muted">#</th>
-                    <th className="pb-2 font-medium text-muted">Name</th>
-                    <th className="pb-2 font-medium text-muted">Email</th>
-                    <th className="pb-2 font-medium text-muted">Phone</th>
-                    <th className="pb-2 font-medium text-muted">Joined</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {waitlistEntries.map((entry) => (
-                    <tr key={entry.id} className="border-b border-border/50">
-                      <td className="py-3 text-muted">{entry.position}</td>
-                      <td className="py-3 font-medium text-ink">
-                        {entry.student_name}
-                      </td>
-                      <td className="py-3 text-muted">{entry.student_email}</td>
-                      <td className="py-3 text-muted">{entry.student_phone}</td>
-                      <td className="py-3 text-muted">
-                        {formatPKT(entry.joined_at, 'datetime')}
-                      </td>
+            <>
+              {/* Mobile card view */}
+              <div className="md:hidden flex flex-col gap-3">
+                {waitlistEntries.map((entry) => (
+                  <div key={entry.id} className="rounded-md border border-border p-3 text-sm">
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted">#{entry.position}</span>
+                      <p className="font-medium text-ink">{entry.student_name}</p>
+                    </div>
+                    <p className="text-muted">{entry.student_email}</p>
+                    <p className="text-muted">{entry.student_phone}</p>
+                    <p className="mt-1 text-muted">{formatPKT(entry.joined_at, 'datetime')}</p>
+                  </div>
+                ))}
+              </div>
+              {/* Desktop table view */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border text-left">
+                      <th className="pb-2 font-medium text-muted">#</th>
+                      <th className="pb-2 font-medium text-muted">Name</th>
+                      <th className="pb-2 font-medium text-muted">Email</th>
+                      <th className="pb-2 font-medium text-muted">Phone</th>
+                      <th className="pb-2 font-medium text-muted">Joined</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {waitlistEntries.map((entry) => (
+                      <tr key={entry.id} className="border-b border-border/50">
+                        <td className="py-3 text-muted">{entry.position}</td>
+                        <td className="py-3 font-medium text-ink">
+                          {entry.student_name}
+                        </td>
+                        <td className="py-3 text-muted">{entry.student_email}</td>
+                        <td className="py-3 text-muted">{entry.student_phone}</td>
+                        <td className="py-3 text-muted">
+                          {formatPKT(entry.joined_at, 'datetime')}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </Card>
       </div>

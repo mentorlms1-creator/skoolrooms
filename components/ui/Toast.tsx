@@ -67,7 +67,7 @@ export function Toast({ type, message, onDismiss }: ToastProps) {
       <p className="text-sm font-medium">{message}</p>
       <button
         onClick={onDismiss}
-        className="ml-2 rounded p-0.5 opacity-70 hover:opacity-100 transition-opacity"
+        className="ml-2 rounded p-2 opacity-70 hover:opacity-100 transition-opacity"
         aria-label="Dismiss notification"
       >
         <svg

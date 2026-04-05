@@ -33,7 +33,7 @@ export default async function SubscribePage() {
   }
 
   return (
-    <div className="min-h-screen bg-paper">
+    <div className="min-h-dvh bg-paper">
       {/* Header */}
       <header className="border-b border-border bg-surface">
         <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-4">

@@ -27,7 +27,7 @@ const severityClasses: Record<'warning' | 'danger', string> = {
 export function UpgradeNudge({ label, current, max, severity }: UpgradeNudgeProps) {
   return (
     <div
-      className={`flex items-center justify-between gap-4 rounded-lg border px-4 py-3 text-sm ${severityClasses[severity]}`}
+      className={`flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 rounded-lg border px-4 py-3 text-sm ${severityClasses[severity]}`}
       role="alert"
     >
       <p>
@@ -35,7 +35,7 @@ export function UpgradeNudge({ label, current, max, severity }: UpgradeNudgeProp
       </p>
       <Link
         href={ROUTES.TEACHER.settings.plan}
-        className="shrink-0 rounded-full bg-brand-600 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-brand-500"
+        className="w-full sm:w-auto text-center shrink-0 rounded-full bg-brand-600 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-brand-500"
       >
         Upgrade
       </Link>

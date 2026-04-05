@@ -6,6 +6,7 @@
  */
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { StatusBadge } from '@/components/ui/StatusBadge'
@@ -114,11 +115,13 @@ export function PaymentCard({
                 className="overflow-hidden rounded-md border border-border transition-shadow hover:shadow-card-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
                 aria-label="View payment screenshot"
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <Image
                   src={payment.screenshot_url}
                   alt="Payment screenshot"
+                  width={112}
+                  height={112}
                   className="h-24 w-24 object-cover sm:h-28 sm:w-28"
+                  sizes="112px"
                 />
               </button>
             ) : (
@@ -159,12 +162,16 @@ export function PaymentCard({
           size="lg"
         >
           <div className="flex justify-center">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={payment.screenshot_url}
-              alt="Payment screenshot full size"
-              className="max-h-[70vh] w-auto rounded-md"
-            />
+            <div className="relative w-full" style={{ maxHeight: '70vh' }}>
+              <Image
+                src={payment.screenshot_url}
+                alt="Payment screenshot full size"
+                width={800}
+                height={600}
+                className="mx-auto max-h-[70vh] w-auto rounded-md"
+                sizes="(max-width: 768px) 100vw, 800px"
+              />
+            </div>
           </div>
         </Modal>
       )}

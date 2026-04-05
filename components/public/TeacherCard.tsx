@@ -5,6 +5,7 @@
  * Server-compatible (no 'use client' needed).
  */
 
+import Image from 'next/image'
 import { Card } from '@/components/ui/Card'
 import type { ExplorableTeacher } from '@/lib/db/explore'
 
@@ -26,11 +27,13 @@ export function TeacherCard({ teacher, platformDomain }: TeacherCardProps) {
         {/* Teacher photo */}
         <div className="flex items-center justify-center bg-paper p-6 pb-4">
           {teacher.profile_photo_url ? (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img
+            <Image
               src={teacher.profile_photo_url}
               alt={teacher.name}
+              width={80}
+              height={80}
               className="h-20 w-20 rounded-full object-cover border-2 border-border"
+              sizes="80px"
             />
           ) : (
             <div className="flex h-20 w-20 items-center justify-center rounded-full bg-brand-100 text-2xl font-bold text-brand-600">
@@ -91,7 +94,7 @@ export function TeacherCard({ teacher, platformDomain }: TeacherCardProps) {
           )}
 
           {/* Stats row */}
-          <div className="mt-auto flex items-center justify-between border-t border-border pt-3 mt-4">
+          <div className="mt-auto flex items-center justify-between border-t border-border pt-3">
             <div className="text-sm">
               <span className="font-semibold text-ink">
                 {formatFeePKR(teacher.starting_fee_pkr)}

@@ -130,7 +130,7 @@ export function AttendanceGrid({
           <button
             type="button"
             onClick={() => toggleAll(true)}
-            className="text-xs font-medium text-brand-600 hover:text-brand-500 transition-colors"
+            className="px-2 py-1.5 text-sm font-medium text-brand-600 hover:text-brand-500 transition-colors"
           >
             Select All
           </button>
@@ -138,7 +138,7 @@ export function AttendanceGrid({
           <button
             type="button"
             onClick={() => toggleAll(false)}
-            className="text-xs font-medium text-brand-600 hover:text-brand-500 transition-colors"
+            className="px-2 py-1.5 text-sm font-medium text-brand-600 hover:text-brand-500 transition-colors"
           >
             Deselect All
           </button>

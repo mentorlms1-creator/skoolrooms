@@ -8,6 +8,7 @@
 
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import Image from 'next/image'
 import { notFound } from 'next/navigation'
 import { requireTeacher } from '@/lib/auth/guards'
 import { getCourseById } from '@/lib/db/courses'
@@ -70,12 +71,15 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
 
       <Card className="overflow-hidden">
         {course.thumbnail_url && (
-          /* eslint-disable-next-line @next/next/no-img-element */
-          <img
-            src={course.thumbnail_url}
-            alt={course.title}
-            className="h-56 w-full object-cover"
-          />
+          <div className="relative h-56 w-full">
+            <Image
+              src={course.thumbnail_url}
+              alt={course.title}
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, 896px"
+            />
+          </div>
         )}
 
         <div className="p-6">

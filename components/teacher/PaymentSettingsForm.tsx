@@ -7,6 +7,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
@@ -118,10 +119,13 @@ export function PaymentSettingsForm({ initialData }: PaymentSettingsFormProps) {
           />
           {initialData.qrCodeUrl && (
             <div className="mt-2">
-              <img
+              <Image
                 src={initialData.qrCodeUrl}
                 alt="Payment QR Code"
-                className="h-32 w-32 rounded border border-border object-contain"
+                width={128}
+                height={128}
+                className="rounded border border-border object-contain"
+                sizes="128px"
               />
             </div>
           )}

@@ -54,7 +54,7 @@ const colorClasses: Record<StatusColor, string> = {
 }
 
 const sizeClasses: Record<StatusBadgeSize, string> = {
-  sm: 'px-2 py-0.5 text-xs',
+  sm: 'px-2 py-0.5 text-[13px]',
   md: 'px-2.5 py-1 text-sm',
 }
 

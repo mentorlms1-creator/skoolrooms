@@ -10,6 +10,7 @@
  */
 
 import { notFound } from 'next/navigation'
+import Image from 'next/image'
 import {
   getCohortByInviteToken,
   getActiveEnrollmentCount,
@@ -121,12 +122,13 @@ export default async function JoinCohortPage({ params }: PageProps) {
       <Card className="overflow-hidden">
         {/* Course thumbnail */}
         {course.thumbnail_url && (
-          <div className="aspect-video w-full overflow-hidden bg-paper">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+          <div className="relative aspect-video w-full overflow-hidden bg-paper">
+            <Image
               src={course.thumbnail_url}
               alt={course.title}
-              className="h-full w-full object-cover"
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, 512px"
             />
           </div>
         )}

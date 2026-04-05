@@ -132,7 +132,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
           </h2>
           <button
             onClick={onClose}
-            className="rounded-md p-1 text-muted hover:bg-paper hover:text-ink transition-colors"
+            className="rounded-md p-2 text-muted hover:bg-paper hover:text-ink transition-colors"
             aria-label="Close modal"
           >
             <svg
@@ -148,7 +148,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
         </div>
 
         {/* Body */}
-        <div className="px-6 py-4">{children}</div>
+        <div className="px-6 py-4 max-h-[calc(100dvh-10rem)] overflow-y-auto">{children}</div>
       </div>
     </div>,
     document.body,

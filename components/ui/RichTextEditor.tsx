@@ -34,7 +34,7 @@ function ToolbarButton({ onClick, isActive, children, title }: ToolbarButtonProp
       onClick={onClick}
       title={title}
       className={`
-        rounded px-2 py-1 text-sm font-medium transition-colors
+        rounded px-2.5 py-2 text-sm font-medium transition-colors
         ${
           isActive
             ? 'bg-brand-100 text-brand-600'

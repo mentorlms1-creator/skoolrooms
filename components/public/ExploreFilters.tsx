@@ -118,7 +118,7 @@ export function ExploreFilters({
             onChange={(e) => setMaxFee(e.target.value)}
             placeholder="e.g., 5000"
             min="0"
-            className="w-32 rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand-500"
+            className="w-full sm:w-32 rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand-500"
           />
         </div>
 

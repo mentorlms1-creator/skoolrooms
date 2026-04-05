@@ -58,6 +58,7 @@ export function StudentSettingsForm({ defaultName, defaultPhone, email, memberSi
       <Input
         label="Phone"
         name="phone"
+        type="tel"
         defaultValue={defaultPhone}
         placeholder="+923001234567"
         required
@@ -75,7 +76,7 @@ export function StudentSettingsForm({ defaultName, defaultPhone, email, memberSi
       </div>
 
       <div className="flex justify-end">
-        <Button type="submit" loading={loading}>Save Changes</Button>
+        <Button type="submit" loading={loading} className="w-full sm:w-auto">Save Changes</Button>
       </div>
     </form>
   )

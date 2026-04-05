@@ -128,7 +128,7 @@ export default async function AdminTeacherDetailPage(
                         by {entry.performed_by} — {formatPKT(entry.created_at, 'datetime')}
                       </p>
                       {entry.metadata && (
-                        <p className="mt-1 text-xs text-muted">
+                        <p className="mt-1 max-w-xs break-all truncate text-xs text-muted">
                           {JSON.stringify(entry.metadata)}
                         </p>
                       )}

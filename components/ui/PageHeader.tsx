@@ -15,12 +15,12 @@ type PageHeaderProps = {
 export function PageHeader({ title, description, action, backHref }: PageHeaderProps) {
   return (
     <div className="mb-6">
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           {backHref && (
             <Link
               href={backHref}
-              className="flex items-center justify-center rounded-md p-1.5 text-muted hover:bg-paper hover:text-ink transition-colors"
+              className="flex items-center justify-center rounded-md p-2.5 min-h-[44px] min-w-[44px] text-muted hover:bg-paper hover:text-ink transition-colors"
               aria-label="Go back"
             >
               <svg
@@ -38,7 +38,7 @@ export function PageHeader({ title, description, action, backHref }: PageHeaderP
               </svg>
             </Link>
           )}
-          <div>
+          <div className="min-w-0">
             <h1 className="text-2xl font-bold text-ink">{title}</h1>
             {description && (
               <p className="mt-1 text-sm text-muted">{description}</p>

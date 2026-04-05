@@ -10,6 +10,7 @@
  */
 
 import { notFound, redirect } from 'next/navigation'
+import Image from 'next/image'
 import { createClient } from '@/supabase/server'
 import { getStudentByAuthId } from '@/lib/db/students'
 import { getEnrollmentById } from '@/lib/db/enrollments'
@@ -368,7 +369,7 @@ function PaymentMethodDetails({
             {iban && (
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted">IBAN</span>
-                <span className="font-mono text-sm font-medium text-ink">
+                <span className="font-mono text-sm font-medium text-ink break-all">
                   {iban}
                 </span>
               </div>
@@ -410,11 +411,13 @@ function PaymentMethodDetails({
           <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">
             Scan to Pay
           </p>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src={qrCodeUrl}
             alt="Payment QR Code"
-            className="mx-auto h-48 w-48 rounded-md object-contain"
+            width={192}
+            height={192}
+            className="mx-auto rounded-md object-contain"
+            sizes="192px"
           />
         </div>
       )}

@@ -7,6 +7,7 @@
 
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import Image from 'next/image'
 import { requireTeacher } from '@/lib/auth/guards'
 import { getTeacherCourses } from '@/lib/db/courses'
 import { PageHeader } from '@/components/ui/PageHeader'
@@ -61,12 +62,15 @@ export default async function CoursesPage() {
             >
               <Card hover className="flex flex-col overflow-hidden">
                 {course.thumbnail_url ? (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img
-                    src={course.thumbnail_url}
-                    alt={course.title}
-                    className="h-40 w-full object-cover"
-                  />
+                  <div className="relative h-40 w-full">
+                    <Image
+                      src={course.thumbnail_url}
+                      alt={course.title}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    />
+                  </div>
                 ) : (
                   <div className="flex h-40 w-full items-center justify-center bg-paper">
                     <svg

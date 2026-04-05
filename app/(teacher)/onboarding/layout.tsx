@@ -9,7 +9,7 @@ export default function OnboardingLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="min-h-screen bg-paper">
+    <div className="min-h-dvh bg-paper">
       <div className="mx-auto max-w-xl px-4 py-12">
         {/* Brand heading */}
         <div className="mb-8 text-center">

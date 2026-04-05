@@ -9,13 +9,13 @@ import { PublicNavbar } from '@/components/public/PublicNavbar'
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-paper">
+    <div className="min-h-dvh bg-paper">
       {/* ── Header ── */}
       <PublicNavbar />
 
       <main>
       {/* ── Hero ── */}
-      <section className="mx-auto max-w-4xl px-4 py-24 text-center">
+      <section className="mx-auto max-w-4xl px-4 py-12 sm:py-24 text-center">
         <h1 className="text-4xl font-bold tracking-tight text-ink sm:text-5xl">
           Your Teaching, Your Brand, One Platform
         </h1>

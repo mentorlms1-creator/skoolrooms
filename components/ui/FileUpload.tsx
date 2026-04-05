@@ -210,7 +210,7 @@ export function FileUpload({
             <img
               src={preview}
               alt="Upload preview"
-              className="h-24 w-24 rounded-md object-cover"
+              className="max-h-64 w-full rounded-md object-contain"
             />
             <p className="text-sm text-muted">Click or drag to replace</p>
           </div>
@@ -246,7 +246,7 @@ export function FileUpload({
             <p className="text-sm font-medium text-ink">
               Click to upload or drag and drop
             </p>
-            <p className="text-xs text-muted">
+            <p className="text-sm text-muted">
               Max {maxLabel}
             </p>
           </div>
@@ -260,6 +260,7 @@ export function FileUpload({
         onChange={handleFileChange}
         className="hidden"
         aria-hidden="true"
+        {...(acceptAttr.includes('image') ? { capture: 'environment' } : {})}
       />
 
       {/* Error message */}

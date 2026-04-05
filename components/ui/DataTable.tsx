@@ -129,7 +129,7 @@ export function DataTable({
             <select
               value={pageSize}
               onChange={(e) => handlePageSizeChange(Number(e.target.value))}
-              className="rounded border border-border bg-surface px-2 py-1 text-sm text-ink"
+              className="rounded border border-border bg-surface px-2 py-2 text-sm text-ink"
             >
               {PAGE_SIZE_OPTIONS.map((opt) => (
                 <option key={opt} value={opt}>
@@ -201,7 +201,7 @@ export function DataTable({
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between text-sm">
+        <div className="flex flex-wrap items-center justify-between text-sm gap-2">
           <p className="text-muted">
             Showing {page * pageSize + 1} to{' '}
             {Math.min((page + 1) * pageSize, sortedData.length)} of{' '}
@@ -211,7 +211,7 @@ export function DataTable({
             <button
               onClick={() => setPage((p) => Math.max(0, p - 1))}
               disabled={page === 0}
-              className="rounded border border-border px-3 py-1 text-muted hover:bg-paper disabled:opacity-50 disabled:cursor-not-allowed"
+              className="rounded border border-border px-3 py-2 text-muted hover:bg-paper disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Previous
             </button>
@@ -242,7 +242,7 @@ export function DataTable({
                     key={item}
                     onClick={() => setPage(item)}
                     className={`
-                      rounded border px-3 py-1
+                      rounded border px-3 py-2
                       ${
                         page === item
                           ? 'border-brand-500 bg-brand-50 text-brand-600 font-medium'
@@ -257,7 +257,7 @@ export function DataTable({
             <button
               onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
               disabled={page === totalPages - 1}
-              className="rounded border border-border px-3 py-1 text-muted hover:bg-paper disabled:opacity-50 disabled:cursor-not-allowed"
+              className="rounded border border-border px-3 py-2 text-muted hover:bg-paper disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Next
             </button>

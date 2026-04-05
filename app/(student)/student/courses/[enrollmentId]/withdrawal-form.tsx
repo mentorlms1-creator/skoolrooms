@@ -87,7 +87,6 @@ export function WithdrawalForm({ enrollmentId }: WithdrawalFormProps) {
         <Button
           type="button"
           variant="danger"
-          size="sm"
           onClick={handleSubmit}
           loading={isPending}
         >
@@ -96,7 +95,6 @@ export function WithdrawalForm({ enrollmentId }: WithdrawalFormProps) {
         <Button
           type="button"
           variant="ghost"
-          size="sm"
           onClick={() => setShowForm(false)}
           disabled={isPending}
         >

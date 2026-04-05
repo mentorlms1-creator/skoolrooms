@@ -76,7 +76,7 @@ export function ExpiryBanner() {
 
   return (
     <div
-      className={`mb-4 flex items-center justify-between gap-4 rounded-lg border px-4 py-3 text-sm ${bannerStyles[state]}`}
+      className={`mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 rounded-lg border px-4 py-3 text-sm ${bannerStyles[state]}`}
       role="alert"
     >
       <div className="flex-1">
@@ -85,14 +85,14 @@ export function ExpiryBanner() {
       {state !== 'hard_lock' ? (
         <Link
           href={ROUTES.PLATFORM.subscribe}
-          className="shrink-0 rounded-full bg-brand-600 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-brand-500"
+          className="w-full sm:w-auto text-center shrink-0 rounded-full bg-brand-600 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-brand-500"
         >
           Renew Now
         </Link>
       ) : (
         <Link
           href={ROUTES.PLATFORM.subscribe}
-          className="shrink-0 rounded-full bg-danger px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-danger/90"
+          className="w-full sm:w-auto text-center shrink-0 rounded-full bg-danger px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-danger/90"
         >
           Renew to Unlock
         </Link>
