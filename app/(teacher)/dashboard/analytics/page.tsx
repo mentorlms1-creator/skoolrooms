@@ -76,30 +76,46 @@ export default async function TeacherAnalyticsPage() {
           {analytics.perCohortBreakdown.length === 0 ? (
             <p className="text-sm text-muted">No cohorts found.</p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead>
-                  <tr className="border-b border-border">
-                    <th className="px-3 py-2 font-medium text-muted">Cohort</th>
-                    <th className="px-3 py-2 font-medium text-muted">Course</th>
-                    <th className="px-3 py-2 font-medium text-muted">Students</th>
-                    <th className="px-3 py-2 font-medium text-muted text-right">Revenue (This Month)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {analytics.perCohortBreakdown.map((cohort) => (
-                    <tr key={cohort.cohortId} className="border-b border-border last:border-0">
-                      <td className="px-3 py-2 font-medium text-ink">{cohort.cohortName}</td>
-                      <td className="px-3 py-2 text-muted">{cohort.courseName}</td>
-                      <td className="px-3 py-2 text-ink">{cohort.studentCount}</td>
-                      <td className="px-3 py-2 text-ink text-right">
-                        PKR {cohort.revenue.toLocaleString()}
-                      </td>
+            <>
+              {/* Mobile card view */}
+              <div className="md:hidden flex flex-col gap-3">
+                {analytics.perCohortBreakdown.map((cohort) => (
+                  <div key={cohort.cohortId} className="rounded-md border border-border p-3 sm:p-4 text-sm">
+                    <p className="font-medium text-ink">{cohort.cohortName}</p>
+                    <p className="text-muted">{cohort.courseName}</p>
+                    <div className="mt-2 flex items-center justify-between">
+                      <span className="text-muted">{cohort.studentCount} students</span>
+                      <span className="font-medium text-ink">PKR {cohort.revenue.toLocaleString()}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {/* Desktop table view */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="px-3 py-2 font-medium text-muted">Cohort</th>
+                      <th className="px-3 py-2 font-medium text-muted">Course</th>
+                      <th className="px-3 py-2 font-medium text-muted">Students</th>
+                      <th className="px-3 py-2 font-medium text-muted text-right">Revenue (This Month)</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {analytics.perCohortBreakdown.map((cohort) => (
+                      <tr key={cohort.cohortId} className="border-b border-border last:border-0">
+                        <td className="px-3 py-2 font-medium text-ink">{cohort.cohortName}</td>
+                        <td className="px-3 py-2 text-muted">{cohort.courseName}</td>
+                        <td className="px-3 py-2 text-ink">{cohort.studentCount}</td>
+                        <td className="px-3 py-2 text-ink text-right">
+                          PKR {cohort.revenue.toLocaleString()}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </Card>
       </div>
@@ -111,30 +127,46 @@ export default async function TeacherAnalyticsPage() {
           {analytics.recentStudents.length === 0 ? (
             <p className="text-sm text-muted">No new students in the last 7 days.</p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead>
-                  <tr className="border-b border-border">
-                    <th className="px-3 py-2 font-medium text-muted">Name</th>
-                    <th className="px-3 py-2 font-medium text-muted">Email</th>
-                    <th className="px-3 py-2 font-medium text-muted">Cohort</th>
-                    <th className="px-3 py-2 font-medium text-muted">Enrolled</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {analytics.recentStudents.map((student) => (
-                    <tr key={`${student.id}-${student.enrolledAt}`} className="border-b border-border last:border-0">
-                      <td className="px-3 py-2 font-medium text-ink">{student.name}</td>
-                      <td className="px-3 py-2 text-muted">{student.email}</td>
-                      <td className="px-3 py-2 text-ink">{student.cohortName}</td>
-                      <td className="px-3 py-2 text-muted">
-                        {formatPKT(student.enrolledAt, 'relative')}
-                      </td>
+            <>
+              {/* Mobile card view */}
+              <div className="md:hidden flex flex-col gap-3">
+                {analytics.recentStudents.map((student) => (
+                  <div key={`${student.id}-${student.enrolledAt}`} className="rounded-md border border-border p-3 sm:p-4 text-sm">
+                    <p className="font-medium text-ink">{student.name}</p>
+                    <p className="text-muted">{student.email}</p>
+                    <div className="mt-2 flex items-center justify-between">
+                      <span className="text-ink">{student.cohortName}</span>
+                      <span className="text-muted">{formatPKT(student.enrolledAt, 'relative')}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {/* Desktop table view */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="px-3 py-2 font-medium text-muted">Name</th>
+                      <th className="px-3 py-2 font-medium text-muted">Email</th>
+                      <th className="px-3 py-2 font-medium text-muted">Cohort</th>
+                      <th className="px-3 py-2 font-medium text-muted">Enrolled</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {analytics.recentStudents.map((student) => (
+                      <tr key={`${student.id}-${student.enrolledAt}`} className="border-b border-border last:border-0">
+                        <td className="px-3 py-2 font-medium text-ink">{student.name}</td>
+                        <td className="px-3 py-2 text-muted">{student.email}</td>
+                        <td className="px-3 py-2 text-ink">{student.cohortName}</td>
+                        <td className="px-3 py-2 text-muted">
+                          {formatPKT(student.enrolledAt, 'relative')}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </Card>
       </div>

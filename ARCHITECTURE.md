@@ -60,10 +60,6 @@
 │   │   │   └── page.tsx                  # Teacher login
 │   │   ├── signup/
 │   │   │   └── page.tsx                  # Teacher signup
-│   │   ├── onboarding/
-│   │   │   ├── step-1/page.tsx           # Subject + teaching level
-│   │   │   ├── step-2/page.tsx           # Subdomain picker
-│   │   │   └── step-3/page.tsx           # Profile photo + bio
 │   │   ├── subscribe/
 │   │   │   └── page.tsx                  # Teacher subscription payment page
 │   │   ├── pricing/
@@ -92,6 +88,11 @@
 │   │
 │   ├── (teacher)/                        # Teacher dashboard — requires teacher auth
 │   │   ├── layout.tsx                    # Teacher layout + auth guard
+│   │   ├── onboarding/                   # Post-signup onboarding (requires teacher auth)
+│   │   │   ├── layout.tsx                # Onboarding layout
+│   │   │   ├── step-1/page.tsx           # Subject + teaching level
+│   │   │   ├── step-2/page.tsx           # Subdomain picker
+│   │   │   └── step-3/page.tsx           # Profile photo + bio
 │   │   ├── dashboard/
 │   │   │   ├── page.tsx                  # Teacher home (stats, usage bars, todos)
 │   │   │   ├── courses/
@@ -130,16 +131,14 @@
 │   │   │       └── billing/page.tsx      # Subscription history log (Phase 2)
 │   │
 │   ├── (student)/                        # students.lumscribe.com — requires student auth
-│   │   ├── layout.tsx
-│   │   ├── page.tsx                      # Student dashboard (upcoming classes)
-│   │   ├── courses/
-│   │   │   └── page.tsx                  # My enrolled courses (grouped by teacher)
-│   │   ├── schedule/
-│   │   │   └── page.tsx                  # Full class schedule
-│   │   ├── payments/
-│   │   │   └── page.tsx                  # Enrollment + payment status
-│   │   └── settings/
-│   │       └── page.tsx
+│   │   └── student/                      # Nested for /student/* URL prefix
+│   │       ├── layout.tsx
+│   │       ├── page.tsx                  # Student dashboard (upcoming classes)
+│   │       ├── courses/
+│   │       │   └── [enrollmentId]/page.tsx  # Enrolled course detail
+│   │       ├── settings/
+│   │       │   └── form.tsx              # Student settings form
+│   │       └── loading.tsx               # Student portal loading skeleton
 │   │
 │   ├── (teacher-public)/                 # Rewrite target for teacher subdomains
 │   │   ├── layout.tsx
@@ -164,33 +163,28 @@
 │   ├── student-forgot-password/
 │   │   └── page.tsx                      # Student forgot password
 │   │
-│   └── api/                              # API Routes (all server-side)
-│       ├── messages/
-│       │   ├── send/route.ts               # Send direct message (Phase 2)
-│       │   ├── thread/route.ts             # Fetch message thread (Phase 2)
-│       │   └── read/route.ts               # Mark message read (Phase 2)
-│       ├── referrals/
-│       │   ├── generate/route.ts           # Generate referral link (Phase 2)
-│       │   └── convert/route.ts            # Convert referral at signup (Phase 2)
-│       ├── cohort/
-│       │   └── feedback/route.ts           # Submit / fetch cohort feedback (Phase 2)
-│       ├── webhooks/
-│       │   └── payment/
-│       │       └── route.ts              # Payment gateway webhook handler
+│   └── api/                              # API Routes — webhooks, crons, external integrations ONLY
 │       ├── auth/
-│       │   ├── teacher/route.ts
-│       │   └── student/route.ts
+│       │   └── callback/route.ts         # Supabase OAuth callback handler
 │       ├── cloudflare/
-│       │   └── subdomain/route.ts        # Create DNS record via Cloudflare API
+│       │   └── subdomain/route.ts        # Create/update DNS record via Cloudflare API
 │       ├── r2/
 │       │   └── presign/route.ts          # Generate pre-signed R2 upload URLs
+│       ├── student/
+│       │   └── enroll/route.ts           # Atomic student enrollment (slot check + payment)
+│       ├── explore/
+│       │   └── track/route.ts            # Analytics tracking for explore page views
+│       ├── public/
+│       │   └── cohort/[token]/
+│       │       └── payment-info/route.ts # Public payment info for student payment page
+│       ├── webhooks/
+│       │   └── payment/route.ts          # Payment gateway webhook handler (NOT YET BUILT)
 │       └── cron/
 │           ├── archive-cohorts/route.ts  # Nightly: archive past-end-date cohorts
 │           ├── fee-reminders/route.ts    # Daily 12:00 UTC: fee reminder emails
 │           ├── class-reminders/route.ts  # Hourly: 24h and 1h class reminders
 │           ├── trial-expiry/route.ts     # Daily: downgrade expired trials
 │           ├── renewal-reminders/route.ts # Daily 08:00 UTC: subscription + trial ending emails
-│           ├── reconcile/route.ts         # Daily 02:00 UTC: gateway reconciliation
 │           ├── grace-period/route.ts      # Daily 07:00 UTC: grace emails + hard lock
 │           ├── enrollment-nudge/route.ts  # Daily 14:00 UTC: 24h unverified enrollment nudge
 │           └── subscription-nudge/route.ts # Daily 09:00 UTC: 48h admin screenshot nudge
@@ -233,6 +227,22 @@
 │       ├── referrals.ts
 │       ├── feedback.ts
 │       └── notifications.ts              # notifications_log + email_delivery_log queries
+│   └── actions/                          # Server Actions — all mutations go here (NOT API routes)
+│       ├── admin.ts                      # Admin panel mutations
+│       ├── announcements.ts              # Create/update announcements
+│       ├── assignments.ts                # Create/update assignments
+│       ├── attendance.ts                 # Save attendance records
+│       ├── class-sessions.ts             # Create/cancel class sessions
+│       ├── cohorts.ts                    # Create/update/archive cohorts
+│       ├── courses.ts                    # Create/update/delete courses
+│       ├── enrollment-management.ts      # Approve/reject/manual enrollments, withdrawals
+│       ├── enrollments.ts                # Student enrollment + payment flow
+│       ├── onboarding.ts                 # Teacher onboarding steps
+│       ├── student-payments.ts           # Student payment submissions
+│       ├── student-settings.ts           # Student profile updates
+│       ├── subscriptions.ts              # Teacher subscription + screenshot upload
+│       ├── teacher-settings.ts           # Teacher profile, payment settings, notifications
+│       └── waitlist.ts                   # Waitlist join/leave
 │
 ├── components/
 │   ├── ui/                               # Generic, reusable primitives — SHARED across all roles
@@ -246,9 +256,10 @@
 │   │   ├── Card.tsx                      # Base card shell (padding, shadow, radius)
 │   │   ├── DataTable.tsx                 # Sortable, filterable, paginated table. Column definitions via props. Used by: teacher student list, admin teacher list, payment queues, payout queue.
 │   │   ├── Tabs.tsx                      # Tab navigation
-│   │   ├── ProgressBar.tsx               # Used inside UsageBars
+│   │   ├── Textarea.tsx                  # Multi-line text input with label + error state
+│   │   ├── Spinner.tsx                   # Loading spinner (sm/md/lg sizes)
 │   │   ├── UsageBars.tsx                 # Plan limit bars (courses/students/storage). Used by: teacher dashboard, admin teacher detail, settings → plan. Amber 80%, red 95%, block 100%.
-│   │   ├── FileUpload.tsx                # Universal R2 upload: accepts fileType prop → auto-validates size from getPlatformSetting() + content type. Shows progress. Returns publicUrl. Used for ALL uploads (thumbnail, profile, QR, screenshot, assignment, announcement, submission).
+│   │   ├── FileUpload.tsx                # Universal R2 upload: accepts fileType prop → auto-validates size from getPlatformSetting() + content type. Shows progress. Returns publicUrl. Includes `capture="environment"` for mobile camera access. Used for ALL uploads (thumbnail, profile, QR, screenshot, assignment, announcement, submission).
 │   │   ├── RichTextEditor.tsx            # TipTap wrapper
 │   │   ├── EmptyState.tsx                # Icon + title + description + CTA button
 │   │   ├── PageHeader.tsx                # Page title + optional action button (consistent across all pages)
@@ -259,7 +270,11 @@
 │   │   ├── PaymentVerificationCard.tsx   # Extends PaymentRow with screenshot viewer + approve/reject
 │   │   ├── CohortCard.tsx                # Cohort summary card for course detail page
 │   │   ├── UpgradeNudge.tsx              # Contextual upgrade banner
-│   │   └── ExpiryBanner.tsx              # 4-state plan expiry banner (amber/orange/red/trial)
+│   │   ├── ExpiryBanner.tsx              # 4-state plan expiry banner (amber/orange/red/trial)
+│   │   ├── PaymentCard.tsx               # Payment summary card for teacher dashboard
+│   │   ├── PaymentSettingsForm.tsx        # Bank account / payout method settings form
+│   │   ├── NotificationSettingsForm.tsx   # Email notification preferences form
+│   │   └── OnboardingChecklist.tsx        # Post-signup onboarding progress checklist
 │   ├── student/                          # Student-SPECIFIC compositions
 │   │   ├── TeacherGroup.tsx              # Groups enrollments by teacher in student portal
 │   │   └── EnrollmentStatus.tsx          # Enrollment status with payment action
@@ -267,7 +282,9 @@
 │   │   ├── TeacherHealthCard.tsx          # Dormant/zero-student/expiring indicators
 │   │   ├── PlanEditor.tsx                # Plan limits + feature toggles editor
 │   │   ├── GrandfatheringModal.tsx        # Shows affected teachers when limit lowered
-│   │   └── PayoutCard.tsx                # Extends PaymentRow with bank details + process actions
+│   │   ├── PayoutCard.tsx                # Extends PaymentRow with bank details + process actions
+│   │   ├── TeacherDetailActions.tsx       # Action buttons on teacher detail page (suspend, reset, etc.)
+│   │   └── PlatformSettingsForm.tsx       # Platform-wide settings editor form
 │   └── public/                           # Public page compositions
 │       ├── CourseCard.tsx                 # Course display for teacher subdomain
 │       ├── TeacherCard.tsx               # Teacher card for explore page (photo, subjects, fee, students)
@@ -303,7 +320,9 @@
         ├── 002_rls_policies.sql
         ├── 003_indexes.sql
         ├── 004_functions.sql             # enroll_student_atomic, credit_teacher_balance
-        └── 005_seed_data.sql             # Plans, features, platform_settings
+        ├── 005_seed_data.sql             # Plans, features, platform_settings
+        ├── 006_enrollment_unique.sql     # Unique constraint on enrollments
+        └── 007_subscription_rejection_reason.sql  # Rejection reason field
 ```
 
 ---
@@ -1629,7 +1648,46 @@ export const config = {
 
 ## 5. API Layer
 
-> Every mutation goes through an API route. No direct Supabase calls from client components for mutations. Reads can use Supabase client directly with RLS.
+> **Mutations use Server Actions** (`lib/actions/*.ts`), NOT API routes. Server Actions are called directly from Server Components and Client Components via form actions or `startTransition`. API routes (`app/api/`) exist ONLY for: webhooks, crons, external integrations (Cloudflare, R2, OAuth callback), and public endpoints.
+>
+> **Data reads** happen in Server Components via `lib/db/*.ts` (service layer). Client Components receive data via props from Server Component parents or React Context (TeacherProvider/StudentProvider).
+
+> **Implementation note:** The tables below document the business logic for each operation. In the codebase, these are implemented as **Server Actions** in `lib/actions/*.ts` (not REST API routes), except where noted as actual API routes. The input/output/logic columns remain accurate regardless of transport mechanism.
+>
+> ### Server Action Files
+>
+> | File | Operations |
+> |------|------------|
+> | `lib/actions/admin.ts` | Admin panel mutations (teacher management, subscription approval/rejection) |
+> | `lib/actions/announcements.ts` | Create/update announcements |
+> | `lib/actions/assignments.ts` | Create/update assignments |
+> | `lib/actions/attendance.ts` | Save attendance records |
+> | `lib/actions/class-sessions.ts` | Create/cancel class sessions |
+> | `lib/actions/cohorts.ts` | Create/update/archive cohorts |
+> | `lib/actions/courses.ts` | Create/update/delete courses |
+> | `lib/actions/enrollment-management.ts` | Approve/reject/manual enrollments, withdrawal management |
+> | `lib/actions/enrollments.ts` | Student enrollment + payment flow |
+> | `lib/actions/onboarding.ts` | Teacher onboarding step completion |
+> | `lib/actions/student-payments.ts` | Student payment screenshot submissions |
+> | `lib/actions/student-settings.ts` | Student profile updates |
+> | `lib/actions/subscriptions.ts` | Teacher subscription + screenshot upload |
+> | `lib/actions/teacher-settings.ts` | Teacher profile, payment settings, notifications |
+> | `lib/actions/waitlist.ts` | Waitlist join/leave |
+>
+> ### Actual API Routes (server-side only)
+>
+> These are real `app/api/` route handlers — used for webhooks, crons, OAuth, and external service integrations:
+>
+> | Route | Purpose |
+> |-------|---------|
+> | `api/auth/callback/route.ts` | Supabase OAuth callback |
+> | `api/cloudflare/subdomain/route.ts` | Cloudflare DNS management |
+> | `api/r2/presign/route.ts` | R2 presigned upload URLs |
+> | `api/student/enroll/route.ts` | Atomic student enrollment |
+> | `api/explore/track/route.ts` | Explore page view tracking |
+> | `api/public/cohort/[token]/payment-info/route.ts` | Public payment info endpoint |
+> | `api/webhooks/payment/route.ts` | Payment gateway webhook (NOT YET BUILT) |
+> | `api/cron/*` | 8 cron jobs (see Cron Routes section below) |
 
 ### Auth API
 
@@ -2698,6 +2756,66 @@ Sidebar:
   Settings
   Operations
 ```
+
+### Mobile-First Responsive Patterns
+
+> These patterns were established during mobile optimization. All new code MUST follow them.
+
+#### Viewport Height
+Use `min-h-dvh` instead of `min-h-screen` on layout wrappers. Mobile Safari's dynamic viewport makes `100vh` unreliable — `dvh` accounts for the URL bar.
+
+#### Touch Targets (44px minimum)
+All interactive elements (buttons, links, inputs, selects, toggles) must have a minimum touch target of 44px (Apple HIG / WCAG). Implementation:
+- `components/ui/Button.tsx`: `min-h-[2.75rem]` on all size variants
+- `components/ui/Input.tsx`, `Select.tsx`: `min-h-[2.75rem]`
+- Icon buttons: `min-h-[2.75rem] min-w-[2.75rem]`
+- For visually compact elements (toolbar buttons, toggles): keep visual size small but ensure the clickable area is 44px via padding or min-height
+
+#### Responsive Tables (Card View Pattern)
+Tables with 4+ columns MUST provide a mobile card view alternative:
+```html
+<!-- Desktop: full table -->
+<div class="hidden md:block">
+  <table>...</table>
+</div>
+
+<!-- Mobile: stacked cards -->
+<div class="md:hidden space-y-3">
+  {items.map(item => (
+    <div class="rounded-lg border border-border bg-paper p-3 sm:p-4">
+      <!-- Key data in a readable card layout -->
+    </div>
+  ))}
+</div>
+```
+Reference implementation: `app/(teacher)/dashboard/courses/[courseId]/cohorts/[cohortId]/students/page.tsx`
+
+#### Prose Overflow Protection
+Rich HTML content (from `dangerouslySetInnerHTML` or RichTextEditor output) must be wrapped with `overflow-x-auto` to prevent wide tables/code blocks from breaking mobile layouts:
+```html
+<div class="prose prose-sm max-w-none overflow-x-auto text-ink">
+  {content}
+</div>
+```
+
+#### Image Optimization
+Use `next/image` instead of raw `<img>` tags for:
+- Lazy loading (offscreen images don't block paint)
+- Automatic WebP/AVIF format negotiation
+- Responsive `sizes` attribute
+
+#### Camera Capture (FileUpload)
+`FileUpload` component includes `capture="environment"` on image inputs, enabling direct camera access on mobile for screenshot uploads.
+
+#### Safe Area Insets (iPhone)
+Fixed/sticky mobile navigation drawers must include bottom safe area padding for iPhone home indicator:
+```html
+<nav class="fixed inset-0 ... pb-[env(safe-area-inset-bottom)]">
+```
+Applied to: `components/teacher/Sidebar.tsx`, `components/admin/AdminSidebar.tsx`
+
+#### Responsive Padding
+Container elements use responsive padding: `p-4 sm:p-6` (tighter on mobile, standard on desktop). Never use fixed large padding that wastes space on 375px screens.
 
 ---
 

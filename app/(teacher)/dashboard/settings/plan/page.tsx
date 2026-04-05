@@ -219,7 +219,24 @@ export default async function PlanSettingsPage() {
       {subscriptions.length > 0 && (
         <Card className="p-6">
           <h3 className="mb-4 text-base font-semibold text-ink">Subscription History</h3>
-          <div className="overflow-x-auto">
+          {/* Mobile card view */}
+          <div className="md:hidden flex flex-col gap-3">
+            {subscriptions.map((sub) => (
+              <div key={sub.id} className="rounded-md border border-border p-3 sm:p-4 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium text-ink capitalize">{sub.plan}</span>
+                  <StatusBadge status={sub.status} size="sm" />
+                </div>
+                <p className="mt-1 text-ink">Rs. {sub.amount_pkr.toLocaleString()}</p>
+                <p className="mt-1 text-muted">
+                  {formatPKT(sub.period_start, 'date')} &mdash; {formatPKT(sub.period_end, 'date')}
+                </p>
+                <p className="mt-1 text-muted">{formatPKT(sub.created_at, 'date')}</p>
+              </div>
+            ))}
+          </div>
+          {/* Desktop table view */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border text-left text-muted">

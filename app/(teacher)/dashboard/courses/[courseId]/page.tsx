@@ -86,7 +86,7 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
           <h2 className="mb-4 text-lg font-semibold text-ink">Description</h2>
           {course.description ? (
             <div
-              className="prose prose-sm max-w-none text-ink"
+              className="prose prose-sm max-w-none overflow-x-auto text-ink"
               dangerouslySetInnerHTML={{ __html: sanitizeHtml(course.description) }}
             />
           ) : (

@@ -6,6 +6,7 @@
  */
 
 import { useState, useMemo } from 'react'
+import { Select } from '@/components/ui/Select'
 import { TeacherCard } from '@/components/public/TeacherCard'
 import type { ExplorableTeacher } from '@/lib/db/explore'
 
@@ -67,44 +68,28 @@ export function ExploreFilters({
       {/* Filter controls */}
       <div className="mb-8 flex flex-wrap items-end gap-4 rounded-lg border border-border bg-surface p-4">
         {/* Subject filter */}
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="filter-subject" className="text-sm font-medium text-ink">
-            Subject
-          </label>
-          <select
-            id="filter-subject"
-            value={subject}
-            onChange={(e) => setSubject(e.target.value)}
-            className="rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-brand-500"
-          >
-            <option value="">All Subjects</option>
-            {allSubjects.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
-        </div>
+        <Select
+          id="filter-subject"
+          label="Subject"
+          value={subject}
+          onChange={(e) => setSubject(e.target.value)}
+          options={[
+            { value: '', label: 'All Subjects' },
+            ...allSubjects.map((s) => ({ value: s, label: s })),
+          ]}
+        />
 
         {/* Level filter */}
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="filter-level" className="text-sm font-medium text-ink">
-            Level
-          </label>
-          <select
-            id="filter-level"
-            value={level}
-            onChange={(e) => setLevel(e.target.value)}
-            className="rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-brand-500"
-          >
-            <option value="">All Levels</option>
-            {allLevels.map((l) => (
-              <option key={l} value={l}>
-                {l}
-              </option>
-            ))}
-          </select>
-        </div>
+        <Select
+          id="filter-level"
+          label="Level"
+          value={level}
+          onChange={(e) => setLevel(e.target.value)}
+          options={[
+            { value: '', label: 'All Levels' },
+            ...allLevels.map((l) => ({ value: l, label: l })),
+          ]}
+        />
 
         {/* Max fee filter */}
         <div className="flex flex-col gap-1.5">

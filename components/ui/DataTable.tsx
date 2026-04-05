@@ -129,7 +129,7 @@ export function DataTable({
             <select
               value={pageSize}
               onChange={(e) => handlePageSizeChange(Number(e.target.value))}
-              className="rounded border border-border bg-surface px-2 py-2 text-sm text-ink"
+              className="rounded border border-border bg-surface px-2 py-2 text-sm text-ink min-h-[2.75rem]"
             >
               {PAGE_SIZE_OPTIONS.map((opt) => (
                 <option key={opt} value={opt}>

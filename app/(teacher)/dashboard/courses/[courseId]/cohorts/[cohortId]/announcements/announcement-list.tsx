@@ -165,7 +165,7 @@ function AnnouncementCard({
 
       {/* Body (sanitized HTML) */}
       <div
-        className="prose prose-sm max-w-none text-ink"
+        className="prose prose-sm max-w-none overflow-x-auto text-ink"
         dangerouslySetInnerHTML={{ __html: sanitizedBody }}
       />
 
@@ -197,7 +197,7 @@ function AnnouncementCard({
         <button
           type="button"
           onClick={() => setShowSeenList(!showSeenList)}
-          className="text-xs text-muted hover:text-ink transition-colors"
+          className="min-h-[2.75rem] py-2 px-1 text-xs text-muted hover:text-ink transition-colors"
         >
           Seen by {announcement.seenByCount} of {announcement.totalStudents} student
           {announcement.totalStudents === 1 ? '' : 's'}
@@ -224,7 +224,7 @@ function AnnouncementCard({
         <button
           type="button"
           onClick={() => setShowComments(!showComments)}
-          className="text-xs font-medium text-muted hover:text-ink transition-colors"
+          className="min-h-[2.75rem] py-2 px-1 text-xs font-medium text-muted hover:text-ink transition-colors"
         >
           {announcement.comments.length} comment
           {announcement.comments.length === 1 ? '' : 's'}

@@ -76,7 +76,26 @@ export default async function AdminTeacherDetailPage(
             {teacher.subscription_history.length === 0 ? (
               <p className="text-sm text-muted">No subscriptions yet.</p>
             ) : (
-              <div className="overflow-x-auto">
+              <>
+              {/* Mobile card view */}
+              <div className="md:hidden flex flex-col gap-3">
+                {teacher.subscription_history.map((sub) => (
+                  <div key={sub.id} className="rounded-md border border-border p-3 sm:p-4 text-sm">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium text-ink capitalize">{sub.plan}</span>
+                      <StatusBadge status={sub.status} size="sm" />
+                    </div>
+                    <p className="mt-1 text-ink">PKR {sub.amount_pkr.toLocaleString()}</p>
+                    <p className="mt-1 text-muted capitalize">{sub.payment_method}</p>
+                    <p className="mt-1 text-muted">
+                      {formatPKT(sub.period_start, 'date')} - {formatPKT(sub.period_end, 'date')}
+                    </p>
+                    <p className="mt-1 text-muted">{formatPKT(sub.created_at, 'date')}</p>
+                  </div>
+                ))}
+              </div>
+              {/* Desktop table view */}
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-left text-sm">
                   <thead>
                     <tr className="border-b border-border">
@@ -108,6 +127,7 @@ export default async function AdminTeacherDetailPage(
                   </tbody>
                 </table>
               </div>
+              </>
             )}
           </Card>
 

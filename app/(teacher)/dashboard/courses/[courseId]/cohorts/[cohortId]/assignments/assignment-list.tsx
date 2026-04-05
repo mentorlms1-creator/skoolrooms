@@ -168,7 +168,7 @@ export function AssignmentList({ assignments, isArchived }: AssignmentListProps)
                 <div className="px-4 py-3 border-b border-border">
                   <h4 className="text-sm font-medium text-muted mb-1">Description</h4>
                   <div
-                    className="prose prose-sm max-w-none text-ink"
+                    className="prose prose-sm max-w-none overflow-x-auto text-ink"
                     dangerouslySetInnerHTML={{ __html: sanitizeHtml(assignment.description) }}
                   />
                   {assignment.fileUrl && (
@@ -189,31 +189,23 @@ export function AssignmentList({ assignments, isArchived }: AssignmentListProps)
                     Submissions ({assignment.submissionCount})
                   </h4>
                   {assignment.submissions.length > 0 ? (
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-sm">
-                        <thead>
-                          <tr className="border-b border-border text-left text-muted">
-                            <th className="pb-2 pr-4 font-medium">Student</th>
-                            <th className="pb-2 pr-4 font-medium">Submitted</th>
-                            <th className="pb-2 pr-4 font-medium">Status</th>
-                            <th className="pb-2 pr-4 font-medium">File</th>
-                            <th className="pb-2 font-medium">Action</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {assignment.submissions.map((sub) => (
-                            <tr key={sub.id} className="border-b border-border last:border-0">
-                              <td className="py-2 pr-4">
-                                <div className="font-medium text-ink">{sub.studentName}</div>
-                                <div className="text-xs text-muted">{sub.studentEmail}</div>
-                              </td>
-                              <td className="py-2 pr-4 text-muted">
-                                {formatPKT(sub.submittedAt, 'datetime')}
-                              </td>
-                              <td className="py-2 pr-4">
-                                <StatusBadge status={sub.status} size="sm" />
-                              </td>
-                              <td className="py-2 pr-4">
+                    <>
+                      {/* Mobile card view */}
+                      <div className="md:hidden flex flex-col gap-3">
+                        {assignment.submissions.map((sub) => (
+                          <div key={sub.id} className="rounded-md border border-border p-3 sm:p-4 text-sm">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="font-medium text-ink">{sub.studentName}</p>
+                                <p className="text-xs text-muted">{sub.studentEmail}</p>
+                              </div>
+                              <StatusBadge status={sub.status} size="sm" />
+                            </div>
+                            <p className="mt-2 text-muted">
+                              {formatPKT(sub.submittedAt, 'datetime')}
+                            </p>
+                            <div className="mt-2 flex items-center justify-between">
+                              <span>
                                 {sub.fileUrl ? (
                                   <a
                                     href={sub.fileUrl}
@@ -221,32 +213,89 @@ export function AssignmentList({ assignments, isArchived }: AssignmentListProps)
                                     rel="noopener noreferrer"
                                     className="text-brand-600 hover:underline"
                                   >
-                                    View
+                                    View File
                                   </a>
                                 ) : (
-                                  <span className="text-muted">--</span>
+                                  <span className="text-muted">No file</span>
                                 )}
-                              </td>
-                              <td className="py-2">
-                                {sub.status !== 'reviewed' ? (
-                                  <Button
-                                    variant="secondary"
-                                    size="sm"
-                                    onClick={() => handleReview(sub.id)}
-                                    loading={reviewingId === sub.id}
-                                    disabled={isPending}
-                                  >
-                                    Review
-                                  </Button>
-                                ) : (
-                                  <span className="text-sm text-success">Reviewed</span>
-                                )}
-                              </td>
+                              </span>
+                              {sub.status !== 'reviewed' ? (
+                                <Button
+                                  variant="secondary"
+                                  size="sm"
+                                  onClick={() => handleReview(sub.id)}
+                                  loading={reviewingId === sub.id}
+                                  disabled={isPending}
+                                >
+                                  Review
+                                </Button>
+                              ) : (
+                                <span className="text-sm text-success">Reviewed</span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      {/* Desktop table view */}
+                      <div className="hidden md:block overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="border-b border-border text-left text-muted">
+                              <th className="pb-2 pr-4 font-medium">Student</th>
+                              <th className="pb-2 pr-4 font-medium">Submitted</th>
+                              <th className="pb-2 pr-4 font-medium">Status</th>
+                              <th className="pb-2 pr-4 font-medium">File</th>
+                              <th className="pb-2 font-medium">Action</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+                          </thead>
+                          <tbody>
+                            {assignment.submissions.map((sub) => (
+                              <tr key={sub.id} className="border-b border-border last:border-0">
+                                <td className="py-2 pr-4">
+                                  <div className="font-medium text-ink">{sub.studentName}</div>
+                                  <div className="text-xs text-muted">{sub.studentEmail}</div>
+                                </td>
+                                <td className="py-2 pr-4 text-muted">
+                                  {formatPKT(sub.submittedAt, 'datetime')}
+                                </td>
+                                <td className="py-2 pr-4">
+                                  <StatusBadge status={sub.status} size="sm" />
+                                </td>
+                                <td className="py-2 pr-4">
+                                  {sub.fileUrl ? (
+                                    <a
+                                      href={sub.fileUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-brand-600 hover:underline"
+                                    >
+                                      View
+                                    </a>
+                                  ) : (
+                                    <span className="text-muted">--</span>
+                                  )}
+                                </td>
+                                <td className="py-2">
+                                  {sub.status !== 'reviewed' ? (
+                                    <Button
+                                      variant="secondary"
+                                      size="sm"
+                                      onClick={() => handleReview(sub.id)}
+                                      loading={reviewingId === sub.id}
+                                      disabled={isPending}
+                                    >
+                                      Review
+                                    </Button>
+                                  ) : (
+                                    <span className="text-sm text-success">Reviewed</span>
+                                  )}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </>
                   ) : (
                     <p className="text-sm text-muted">No submissions yet.</p>
                   )}

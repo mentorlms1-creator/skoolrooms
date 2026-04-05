@@ -158,7 +158,7 @@ function StudentAnnouncementCard({
         <button
           type="button"
           onClick={() => setShowComments(!showComments)}
-          className="py-2 px-1 text-xs font-medium text-muted hover:text-ink transition-colors"
+          className="min-h-[2.75rem] py-2 px-1 text-xs font-medium text-muted hover:text-ink transition-colors"
         >
           {announcement.comments.length} comment
           {announcement.comments.length === 1 ? '' : 's'}

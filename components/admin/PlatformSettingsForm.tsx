@@ -95,26 +95,28 @@ export function PlatformSettingsForm({ settings }: PlatformSettingsFormProps) {
               </div>
               <div className="shrink-0">
                 {isToggle ? (
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={values[setting.key] === 'true'}
-                    onClick={() =>
-                      handleChange(
-                        setting.key,
-                        values[setting.key] === 'true' ? 'false' : 'true'
-                      )
-                    }
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      values[setting.key] === 'true' ? 'bg-brand-600' : 'bg-border'
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-surface transition-transform ${
-                        values[setting.key] === 'true' ? 'translate-x-6' : 'translate-x-1'
+                  <div className="flex min-h-[2.75rem] items-center">
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={values[setting.key] === 'true'}
+                      onClick={() =>
+                        handleChange(
+                          setting.key,
+                          values[setting.key] === 'true' ? 'false' : 'true'
+                        )
+                      }
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                        values[setting.key] === 'true' ? 'bg-brand-600' : 'bg-border'
                       }`}
-                    />
-                  </button>
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-surface transition-transform ${
+                          values[setting.key] === 'true' ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                  </div>
                 ) : (
                   <Input
                     value={values[setting.key] ?? ''}

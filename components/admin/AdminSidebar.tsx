@@ -159,7 +159,7 @@ export function AdminSidebar() {
 
       {/* Mobile slide-out sidebar */}
       <aside
-        className={`fixed left-0 top-14 z-50 flex h-[calc(100%-3.5rem)] w-64 flex-col border-r border-border bg-surface transition-transform md:hidden ${
+        className={`fixed left-0 top-14 z-50 flex h-[calc(100%-3.5rem)] w-64 flex-col border-r border-border bg-surface transition-transform md:hidden pb-[env(safe-area-inset-bottom)] ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
