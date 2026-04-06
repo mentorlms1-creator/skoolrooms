@@ -17,7 +17,9 @@ import {
   getOperationsStats,
   getRecentTeachers,
   getRevenueByCohort,
+  getTopAdminAlert,
 } from '@/lib/db/admin'
+import Link from 'next/link'
 import { formatPKT } from '@/lib/time/pkt'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { DateRangeFilter } from '@/components/ui/DateRangeFilter'
@@ -37,11 +39,12 @@ export const metadata: Metadata = {
 }
 
 export default async function AdminDashboardPage() {
-  const [stats, ops, recentTeachers, revenueByCohort] = await Promise.all([
+  const [stats, ops, recentTeachers, revenueByCohort, alert] = await Promise.all([
     getAdminDashboardStats(),
     getOperationsStats(),
     getRecentTeachers(),
     getRevenueByCohort(),
+    getTopAdminAlert(),
   ])
 
   return (
@@ -195,29 +198,44 @@ export default async function AdminDashboardPage() {
             </CardContent>
           </Card>
 
-          {/* AI Insights Style card */}
-          <Card className="border-none shadow-2xl rounded-[2rem] overflow-hidden bg-gradient-to-br from-[#2b2b3d] to-[#12121a] text-white p-8">
+          {/* Smart Priority Alert */}
+          <Card className="border-none shadow-2xl rounded-[2rem] overflow-hidden bg-gradient-to-br from-primary/90 to-primary-foreground text-primary-foreground p-8">
              <div className="flex items-center justify-between mb-8">
-                <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-[11px] font-bold uppercase tracking-wider backdrop-blur-md">
-                   <div className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
-                   AI Insights
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-card/10 text-[11px] font-bold uppercase tracking-wider backdrop-blur-md">
+                   <div className={cn(
+                     "h-1.5 w-1.5 rounded-full",
+                     alert.type === 'all_clear' ? "bg-green-400" : "bg-card animate-pulse"
+                   )} />
+                   {alert.title}
                 </div>
-                <button className="text-white/40 hover:text-white transition-colors">
-                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="h-5 w-5"><circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /><circle cx="5" cy="12" r="1" /></svg>
-                </button>
+                <div className="flex gap-1">
+                  <div className="h-1.5 w-1.5 rounded-full bg-card/40" />
+                  <div className="h-1.5 w-1.5 rounded-full bg-card/40" />
+                  <div className="h-1.5 w-1.5 rounded-full bg-card/40" />
+                </div>
              </div>
-             
+
              <p className="text-[19px] font-bold leading-relaxed mb-10">
-                On Wednesday you&apos;re <span className="text-chart-3">overloaded</span>. Should we move <span className="underline decoration-white/20">2 tasks</span> to Thursday?
+                {alert.message.split(alert.highlight).map((part, i, arr) => (
+                  <span key={i}>
+                    {part}
+                    {i < arr.length - 1 && (
+                      <span className="text-accent underline decoration-accent/30">{alert.highlight}</span>
+                    )}
+                  </span>
+                ))}
              </p>
 
              <div className="space-y-3">
-                <button className="w-full h-12 rounded-2xl bg-white/10 hover:bg-white/15 text-[15px] font-bold transition-all backdrop-blur-sm">
-                   Ignore
+                <button className="w-full h-12 rounded-2xl bg-card/10 hover:bg-card/15 text-[15px] font-bold transition-all backdrop-blur-sm">
+                   {alert.secondaryAction.label}
                 </button>
-                <button className="w-full h-12 rounded-2xl bg-white text-black hover:bg-white/90 text-[15px] font-bold transition-all shadow-lg">
-                   Reschedule
-                </button>
+                <Link
+                  href={alert.primaryAction.href}
+                  className="flex w-full h-12 items-center justify-center rounded-2xl bg-card text-foreground hover:bg-card/90 text-[15px] font-bold transition-all shadow-lg"
+                >
+                   {alert.primaryAction.label}
+                </Link>
              </div>
           </Card>
         </div>

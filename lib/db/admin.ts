@@ -85,6 +85,16 @@ export type OperationsStats = {
   pendingPaymentCount: number
 }
 
+export type AdminAlert = {
+  type: 'payments' | 'expiring_plans' | 'stalled_onboarding' | 'all_clear'
+  priority: number // lower = more urgent
+  title: string
+  message: string
+  highlight: string
+  primaryAction: { label: string; href: string }
+  secondaryAction: { label: string }
+}
+
 export type PlatformSettingRow = {
   id: string
   key: string
@@ -904,4 +914,90 @@ export async function getPendingSubscriptions(): Promise<PendingSubscriptionRow[
       created_at: s.created_at as string,
     }
   })
+}
+
+// -----------------------------------------------------------------------------
+// getTopAdminAlert — Smart priority alert for the admin dashboard
+// Checks multiple conditions and returns the most urgent one
+// -----------------------------------------------------------------------------
+export async function getTopAdminAlert(): Promise<AdminAlert> {
+  const supabase = createAdminClient()
+  const now = new Date()
+  const alerts: AdminAlert[] = []
+
+  // 1. Pending payment screenshots older than 48 hours
+  const fortyEightHoursAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000)
+  const { count: stalePayments } = await supabase
+    .from('teacher_subscriptions')
+    .select('*', { count: 'exact', head: true })
+    .eq('status', 'pending_verification')
+    .lt('created_at', fortyEightHoursAgo.toISOString())
+
+  if (stalePayments && stalePayments > 0) {
+    alerts.push({
+      type: 'payments',
+      priority: 1,
+      title: 'Payments Waiting',
+      message: `You have ${stalePayments} unverified payment${stalePayments > 1 ? 's' : ''} older than 48 hours. Teachers are waiting for approval.`,
+      highlight: `${stalePayments} payment${stalePayments > 1 ? 's' : ''}`,
+      primaryAction: { label: 'Review Now', href: '/admin/payments' },
+      secondaryAction: { label: 'Dismiss' },
+    })
+  }
+
+  // 2. Teachers with plans expiring in 3 days
+  const threeDaysFromNow = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000)
+  const { count: expiringPlans } = await supabase
+    .from('teachers')
+    .select('*', { count: 'exact', head: true })
+    .neq('plan', 'free')
+    .lte('plan_expires_at', threeDaysFromNow.toISOString())
+    .gte('plan_expires_at', now.toISOString())
+
+  if (expiringPlans && expiringPlans > 0) {
+    alerts.push({
+      type: 'expiring_plans',
+      priority: 2,
+      title: 'Plans Expiring',
+      message: `${expiringPlans} teacher${expiringPlans > 1 ? 's\'' : '\'s'} plan${expiringPlans > 1 ? 's' : ''} expire${expiringPlans > 1 ? '' : 's'} within 3 days. They haven't renewed yet.`,
+      highlight: `${expiringPlans} teacher${expiringPlans > 1 ? 's' : ''}`,
+      primaryAction: { label: 'View Teachers', href: '/admin/teachers' },
+      secondaryAction: { label: 'Ignore' },
+    })
+  }
+
+  // 3. Teachers who signed up but haven't completed onboarding (7+ days old)
+  const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+  const { count: stalledOnboarding } = await supabase
+    .from('teachers')
+    .select('*', { count: 'exact', head: true })
+    .eq('onboarding_completed', false)
+    .lt('created_at', sevenDaysAgo.toISOString())
+
+  if (stalledOnboarding && stalledOnboarding > 0) {
+    alerts.push({
+      type: 'stalled_onboarding',
+      priority: 3,
+      title: 'Stalled Signups',
+      message: `${stalledOnboarding} teacher${stalledOnboarding > 1 ? 's' : ''} signed up over a week ago but haven't completed onboarding. They might need help.`,
+      highlight: `${stalledOnboarding} teacher${stalledOnboarding > 1 ? 's' : ''}`,
+      primaryAction: { label: 'View Teachers', href: '/admin/teachers' },
+      secondaryAction: { label: 'Dismiss' },
+    })
+  }
+
+  // Return highest priority alert, or "all clear"
+  if (alerts.length > 0) {
+    return alerts.sort((a, b) => a.priority - b.priority)[0]
+  }
+
+  return {
+    type: 'all_clear',
+    priority: 99,
+    title: 'All Clear',
+    message: 'No urgent actions needed. Your platform is running smoothly.',
+    highlight: 'smoothly',
+    primaryAction: { label: 'View Analytics', href: '/admin/teachers' },
+    secondaryAction: { label: 'Dismiss' },
+  }
 }
