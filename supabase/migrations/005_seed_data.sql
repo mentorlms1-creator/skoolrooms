@@ -31,7 +31,7 @@ INSERT INTO feature_registry (feature_key, display_name, description, category, 
   ('discount_codes',          'Discount Codes',              'Create per-cohort discount codes (fixed or percent)',              'payments',       false),
   ('whatsapp_notifications',  'WhatsApp Notifications',      'Class reminders and enrollment alerts via WhatsApp',              'communication',  false),
   ('multi_teacher',           'Multiple Teacher Accounts',   'Invite additional teachers to manage courses',                     'branding',       true),
-  ('remove_branding',         'Remove Platform Branding',    'Hide "Powered by Lumscribe" footer on teacher subdomain',          'branding',       false),
+  ('remove_branding',         'Remove Platform Branding',    'Hide "Powered by Skool Rooms" footer on teacher subdomain',          'branding',       false),
   ('custom_domain',           'Custom Domain',               'Use your own .com domain instead of subdomain',                   'branding',       false);
 
 -- ============================================================================

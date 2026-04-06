@@ -82,7 +82,7 @@ export async function sendEmail(params: {
 
   // Step 2: Send via Brevo
   const brevoApiKey = process.env.BREVO_API_KEY
-  const fromEmail = process.env.BREVO_FROM_EMAIL || 'noreply@lumscribe.com'
+  const fromEmail = process.env.BREVO_FROM_EMAIL || 'noreply@skoolrooms.com'
 
   if (!brevoApiKey) {
     console.error('[sendEmail] BREVO_API_KEY not configured')
@@ -112,7 +112,7 @@ export async function sendEmail(params: {
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        sender: { email: fromEmail, name: 'Lumscribe' },
+        sender: { email: fromEmail, name: 'Skool Rooms' },
         to: [{ email: to }],
         subject,
         htmlContent,
@@ -205,7 +205,7 @@ async function logNotification(
  * The `data` object may contain context-specific values for the subject.
  */
 function buildSubject(type: EmailType, data: Record<string, unknown>): string {
-  const platformName = (data.platformName as string) || 'Lumscribe'
+  const platformName = (data.platformName as string) || 'Skool Rooms'
 
   const subjects: Record<string, string> = {
     enrollment_confirmed: `${platformName} — Enrollment Confirmed`,
@@ -258,7 +258,7 @@ function buildSubject(type: EmailType, data: Record<string, unknown>): string {
  * enhanced later without changing the sendEmail() interface.
  */
 function buildHtmlContent(type: EmailType, data: Record<string, unknown>): string {
-  const platformName = (data.platformName as string) || 'Lumscribe'
+  const platformName = (data.platformName as string) || 'Skool Rooms'
   const recipientName = (data.teacherName as string) || (data.studentName as string) || ''
 
   // Simple wrapper — replace with proper templates in future

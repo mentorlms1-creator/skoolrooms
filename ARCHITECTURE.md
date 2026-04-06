@@ -1,8 +1,8 @@
-# ARCHITECTURE.md — LMS SaaS Platform (Lumscribe)
+# ARCHITECTURE.md — LMS SaaS Platform (Skool Rooms)
 
 > **This is the single source of truth for Claude Code.**
 > Read this entire file before writing any code. Every system, pattern, and rule is here.
-> Platform domain placeholder: `lumscribe.com` — controlled by `NEXT_PUBLIC_PLATFORM_DOMAIN` env var.
+> Platform domain placeholder: `skoolrooms.com` — controlled by `NEXT_PUBLIC_PLATFORM_DOMAIN` env var.
 
 ### Tech Stack
 
@@ -51,7 +51,7 @@
 /
 ├── app/                                  # Next.js 16 App Router
 │   │
-│   ├── (platform)/                       # lumscribe.com routes
+│   ├── (platform)/                       # skoolrooms.com routes
 │   │   ├── layout.tsx                    # Platform root layout
 │   │   ├── page.tsx                      # Marketing homepage
 │   │   ├── explore/
@@ -130,7 +130,7 @@
 │   │   │       ├── plan/page.tsx         # Current plan + usage + grandfathered limits
 │   │   │       └── billing/page.tsx      # Subscription history log (Phase 2)
 │   │
-│   ├── (student)/                        # students.lumscribe.com — requires student auth
+│   ├── (student)/                        # students.skoolrooms.com — requires student auth
 │   │   └── student/                      # Nested for /student/* URL prefix
 │   │       ├── layout.tsx
 │   │       ├── page.tsx                  # Student dashboard (upcoming classes)
@@ -535,7 +535,7 @@ export const ROUTES = {
   TEACHER_DASHBOARD: '/dashboard',
   TEACHER_COURSES: '/dashboard/courses',
   TEACHER_SETTINGS: '/dashboard/settings',
-  STUDENT_DASHBOARD: '/',       // relative to students.lumscribe.com
+  STUDENT_DASHBOARD: '/',       // relative to students.skoolrooms.com
   ADMIN_DASHBOARD: '/admin',
   JOIN_COHORT: (token: string) => `/join/${token}`,
 } as const
@@ -1107,7 +1107,7 @@ INSERT INTO feature_registry (feature_key, display_name, description, category, 
   ('discount_codes', 'Discount Codes', 'Create per-cohort discount codes (fixed or percent)', 'payments', false),
   ('whatsapp_notifications', 'WhatsApp Notifications', 'Class reminders and enrollment alerts via WhatsApp', 'communication', false),
   ('multi_teacher', 'Multiple Teacher Accounts', 'Invite additional teachers to manage courses', 'branding', true),
-  ('remove_branding', 'Remove Platform Branding', 'Hide "Powered by Lumscribe" footer on teacher subdomain', 'branding', false),
+  ('remove_branding', 'Remove Platform Branding', 'Hide "Powered by Skool Rooms" footer on teacher subdomain', 'branding', false),
   ('custom_domain', 'Custom Domain', 'Use your own .com domain instead of subdomain', 'branding', false);
 ```
 
@@ -1528,14 +1528,14 @@ END; $$ LANGUAGE plpgsql;
 
 | Role | Auth Method | Session Scope | Notes |
 |------|------------|---------------|-------|
-| Teacher | Email + password via Supabase Auth | lumscribe.com + subdomains | Teachers share session across their own subdomain |
-| Student | Email + password via Supabase Auth | students.lumscribe.com | One account, enroll with multiple teachers |
-| Admin | Email + password via Supabase Auth | lumscribe.com/admin only | Separate admin role metadata |
+| Teacher | Email + password via Supabase Auth | skoolrooms.com + subdomains | Teachers share session across their own subdomain |
+| Student | Email + password via Supabase Auth | students.skoolrooms.com | One account, enroll with multiple teachers |
+| Admin | Email + password via Supabase Auth | skoolrooms.com/admin only | Separate admin role metadata |
 
 ### Teacher Login Flow
 
 ```
-1. Teacher visits lumscribe.com/login
+1. Teacher visits skoolrooms.com/login
 2. Enters email + password
 3. Supabase Auth validates → returns session
 4. Server fetches teachers row by supabase_auth_id
@@ -1548,17 +1548,17 @@ END; $$ LANGUAGE plpgsql;
 ### Student Login Flow
 
 ```
-1. Student visits students.lumscribe.com OR is redirected from teacher subdomain
+1. Student visits students.skoolrooms.com OR is redirected from teacher subdomain
 2. If no account: self-registers at enrollment time (name, phone, email, password)
 3. Supabase Auth creates auth.users row
 4. students row created linked to auth.users.id
-5. Session valid on students.lumscribe.com
+5. Session valid on students.skoolrooms.com
 ```
 
 ### Admin Login Flow
 
 ```
-1. Admin visits lumscribe.com/admin
+1. Admin visits skoolrooms.com/admin
 2. Middleware checks: is user authenticated AND has admin role metadata?
 3. Admin role stored in auth.users user_metadata: { role: 'admin' }
 4. Session timeout: 4 hours idle — then forced re-login (Supabase Auth JWT expiry)
@@ -1649,12 +1649,12 @@ export function middleware(req: NextRequest) {
   const host = req.headers.get('host')?.replace(':3000','').replace(':3001','') ?? ''
   const domain = process.env.NEXT_PUBLIC_PLATFORM_DOMAIN!
 
-  // students.lumscribe.com → /student/*
+  // students.skoolrooms.com → /student/*
   if (host === `students.${domain}`) {
     return NextResponse.rewrite(new URL(`/student${req.nextUrl.pathname}`, req.url))
   }
 
-  // ahmed.lumscribe.com → /teacher-public/ahmed/*
+  // ahmed.skoolrooms.com → /teacher-public/ahmed/*
   const subdomain = host.replace(`.${domain}`, '')
   if (subdomain && subdomain !== domain && subdomain !== 'students' && subdomain !== 'www') {
     return NextResponse.rewrite(
@@ -1889,7 +1889,7 @@ Server: isGatewayEnabled()? → if false: show screenshot form
   ↓
 PaymentProvider.createCheckout({
   amountPkr: plan.price_pkr,
-  description: `Lumscribe ${plan.name} Plan`,
+  description: `Skool Rooms ${plan.name} Plan`,
   metadata: { type: 'subscription', teacherId, planSlug },
   idempotencyKey,
   successUrl: platformUrl('/subscribe/success'),
@@ -2250,7 +2250,7 @@ Every email type requires these minimum variables:
 const emailData = {
   teacherName: string,      // for teacher emails
   studentName: string,      // for student emails
-  platformName: string,     // "Lumscribe"
+  platformName: string,     // "Skool Rooms"
   platformUrl: string,      // platformUrl()
   // ... type-specific variables
 }
@@ -2795,49 +2795,49 @@ Every route in the platform. Developers must implement all routes exactly as lis
 
 | URL | Access | Description |
 |-----|--------|-------------|
-| `[subdomain].lumscribe.com` | Public | Teacher public profile + course listing |
-| `[subdomain].lumscribe.com/courses/[slug]` | Public | Individual course page with cohort list |
-| `[subdomain].lumscribe.com/join/[token]` | Public | Cohort enroll page (or waitlist/coming-soon if closed/draft) |
-| `[subdomain].lumscribe.com/pay/[enrollment_id]` | Student auth | Payment page after enrollment created |
-| `lumscribe.com` | Public | Marketing homepage |
-| `lumscribe.com/explore` | Public | Teacher directory (SSR, Google-indexed) |
-| `lumscribe.com/pricing` | Public | Plan pricing page |
-| `lumscribe.com/login` | Guest only | Teacher login (redirects to dashboard if auth) |
-| `lumscribe.com/signup` | Guest only | Teacher signup → onboarding |
-| `lumscribe.com/forgot-password` | Guest only | Teacher password reset request |
-| `lumscribe.com/auth/reset-password` | Guest only | Teacher new password form (token in URL) |
-| `lumscribe.com/dashboard` | Teacher auth | Teacher main dashboard |
-| `lumscribe.com/dashboard/courses` | Teacher auth | Course management |
-| `lumscribe.com/dashboard/courses/new` | Teacher auth | Create new course |
-| `lumscribe.com/dashboard/courses/[id]` | Teacher auth | Individual course + cohort list |
-| `lumscribe.com/dashboard/courses/[id]/cohorts/new` | Teacher auth | Create new cohort for course |
-| `lumscribe.com/dashboard/courses/[id]/cohorts/[cohortId]` | Teacher auth | Cohort management (students, schedule, announcements, assignments, attendance, payments) |
-| `lumscribe.com/dashboard/students` | Teacher auth | Student roster across all cohorts |
-| `lumscribe.com/dashboard/payments` | Teacher auth | Payment verification queue + history |
-| `lumscribe.com/dashboard/earnings` | Teacher auth | Balance, payout history, request payout |
-| `lumscribe.com/dashboard/analytics` | Teacher auth | Revenue, student health, cohort analytics |
-| `lumscribe.com/dashboard/settings` | Teacher auth | Profile, payments, notifications, plan, billing |
-| `lumscribe.com/subscribe` | Teacher auth | Platform subscription / upgrade page |
-| `students.lumscribe.com` | Student auth | Student portal — all enrollments |
-| `students.lumscribe.com/courses` | Student auth | Enrolled courses grouped by teacher |
-| `students.lumscribe.com/schedule` | Student auth | Upcoming classes across all teachers |
-| `students.lumscribe.com/billing` | Student auth | Payment history + enrollment statuses |
-| `students.lumscribe.com/messages` | Student auth | Direct message inbox (Phase 2) |
-| `students.lumscribe.com/settings` | Student auth | Student profile settings |
-| `students.lumscribe.com/forgot-password` | Guest only | Student password reset request |
-| `lumscribe.com/admin` | Admin auth | Admin dashboard (not linked publicly) |
-| `lumscribe.com/admin/login` | Guest only | Admin login — not linked from any public page |
-| `lumscribe.com/admin/teachers` | Admin auth | Teacher management list |
-| `lumscribe.com/admin/teachers/[id]` | Admin auth | Teacher detail — profile, activity log, plan, actions (suspend/extend/reset) |
-| `lumscribe.com/admin/payments` | Admin auth | Subscription payment queue |
-| `lumscribe.com/admin/payouts` | Admin auth | Teacher payout request queue |
-| `lumscribe.com/admin/plans` | Admin auth | Plan management |
-| `lumscribe.com/admin/settings` | Admin auth | Platform settings |
-| `lumscribe.com/admin/analytics` | Admin auth | Full KPI dashboard (Phase 2) |
-| `lumscribe.com/admin/earnings` | Admin auth | Platform earnings panel (Phase 2) |
-| `lumscribe.com/admin/operations` | Admin auth | System health panel |
+| `[subdomain].skoolrooms.com` | Public | Teacher public profile + course listing |
+| `[subdomain].skoolrooms.com/courses/[slug]` | Public | Individual course page with cohort list |
+| `[subdomain].skoolrooms.com/join/[token]` | Public | Cohort enroll page (or waitlist/coming-soon if closed/draft) |
+| `[subdomain].skoolrooms.com/pay/[enrollment_id]` | Student auth | Payment page after enrollment created |
+| `skoolrooms.com` | Public | Marketing homepage |
+| `skoolrooms.com/explore` | Public | Teacher directory (SSR, Google-indexed) |
+| `skoolrooms.com/pricing` | Public | Plan pricing page |
+| `skoolrooms.com/login` | Guest only | Teacher login (redirects to dashboard if auth) |
+| `skoolrooms.com/signup` | Guest only | Teacher signup → onboarding |
+| `skoolrooms.com/forgot-password` | Guest only | Teacher password reset request |
+| `skoolrooms.com/auth/reset-password` | Guest only | Teacher new password form (token in URL) |
+| `skoolrooms.com/dashboard` | Teacher auth | Teacher main dashboard |
+| `skoolrooms.com/dashboard/courses` | Teacher auth | Course management |
+| `skoolrooms.com/dashboard/courses/new` | Teacher auth | Create new course |
+| `skoolrooms.com/dashboard/courses/[id]` | Teacher auth | Individual course + cohort list |
+| `skoolrooms.com/dashboard/courses/[id]/cohorts/new` | Teacher auth | Create new cohort for course |
+| `skoolrooms.com/dashboard/courses/[id]/cohorts/[cohortId]` | Teacher auth | Cohort management (students, schedule, announcements, assignments, attendance, payments) |
+| `skoolrooms.com/dashboard/students` | Teacher auth | Student roster across all cohorts |
+| `skoolrooms.com/dashboard/payments` | Teacher auth | Payment verification queue + history |
+| `skoolrooms.com/dashboard/earnings` | Teacher auth | Balance, payout history, request payout |
+| `skoolrooms.com/dashboard/analytics` | Teacher auth | Revenue, student health, cohort analytics |
+| `skoolrooms.com/dashboard/settings` | Teacher auth | Profile, payments, notifications, plan, billing |
+| `skoolrooms.com/subscribe` | Teacher auth | Platform subscription / upgrade page |
+| `students.skoolrooms.com` | Student auth | Student portal — all enrollments |
+| `students.skoolrooms.com/courses` | Student auth | Enrolled courses grouped by teacher |
+| `students.skoolrooms.com/schedule` | Student auth | Upcoming classes across all teachers |
+| `students.skoolrooms.com/billing` | Student auth | Payment history + enrollment statuses |
+| `students.skoolrooms.com/messages` | Student auth | Direct message inbox (Phase 2) |
+| `students.skoolrooms.com/settings` | Student auth | Student profile settings |
+| `students.skoolrooms.com/forgot-password` | Guest only | Student password reset request |
+| `skoolrooms.com/admin` | Admin auth | Admin dashboard (not linked publicly) |
+| `skoolrooms.com/admin/login` | Guest only | Admin login — not linked from any public page |
+| `skoolrooms.com/admin/teachers` | Admin auth | Teacher management list |
+| `skoolrooms.com/admin/teachers/[id]` | Admin auth | Teacher detail — profile, activity log, plan, actions (suspend/extend/reset) |
+| `skoolrooms.com/admin/payments` | Admin auth | Subscription payment queue |
+| `skoolrooms.com/admin/payouts` | Admin auth | Teacher payout request queue |
+| `skoolrooms.com/admin/plans` | Admin auth | Plan management |
+| `skoolrooms.com/admin/settings` | Admin auth | Platform settings |
+| `skoolrooms.com/admin/analytics` | Admin auth | Full KPI dashboard (Phase 2) |
+| `skoolrooms.com/admin/earnings` | Admin auth | Platform earnings panel (Phase 2) |
+| `skoolrooms.com/admin/operations` | Admin auth | System health panel |
 
-> **Note:** All URLs use `platformDomain()` — never hardcode `lumscribe.com`. The route map above uses the current placeholder domain.
+> **Note:** All URLs use `platformDomain()` — never hardcode `skoolrooms.com`. The route map above uses the current placeholder domain.
 
 ---
 
@@ -2847,7 +2847,7 @@ Every route in the platform. Developers must implement all routes exactly as lis
 # ════════════════════════════════════════
 # PLATFORM
 # ════════════════════════════════════════
-NEXT_PUBLIC_PLATFORM_DOMAIN=lumscribe.com
+NEXT_PUBLIC_PLATFORM_DOMAIN=skoolrooms.com
 # Change this one value to rename the platform domain. Nothing else changes.
 
 # ════════════════════════════════════════
@@ -2862,7 +2862,7 @@ SUPABASE_SERVICE_ROLE_KEY=eyJ...
 # CLOUDFLARE
 # ════════════════════════════════════════
 CLOUDFLARE_API_TOKEN=xxxx
-# Scopes needed: Zone:DNS:Edit for the lumscribe.com zone
+# Scopes needed: Zone:DNS:Edit for the skoolrooms.com zone
 CLOUDFLARE_ZONE_ID=xxxx
 
 # ════════════════════════════════════════
@@ -2870,9 +2870,9 @@ CLOUDFLARE_ZONE_ID=xxxx
 # ════════════════════════════════════════
 CLOUDFLARE_R2_ACCESS_KEY=xxxx
 CLOUDFLARE_R2_SECRET_KEY=xxxx
-CLOUDFLARE_R2_BUCKET=lumscribe-files
+CLOUDFLARE_R2_BUCKET=skoolrooms-files
 CLOUDFLARE_R2_ENDPOINT=https://xxxx.r2.cloudflarestorage.com
-CLOUDFLARE_R2_PUBLIC_URL=https://files.lumscribe.com
+CLOUDFLARE_R2_PUBLIC_URL=https://files.skoolrooms.com
 # R2 bucket must have public access enabled for public URLs
 
 # ════════════════════════════════════════
@@ -2898,7 +2898,7 @@ PAYFAST_SANDBOX=true
 # EMAIL
 # ════════════════════════════════════════
 BREVO_API_KEY=xkeysib-xxxx
-BREVO_FROM_EMAIL=noreply@lumscribe.com
+BREVO_FROM_EMAIL=noreply@skoolrooms.com
 # Brevo requires domain verification via DNS (DKIM + SPF records)
 
 # ════════════════════════════════════════
@@ -2924,7 +2924,7 @@ UPSTASH_REDIS_TOKEN=
 # ════════════════════════════════════════
 # ADMIN
 # ════════════════════════════════════════
-ADMIN_EMAIL=admin@lumscribe.com
+ADMIN_EMAIL=admin@skoolrooms.com
 # Used to create the first admin account in seed script
 ```
 
@@ -3006,7 +3006,7 @@ ADMIN_EMAIL=admin@lumscribe.com
 ### Week 4 — Student Portal + Enrollment
 
 - [ ] Student registration at enrollment
-- [ ] `students.lumscribe.com` routing
+- [ ] `students.skoolrooms.com` routing
 - [ ] Student dashboard (upcoming classes, enrolled courses)
 - [ ] Student login/signup page
 - [ ] Student portal multi-teacher grouping
@@ -3388,7 +3388,7 @@ blog, docs, status, cdn, assets, static, files, media
 | Scenario | Rule |
 |----------|------|
 | Teacher visits their own subdomain while logged in | Show teacher dashboard at subdomain (not student portal). Middleware checks auth role. |
-| Student visits teacher subdomain | Show public teacher page. Student login redirects to students.lumscribe.com. |
+| Student visits teacher subdomain | Show public teacher page. Student login redirects to students.skoolrooms.com. |
 | Unverified teacher tries to log in | Show banner: "Please verify your email" with resend button. Block dashboard access. |
 | Suspended teacher tries to log in | Show suspension notice page. Cannot access any teacher features. |
 | Suspended teacher's students | Students RETAIN read access to enrolled cohort content (schedule, announcements, materials). Students CANNOT enroll in new cohorts. All cron jobs (class reminders, fee reminders) skip suspended teacher's cohorts: add `WHERE teacher.is_suspended = false` filter. |

@@ -20,7 +20,7 @@
 - [x] Remaining steps link to correct pages
 - [x] Plan Usage card shows correct limits (Courses 0/1, Students 0/15, Active Cohorts 0/1, Storage 0 MB/500 MB)
 - [x] Current plan displays: "Free (free)"
-- [ ] **BUG: Generic page title** — All dashboard pages show "Lumscribe — LMS for Tutors" instead of specific titles like "Dashboard — Lumscribe", "Courses — Lumscribe", etc.
+- [ ] **BUG: Generic page title** — All dashboard pages show "Skool Rooms — LMS for Tutors" instead of specific titles like "Dashboard — Skool Rooms", "Courses — Skool Rooms", etc.
 
 ## Courses (`/dashboard/courses`)
 

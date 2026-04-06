@@ -1,8 +1,8 @@
-# Lumscribe — LMS SaaS Platform
+# Skool Rooms — LMS SaaS Platform
 
 ## What This Project Is
 
-An LMS SaaS platform for independent tutors, home teachers, and small coaching centers in Pakistan. Teachers sign up, get a branded subdomain (xyz.lumscribe.com), and manage courses, students, Google Meet sessions, and payments from one dashboard. Students enroll via invite links and pay via screenshot verification (bank transfer/JazzCash/EasyPaisa). Platform owner (admin) earns via monthly teacher subscriptions + a percentage cut on every student payment.
+An LMS SaaS platform for independent tutors, home teachers, and small coaching centers in Pakistan. Teachers sign up, get a branded subdomain (xyz.skoolrooms.com), and manage courses, students, Google Meet sessions, and payments from one dashboard. Students enroll via invite links and pay via screenshot verification (bank transfer/JazzCash/EasyPaisa). Platform owner (admin) earns via monthly teacher subscriptions + a percentage cut on every student payment.
 
 ## Architecture Reference
 
@@ -51,10 +51,10 @@ Build plan is in `BUILD_PLAN.md`.
 
 ```
 app/
-  (platform)/          Marketing site + admin panel (lumscribe.com/*)
-  (teacher)/           Teacher dashboard (lumscribe.com/dashboard/*)
-  (student)/           Student portal (students.lumscribe.com/*)
-  (teacher-public)/    Teacher subdomain pages ([subdomain].lumscribe.com/*)
+  (platform)/          Marketing site + admin panel (skoolrooms.com/*)
+  (teacher)/           Teacher dashboard (skoolrooms.com/dashboard/*)
+  (student)/           Student portal (students.skoolrooms.com/*)
+  (teacher-public)/    Teacher subdomain pages ([subdomain].skoolrooms.com/*)
   api/                 Webhooks, crons, external integrations ONLY
 lib/
   utils.ts             cn() utility (clsx + tailwind-merge)
@@ -100,7 +100,7 @@ supabase/
 | Role-specific compositions | `components/teacher/`, `student/`, `admin/`, `public/` | `components/ui/` |
 | Types | `types/*.ts` | Inline in components |
 | Constants (routes, feature keys) | `constants/*.ts` | Hardcoded strings anywhere |
-| Platform URLs | `platformDomain()`, `teacherSubdomainUrl()` | Hardcoded `lumscribe.com` anywhere |
+| Platform URLs | `platformDomain()`, `teacherSubdomainUrl()` | Hardcoded `skoolrooms.com` anywhere |
 | Timestamps (display) | `formatPKT()` | `new Date().toLocaleString()` or raw UTC |
 | Email sending | `sendEmail()` in `lib/email/sender.ts` | Direct Brevo SDK calls in routes |
 | File uploads | `FileUpload` component → `lib/r2/upload.ts` | Direct R2 SDK calls in components |

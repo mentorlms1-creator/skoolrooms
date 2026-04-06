@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Migrate Lumscribe's custom UI to shadcn/ui with purple+orange theme, dark mode, bento dashboards, and unified sidebar navigation.
+**Goal:** Migrate Skool Rooms's custom UI to shadcn/ui with purple+orange theme, dark mode, bento dashboards, and unified sidebar navigation.
 
 **Architecture:** Layered migration in 4 phases — Foundation (theme + deps), Primitives (9 component swaps), Compositions (sidebar + data table + command palette), Dashboards + Polish (bento grids + charts + final audit). Each phase is independently shippable. Each component swap verified with TypeScript check + Chrome DevTools screenshots.
 
@@ -416,7 +416,7 @@ export const viewport: Viewport = {
 }
 
 export const metadata: Metadata = {
-  title: "Lumscribe — LMS for Tutors",
+  title: "Skool Rooms — LMS for Tutors",
   description:
     "An LMS platform for independent tutors, home teachers, and small coaching centers.",
 };

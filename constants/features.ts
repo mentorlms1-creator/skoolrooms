@@ -1,5 +1,5 @@
 /**
- * Feature key constants and display metadata for the Lumscribe LMS platform.
+ * Feature key constants and display metadata for the Skool Rooms LMS platform.
  * Derived from ARCHITECTURE.md feature_registry seed data.
  *
  * These keys map 1:1 to the `feature_registry` table's `feature_key` column
@@ -160,7 +160,7 @@ export const FEATURE_REGISTRY: readonly FeatureInfo[] = [
   {
     key: 'remove_branding',
     displayName: 'Remove Platform Branding',
-    description: 'Hide "Powered by Lumscribe" footer on teacher subdomain',
+    description: 'Hide "Powered by Skool Rooms" footer on teacher subdomain',
     category: 'branding',
     isLimitBased: false,
   },

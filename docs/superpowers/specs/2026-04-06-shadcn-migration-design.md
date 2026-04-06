@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-Migrate Lumscribe's custom UI component library to shadcn/ui and overhaul the visual design. The new design is inspired by a reference project management dashboard featuring purple/orange accent colors, bento grid layouts, dark mode, generous spacing, and a clean sidebar navigation with Lucide icons.
+Migrate Skool Rooms's custom UI component library to shadcn/ui and overhaul the visual design. The new design is inspired by a reference project management dashboard featuring purple/orange accent colors, bento grid layouts, dark mode, generous spacing, and a clean sidebar navigation with Lucide icons.
 
 ### Goals
 - Replace 9 custom UI primitives with shadcn equivalents (Radix-based, accessible, iOS-compatible)
@@ -261,7 +261,7 @@ Auth pages (login, signup, forgot password, reset password, admin login, student
 - **Styling:** Updated to use new tokens (bg-card, text-foreground, border-border)
 - **Dark mode:** Fully supported — card surfaces adapt, inputs adapt
 - **No split layout or hero images** — keep it simple, fast-loading for Pakistani users on slow connections
-- **Logo:** Lumscribe logo at top of card in `text-primary` (purple)
+- **Logo:** Skool Rooms logo at top of card in `text-primary` (purple)
 
 ## 3f. Animations & Transitions
 
@@ -450,7 +450,7 @@ All three roles use the same `SidebarShell` component with role-specific configu
 ### Desktop States
 
 **Expanded (256px, default):**
-- Logo ("Lumscribe") at top
+- Logo ("Skool Rooms") at top
 - Search/Command bar (triggers Cmd+K)
 - Nav items with Lucide icons + text labels
 - Notification bell with red dot indicator

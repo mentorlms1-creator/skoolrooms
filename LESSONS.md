@@ -1,4 +1,4 @@
-# Lessons Learned — Lumscribe LMS
+# Lessons Learned — Skool Rooms LMS
 
 > Log every unexpected issue, wrong assumption, or library gotcha here.
 > Check this file BEFORE starting any complex task — the answer might already be here.

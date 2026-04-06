@@ -4,7 +4,7 @@
  * Server Component. Checks auth, fetches student data and enrollments,
  * wraps children in UIProvider > StudentProvider > StudentNav + main content.
  *
- * The middleware rewrites students.lumscribe.com/* to /student/*,
+ * The middleware rewrites students.skoolrooms.com/* to /student/*,
  * so this layout handles all student portal pages.
  */
 

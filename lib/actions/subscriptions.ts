@@ -157,7 +157,7 @@ export async function submitSubscriptionScreenshotAction(
 
   // Notify admin about new screenshot
   await sendEmail({
-    to: process.env.ADMIN_EMAIL ?? 'admin@lumscribe.com',
+    to: process.env.ADMIN_EMAIL ?? 'admin@skoolrooms.com',
     type: 'new_subscription_screenshot',
     recipientId: 'admin',
     recipientType: 'teacher', // admin notifications use teacher type for routing

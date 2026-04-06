@@ -13,7 +13,7 @@
 - [x] Teacher login at `/login` works
 - [x] Redirects to `/dashboard` after login
 - [x] Dashboard shows "Welcome back, Ahmed Khan"
-- [x] Page title: "Dashboard — Lumscribe" (fixed)
+- [x] Page title: "Dashboard — Skool Rooms" (fixed)
 
 ### Payment Settings (prerequisite for publishing)
 - [x] Navigate to Settings > Payments

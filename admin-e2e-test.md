@@ -11,8 +11,8 @@
 
 - [x] Admin login at `/admin-login` works
 - [x] Redirects to `/admin` after login
-- [x] Page title: "Admin Dashboard — Lumscribe"
-- [x] Sidebar shows "Lumscribe" with "Admin" badge
+- [x] Page title: "Admin Dashboard — Skool Rooms"
+- [x] Sidebar shows "Skool Rooms" with "Admin" badge
 
 ---
 
@@ -32,7 +32,7 @@
 
 ### Teacher List
 - [x] Page loads at `/admin/teachers`
-- [x] Page title: "Teachers — Lumscribe Admin"
+- [x] Page title: "Teachers — Skool Rooms Admin"
 - [x] Shows "2 teachers on the platform."
 - [x] **Search works** — typing "Ahmed" filters to 1 row, clearing restores all
 - [x] Sortable columns: Name, Email, Plan, Status, Students, Joined
@@ -75,7 +75,7 @@
 ## Phase 4: Payments
 
 - [x] Page loads at `/admin/payments`
-- [x] Page title: "Payments — Lumscribe Admin"
+- [x] Page title: "Payments — Skool Rooms Admin"
 - [x] Title: "Subscription Payments"
 - [x] Empty state: "No pending subscriptions to review."
 
@@ -84,7 +84,7 @@
 ## Phase 5: Platform Settings
 
 - [x] Page loads at `/admin/settings`
-- [x] Page title: "Settings — Lumscribe Admin"
+- [x] Page title: "Settings — Skool Rooms Admin"
 - [x] All 13 platform settings displayed
 - [x] **Toggle switches**: 3 boolean settings now use toggle switches:
   - Payment Gateway Enabled (off)
@@ -99,7 +99,7 @@
 ## Phase 6: Operations
 
 - [x] Page loads at `/admin/operations`
-- [x] Page title: "Operations — Lumscribe Admin"
+- [x] Page title: "Operations — Skool Rooms Admin"
 - [x] Stats cards: Active Cohorts (0), Total Students (1), Pending Payments (0)
 - [x] Helpful subtitles on each card
 
@@ -107,7 +107,7 @@
 
 ## Phase 7: Mobile Responsiveness
 
-- [x] Mobile top bar with "Lumscribe Admin" badge + hamburger
+- [x] Mobile top bar with "Skool Rooms Admin" badge + hamburger
 - [x] Sidebar hidden by default on mobile
 - [x] Hamburger opens slide-out sidebar
 - [x] Content takes full width
@@ -130,7 +130,7 @@
 
 | # | Severity | Description | Location |
 |---|----------|-------------|----------|
-| 1 | Low | Teacher detail page title still generic "Lumscribe — LMS for Tutors" | `/admin/teachers/[id]` |
+| 1 | Low | Teacher detail page title still generic "Skool Rooms — LMS for Tutors" | `/admin/teachers/[id]` |
 | 2 | Info | Activity Log shows raw JSON for plan change details | Activity Log section |
 
 ---

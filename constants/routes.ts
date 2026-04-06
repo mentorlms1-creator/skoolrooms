@@ -1,5 +1,5 @@
 /**
- * Route constants for the Lumscribe LMS platform.
+ * Route constants for the Skool Rooms LMS platform.
  * Never hardcode route strings — always import from here.
  *
  * Route map derived from ARCHITECTURE.md Section 10b.
@@ -7,7 +7,7 @@
 
 export const ROUTES = {
   // ═══════════════════════════════════════════
-  // PLATFORM — lumscribe.com public routes
+  // PLATFORM — skoolrooms.com public routes
   // ═══════════════════════════════════════════
   PLATFORM: {
     home: '/',
@@ -29,7 +29,7 @@ export const ROUTES = {
   },
 
   // ═══════════════════════════════════════════
-  // TEACHER — lumscribe.com/dashboard/*
+  // TEACHER — skoolrooms.com/dashboard/*
   // ═══════════════════════════════════════════
   TEACHER: {
     dashboard: '/dashboard',
@@ -72,7 +72,7 @@ export const ROUTES = {
   },
 
   // ═══════════════════════════════════════════
-  // STUDENT — students.lumscribe.com/*
+  // STUDENT — students.skoolrooms.com/*
   // ═══════════════════════════════════════════
   STUDENT: {
     dashboard: '/student',
@@ -86,7 +86,7 @@ export const ROUTES = {
   },
 
   // ═══════════════════════════════════════════
-  // ADMIN — lumscribe.com/admin/*
+  // ADMIN — skoolrooms.com/admin/*
   // ═══════════════════════════════════════════
   ADMIN: {
     dashboard: '/admin',
@@ -103,7 +103,7 @@ export const ROUTES = {
   },
 
   // ═══════════════════════════════════════════
-  // PUBLIC — [subdomain].lumscribe.com/*
+  // PUBLIC — [subdomain].skoolrooms.com/*
   // ═══════════════════════════════════════════
   PUBLIC: {
     teacherPage: (subdomain: string) => `/${subdomain}` as const,

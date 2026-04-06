@@ -5,4 +5,4 @@ Disallow: /admin/
 Disallow: /student/
 Disallow: /api/
 
-Sitemap: https://lumscribe.com/sitemap.xml
+Sitemap: https://skoolrooms.com/sitemap.xml

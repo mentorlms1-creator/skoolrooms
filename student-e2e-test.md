@@ -12,7 +12,7 @@
 - [x] Student login at `/student-login` works
 - [x] Redirects to `/student` after login
 - [x] Dashboard shows "Welcome back, Sara"
-- [x] Page title: "Dashboard — Lumscribe Student"
+- [x] Page title: "Dashboard — Skool Rooms Student"
 - [x] Single "Forgot password?" link (duplicate fix confirmed)
 
 ---
@@ -29,7 +29,7 @@
 ## Phase 3: My Courses
 
 - [x] Page loads at `/student/courses`
-- [x] Page title: "My Courses — Lumscribe Student"
+- [x] Page title: "My Courses — Skool Rooms Student"
 - [x] Empty state: "No courses yet — Ask your teacher for an invite link to get started."
 - [ ] **NOT TESTABLE**: Cannot test enrolled course view — enrollment requires subdomain-based join link which doesn't work on localhost
 
@@ -38,7 +38,7 @@
 ## Phase 4: Schedule
 
 - [x] Page loads at `/student/schedule`
-- [x] Page title: "Schedule — Lumscribe Student"
+- [x] Page title: "Schedule — Skool Rooms Student"
 - [x] Title: "Schedule" with subtitle "All your upcoming classes across all courses"
 - [x] Empty state: "No upcoming classes — Your teachers will add classes to your enrolled courses."
 
@@ -47,7 +47,7 @@
 ## Phase 5: Payments
 
 - [x] Page loads at `/student/payments`
-- [x] Page title: "Payments — Lumscribe Student"
+- [x] Page title: "Payments — Skool Rooms Student"
 - [x] Title: "Payments" with subtitle "Your payment history and pending fees"
 - [x] Empty state: "No payment records — Your payment history will appear here once you make your first payment."
 
@@ -56,7 +56,7 @@
 ## Phase 6: Settings
 
 - [x] Page loads at `/student/settings`
-- [x] Page title: "Settings — Lumscribe Student"
+- [x] Page title: "Settings — Skool Rooms Student"
 - [x] Editable fields: Full Name, Phone
 - [x] Read-only: Email ("Email cannot be changed here.")
 - [x] Read-only: Member Since date (30 Mar 2026)
@@ -79,7 +79,7 @@
 
 ## Phase 8: Enrollment Flow (Public Join Page)
 
-- [ ] **CRITICAL: Cannot test on localhost** — The invite link (`https://ahmed-khan.lumscribe.com/join/...`) uses subdomain routing which requires actual DNS. On localhost, accessing `/teacher-public/ahmed-khan/join/...` returns 404 because the middleware only rewrites for actual subdomains, not direct path access. This is a **dev environment limitation**, not a code bug — but it means the entire enrollment → payment → screenshot flow is untestable locally.
+- [ ] **CRITICAL: Cannot test on localhost** — The invite link (`https://ahmed-khan.skoolrooms.com/join/...`) uses subdomain routing which requires actual DNS. On localhost, accessing `/teacher-public/ahmed-khan/join/...` returns 404 because the middleware only rewrites for actual subdomains, not direct path access. This is a **dev environment limitation**, not a code bug — but it means the entire enrollment → payment → screenshot flow is untestable locally.
 
 ---
 

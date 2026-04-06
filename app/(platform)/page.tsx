@@ -1,5 +1,5 @@
 /**
- * app/(platform)/page.tsx — Marketing homepage for lumscribe.com
+ * app/(platform)/page.tsx — Marketing homepage for skoolrooms.com
  * Server Component. Hero, features, and footer.
  */
 
@@ -90,7 +90,7 @@ const FEATURES: Feature[] = [
   {
     title: 'Branded Subdomain',
     description:
-      'Get your own yourname.lumscribe.com page where students can discover your courses and enroll instantly.',
+      'Get your own yourname.skoolrooms.com page where students can discover your courses and enroll instantly.',
     icon: (
       <svg
         xmlns="http://www.w3.org/2000/svg"

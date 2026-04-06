@@ -1,6 +1,6 @@
 /**
  * app/(platform)/layout.tsx — Platform layout
- * Minimal wrapper for marketing pages and auth pages on the main domain (lumscribe.com).
+ * Minimal wrapper for marketing pages and auth pages on the main domain (skoolrooms.com).
  * No sidebar — just wraps children.
  */
 

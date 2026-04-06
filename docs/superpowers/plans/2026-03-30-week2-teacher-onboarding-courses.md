@@ -970,7 +970,7 @@ export function Sidebar() {
       {/* Logo */}
       <div className="flex h-16 items-center px-6 border-b border-border">
         <Link href={ROUTES.TEACHER.dashboard} className="text-xl font-bold text-brand-600">
-          Lumscribe
+          Skool Rooms
         </Link>
       </div>
 
@@ -1393,7 +1393,7 @@ export default function OnboardingLayout({
       <div className="mx-auto max-w-xl px-4 py-12">
         {/* Progress indicator */}
         <div className="mb-8 text-center">
-          <h1 className="text-2xl font-bold text-brand-600">Lumscribe</h1>
+          <h1 className="text-2xl font-bold text-brand-600">Skool Rooms</h1>
           <p className="mt-2 text-muted">Set up your teaching profile</p>
         </div>
         {children}
@@ -2494,7 +2494,7 @@ export default function TeacherPublicLayout({
     <div className="min-h-screen bg-paper">
       {children}
       <footer className="border-t border-border py-6 text-center text-sm text-muted">
-        Powered by Lumscribe
+        Powered by Skool Rooms
       </footer>
     </div>
   )
@@ -2592,7 +2592,7 @@ export default function HomePage() {
       {/* Nav */}
       <header className="border-b border-border bg-surface">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-          <Link href="/" className="text-xl font-bold text-brand-600">Lumscribe</Link>
+          <Link href="/" className="text-xl font-bold text-brand-600">Skool Rooms</Link>
           <nav className="flex items-center gap-4">
             <Link href={ROUTES.PLATFORM.explore} className="text-sm text-muted hover:text-ink">Find a Teacher</Link>
             <Link href={ROUTES.PLATFORM.pricing} className="text-sm text-muted hover:text-ink">Pricing</Link>
@@ -2611,7 +2611,7 @@ export default function HomePage() {
           <span className="text-brand-600">your platform.</span>
         </h1>
         <p className="mx-auto mt-6 max-w-2xl text-lg text-muted">
-          Lumscribe gives independent tutors and coaching centers a branded subdomain,
+          Skool Rooms gives independent tutors and coaching centers a branded subdomain,
           course management, student enrollment, and payment tracking — all from one dashboard.
         </p>
         <div className="mt-8 flex items-center justify-center gap-4">
@@ -2628,7 +2628,7 @@ export default function HomePage() {
       <section className="mx-auto max-w-5xl px-4 pb-24">
         <div className="grid gap-6 sm:grid-cols-3">
           {[
-            { title: 'Branded Subdomain', desc: 'Get your own yourname.lumscribe.com page instantly.' },
+            { title: 'Branded Subdomain', desc: 'Get your own yourname.skoolrooms.com page instantly.' },
             { title: 'Course Management', desc: 'Create courses, schedule classes, track attendance.' },
             { title: 'Simple Payments', desc: 'Students pay via bank transfer or JazzCash. You verify.' },
           ].map((f) => (
@@ -2642,7 +2642,7 @@ export default function HomePage() {
 
       {/* Footer */}
       <footer className="border-t border-border py-8 text-center text-sm text-muted">
-        Lumscribe — LMS for Tutors
+        Skool Rooms — LMS for Tutors
       </footer>
     </div>
   )
@@ -2687,7 +2687,7 @@ export default function PricingPage() {
     <div className="min-h-screen bg-paper">
       <header className="border-b border-border bg-surface">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-          <Link href="/" className="text-xl font-bold text-brand-600">Lumscribe</Link>
+          <Link href="/" className="text-xl font-bold text-brand-600">Skool Rooms</Link>
           <Link href={ROUTES.PLATFORM.login} className="text-sm text-muted hover:text-ink">Log In</Link>
         </div>
       </header>

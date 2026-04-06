@@ -1,4 +1,4 @@
-# BUILD PLAN — Lumscribe LMS SaaS Platform
+# BUILD PLAN — Skool Rooms LMS SaaS Platform
 
 > Week-by-week implementation plan. Each week delivers something testable.
 > Phase 1 = launch-ready MVP. Phase 2 = full feature set. Phase 3 = scale.
@@ -26,7 +26,7 @@
 | 2 | **Brevo** | Create account at brevo.com (free tier) → Settings → SMTP & API → API Keys | `BREVO_API_KEY` |
 | 3 | **Cloudflare** | Add your domain to Cloudflare (free tier) → API Tokens → Create Token (Zone:DNS:Edit) | `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ZONE_ID` |
 | 4 | **Cloudflare R2** | Cloudflare dashboard → R2 → Create Bucket → Manage R2 API Tokens | `CLOUDFLARE_R2_ACCESS_KEY`, `CLOUDFLARE_R2_SECRET_KEY`, `CLOUDFLARE_R2_BUCKET`, `CLOUDFLARE_R2_ENDPOINT`, `CLOUDFLARE_R2_PUBLIC_URL` |
-| 5 | **You decide** | Pick your platform domain (e.g. `lumscribe.com`) | `NEXT_PUBLIC_PLATFORM_DOMAIN` |
+| 5 | **You decide** | Pick your platform domain (e.g. `skoolrooms.com`) | `NEXT_PUBLIC_PLATFORM_DOMAIN` |
 | 6 | **You decide** | Your admin email address | `ADMIN_EMAIL` |
 | 7 | **Auto-generated** | We generate a random UUID for cron protection | `CRON_SECRET` |
 | 8 | **Mock (no key needed)** | Payment gateway starts as mock — no real key until Phase 2 | `PAYMENT_GATEWAY=mock` |
@@ -208,8 +208,8 @@ Everything below this week is shared infrastructure that every other week depend
 - [ ] Course creation page with TipTap rich text editor
 - [ ] Course thumbnail upload via R2 presign
 - [ ] Course list page (draft/published badges)
-- [ ] Teacher public page on subdomain (`[subdomain].lumscribe.com`) — course listing + bio
-- [ ] Marketing homepage at `lumscribe.com` — value prop, "Start Free" CTA, "Find a Teacher" link to explore, pricing overview
+- [ ] Teacher public page on subdomain (`[subdomain].skoolrooms.com`) — course listing + bio
+- [ ] Marketing homepage at `skoolrooms.com` — value prop, "Start Free" CTA, "Find a Teacher" link to explore, pricing overview
 - [ ] `EmptyState` component for all list pages
 
 **Testable:** Teacher completes onboarding, subdomain goes live, creates a course with thumbnail, publishes it, public page shows the course.
@@ -282,7 +282,7 @@ Everything below this week is shared infrastructure that every other week depend
 - [ ] Teacher payment verification panel (pending list sorted by newest, full-size screenshot view, approve/reject buttons)
 - [ ] Payment badge count on sidebar nav (realtime via Supabase subscription)
 - [ ] Student portal layout (top nav: My Courses, Schedule, Payments, Settings)
-- [ ] `students.lumscribe.com` routing working
+- [ ] `students.skoolrooms.com` routing working
 - [ ] Student dashboard — upcoming classes with Meet links, grouped by teacher
 - [ ] Student courses page — enrolled courses grouped by teacher
 - [ ] Student schedule page — all upcoming classes across all teachers

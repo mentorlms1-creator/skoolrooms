@@ -1,5 +1,5 @@
 /**
- * Plan constants, upload limits, and reserved subdomains for the Lumscribe LMS platform.
+ * Plan constants, upload limits, and reserved subdomains for the Skool Rooms LMS platform.
  * Derived from ARCHITECTURE.md Section 13 (Business Rules Reference).
  *
  * All values here are launch defaults. Live values are admin-configurable

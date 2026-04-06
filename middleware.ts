@@ -34,14 +34,14 @@ export async function middleware(request: NextRequest) {
   // Strip port for localhost development
   const normalizedHost = hostname.replace(':3000', '').replace(':3001', '')
 
-  // Skip rewriting for the bare platform domain (lumscribe.com) and www
+  // Skip rewriting for the bare platform domain (skoolrooms.com) and www
   if (
     normalizedHost !== platformDomain &&
     normalizedHost !== `www.${platformDomain}` &&
     normalizedHost !== 'localhost' &&
     normalizedHost !== ''
   ) {
-    // students.lumscribe.com -> rewrite to /student/*
+    // students.skoolrooms.com -> rewrite to /student/*
     if (normalizedHost === `students.${platformDomain}`) {
       const url = request.nextUrl.clone()
       url.pathname = `/student${url.pathname}`
@@ -51,7 +51,7 @@ export async function middleware(request: NextRequest) {
       })
     }
 
-    // {subdomain}.lumscribe.com -> rewrite to /teacher-public/{subdomain}/*
+    // {subdomain}.skoolrooms.com -> rewrite to /teacher-public/{subdomain}/*
     const subdomain = normalizedHost.replace(`.${platformDomain}`, '')
     if (subdomain && subdomain !== normalizedHost) {
       const url = request.nextUrl.clone()

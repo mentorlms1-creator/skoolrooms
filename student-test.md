@@ -19,7 +19,7 @@
 - [x] Stats cards: Active Courses (0), Upcoming Classes (0)
 - [x] Quick Links card: My Courses, Full Schedule
 - [x] Empty state: "No upcoming classes" with "View My Courses" CTA
-- [ ] **BUG: Generic page title** — All student pages show "Lumscribe — LMS for Tutors" instead of specific titles like "Dashboard — Lumscribe Student", "My Courses — Lumscribe", etc.
+- [ ] **BUG: Generic page title** — All student pages show "Skool Rooms — LMS for Tutors" instead of specific titles like "Dashboard — Skool Rooms Student", "My Courses — Skool Rooms", etc.
 
 ## My Courses (`/student/courses`)
 

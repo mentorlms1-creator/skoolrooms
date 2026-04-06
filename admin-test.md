@@ -10,7 +10,7 @@
 - [x] Admin login at `/admin-login` works with correct credentials
 - [x] Redirects to `/admin` after successful login
 - [x] Sign Out button present in sidebar
-- [x] "Lumscribe Admin" branding with "Admin" badge in sidebar
+- [x] "Skool Rooms Admin" branding with "Admin" badge in sidebar
 
 ## Dashboard (`/admin`)
 
@@ -18,7 +18,7 @@
 - [x] Title: "Admin Dashboard" with subtitle "Platform overview and key metrics."
 - [x] Top row metrics: Monthly Recurring Revenue (PKR 0), Signups This Week (2), Signups This Month (2), Pending Payments (0)
 - [x] Bottom row metrics: Active Cohorts (0), Total Students (1), Plan Distribution (Free: 2)
-- [ ] **BUG: Generic page title** — All admin pages show "Lumscribe — LMS for Tutors" instead of "Admin Dashboard — Lumscribe" etc.
+- [ ] **BUG: Generic page title** — All admin pages show "Skool Rooms — LMS for Tutors" instead of "Admin Dashboard — Skool Rooms" etc.
 
 ## Teachers (`/admin/teachers`)
 
