@@ -82,15 +82,15 @@ export function PlanChart({ data }: PlanChartProps) {
                   >
                     <tspan
                       x={viewBox.cx}
-                      y={viewBox.cy}
-                      className="fill-foreground text-2xl font-bold"
+                      y={(viewBox.cy ?? 0) - 10}
+                      className="fill-foreground text-[15px] font-bold"
                     >
                       {total}
                     </tspan>
                     <tspan
                       x={viewBox.cx}
-                      y={(viewBox.cy ?? 0) + 20}
-                      className="fill-muted-foreground text-xs"
+                      y={(viewBox.cy ?? 0) + 12}
+                      className="fill-muted-foreground text-[11px] font-medium"
                     >
                       Teachers
                     </tspan>

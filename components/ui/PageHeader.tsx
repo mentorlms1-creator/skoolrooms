@@ -18,28 +18,32 @@ type PageHeaderProps = {
 
 export function PageHeader({ title, description, action, filter, backHref, className }: PageHeaderProps) {
   return (
-    <div className={cn('mb-6', className)}>
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          {backHref && (
-            <Link
-              href={backHref}
-              className="flex items-center justify-center rounded-md p-2.5 min-h-[44px] min-w-[44px] text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-              aria-label="Go back"
-            >
-              <ArrowLeft className="h-5 w-5" aria-hidden="true" />
-            </Link>
-          )}
+    <div className={cn('mb-10', className)}>
+      <div className="flex flex-col gap-1">
+        {backHref && (
+          <Link
+            href={backHref}
+            className="mb-4 flex items-center justify-center rounded-xl p-2.5 min-h-[44px] min-w-[44px] w-fit text-muted-foreground bg-card shadow-sm ring-1 ring-foreground/5 hover:text-foreground transition-all"
+            aria-label="Go back"
+          >
+            <ArrowLeft className="h-5 w-5" aria-hidden="true" />
+          </Link>
+        )}
+        <div className="flex flex-wrap items-end justify-between gap-6">
           <div className="min-w-0">
-            <h1 className="text-2xl font-semibold text-foreground">{title}</h1>
+            <h1 className="text-[2.5rem] font-bold tracking-tight text-foreground leading-[1.1]">
+              {title}
+            </h1>
             {description && (
-              <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+              <p className="mt-2 text-[17px] font-medium text-muted-foreground/80">
+                {description}
+              </p>
             )}
           </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-          {filter && <div className="shrink-0">{filter}</div>}
-          {action && <div className="shrink-0">{action}</div>}
+          <div className="flex flex-wrap items-center gap-4">
+            {filter && <div className="shrink-0">{filter}</div>}
+            {action && <div className="shrink-0">{action}</div>}
+          </div>
         </div>
       </div>
     </div>

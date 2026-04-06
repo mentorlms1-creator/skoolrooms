@@ -36,40 +36,48 @@ export function RevenueChart({ data }: RevenueChartProps) {
   }
 
   return (
-    <ChartContainer config={chartConfig} className="h-[260px] w-full">
+    <ChartContainer config={chartConfig} className="h-full w-full">
       <BarChart
         data={data}
-        margin={{ top: 8, right: 8, bottom: 0, left: 0 }}
+        margin={{ top: 20, right: 0, bottom: 0, left: -20 }}
+        barGap={8}
       >
-        <CartesianGrid vertical={false} />
+        <CartesianGrid vertical={false} strokeDasharray="3 3" className="stroke-border" />
         <XAxis
           dataKey="cohortName"
           tickLine={false}
           axisLine={false}
-          tickMargin={8}
+          tick={{ fill: 'var(--muted-foreground)', fontSize: 12, fontWeight: 600 }}
+          tickMargin={12}
           tickFormatter={(value: string) =>
-            value.length > 12 ? `${value.slice(0, 12)}...` : value
+            value.length > 10 ? `${value.slice(0, 10)}...` : value
           }
         />
         <YAxis
           tickLine={false}
           axisLine={false}
-          tickMargin={4}
+          tick={{ fill: 'var(--muted-foreground)', fontSize: 12, fontWeight: 600 }}
+          tickMargin={8}
           tickFormatter={(value: number) =>
             value >= 1000 ? `${(value / 1000).toFixed(0)}k` : String(value)
           }
         />
         <ChartTooltip
+          cursor={{ fill: 'var(--muted)', radius: 12 }}
           content={
             <ChartTooltipContent
+              className="bg-card shadow-xl border-none rounded-xl"
               formatter={(value) => `PKR ${Number(value).toLocaleString()}`}
             />
           }
         />
         <Bar
           dataKey="revenue"
-          fill="var(--color-revenue)"
-          radius={[12, 12, 12, 12]}
+          fill="var(--chart-1)"
+          radius={[10, 10, 10, 10]}
+          barSize={45}
+          animationDuration={1500}
+          animationEasing="ease-out"
         />
       </BarChart>
     </ChartContainer>
