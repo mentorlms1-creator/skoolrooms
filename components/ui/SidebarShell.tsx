@@ -10,7 +10,13 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { LogOut, Search } from 'lucide-react'
-import type { NavItem } from '@/constants/nav-items'
+import { TEACHER_NAV_ITEMS, ADMIN_NAV_ITEMS, STUDENT_NAV_ITEMS, type NavItem } from '@/constants/nav-items'
+
+const NAV_ITEMS_BY_ROLE: Record<string, NavItem[]> = {
+  teacher: TEACHER_NAV_ITEMS,
+  admin: ADMIN_NAV_ITEMS,
+  student: STUDENT_NAV_ITEMS,
+}
 import { cn } from '@/lib/utils'
 import {
   Sidebar,
@@ -32,8 +38,8 @@ import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { CommandPalette, useCommandPalette } from '@/components/ui/CommandPalette'
 
 type SidebarShellProps = {
-  navItems: NavItem[]
-  user: { name: string; role: string }
+  role: 'teacher' | 'admin' | 'student'
+  user: { name: string }
   roleBadge?: string | null
   notificationCount?: number
   notificationHref?: string
@@ -42,7 +48,7 @@ type SidebarShellProps = {
 }
 
 export function SidebarShell({
-  navItems,
+  role,
   user,
   roleBadge,
   notificationCount = 0,
@@ -50,6 +56,7 @@ export function SidebarShell({
   signOutAction,
   children,
 }: SidebarShellProps) {
+  const navItems = NAV_ITEMS_BY_ROLE[role] || []
   const pathname = usePathname()
   const { open: openCommandPalette } = useCommandPalette()
 
@@ -132,7 +139,7 @@ export function SidebarShell({
                 {user.name}
               </span>
               <span className="truncate text-xs text-muted-foreground capitalize">
-                {user.role}
+                {role}
               </span>
             </div>
             <ThemeToggle />

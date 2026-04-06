@@ -16,7 +16,6 @@ import { UIProvider } from '@/providers/UIProvider'
 import { StudentProvider } from '@/providers/StudentProvider'
 import type { StudentData, StudentEnrollment } from '@/providers/StudentProvider'
 import { SidebarShell } from '@/components/ui/SidebarShell'
-import { STUDENT_NAV_ITEMS } from '@/constants/nav-items'
 import { ROUTES } from '@/constants/routes'
 import { signOutStudent } from '@/lib/auth/actions'
 
@@ -61,10 +60,10 @@ export default async function StudentLayout({
     <UIProvider>
       <StudentProvider student={studentData} enrollments={studentEnrollments}>
         <SidebarShell
-          navItems={STUDENT_NAV_ITEMS}
-          user={{ name: studentData.name, role: 'student' }}
+          role="student"
+          user={{ name: studentData.name }}
           notificationCount={0}
-          notificationHref={ROUTES.STUDENT.messages}
+          notificationHref={ROUTES.STUDENT.payments}
           signOutAction={signOutStudent}
         >
           {children}

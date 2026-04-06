@@ -7,7 +7,6 @@
 
 import { requireAdmin } from '@/lib/auth/guards'
 import { SidebarShell } from '@/components/ui/SidebarShell'
-import { ADMIN_NAV_ITEMS } from '@/constants/nav-items'
 import { UIProvider } from '@/providers/UIProvider'
 import { signOut } from '@/lib/auth/actions'
 
@@ -22,8 +21,8 @@ export default async function AdminLayout({
   return (
     <UIProvider>
       <SidebarShell
-        navItems={ADMIN_NAV_ITEMS}
-        user={{ name: 'Admin', role: 'admin' }}
+        role="admin"
+        user={{ name: 'Admin' }}
         roleBadge="Admin"
         signOutAction={signOut}
       >

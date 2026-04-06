@@ -12,7 +12,6 @@ import { redirect } from 'next/navigation'
 import { requireTeacher } from '@/lib/auth/guards'
 import { getTeacherPlanDetails, getTeacherUsage } from '@/lib/db/teachers'
 import { SidebarShell } from '@/components/ui/SidebarShell'
-import { TEACHER_NAV_ITEMS } from '@/constants/nav-items'
 import { TeacherProvider } from '@/providers/TeacherProvider'
 import type { TeacherData } from '@/providers/TeacherProvider'
 import type { PlanSlug } from '@/types/domain'
@@ -82,8 +81,8 @@ export default async function DashboardLayout({
       usage={usage ?? defaultUsage}
     >
       <SidebarShell
-        navItems={TEACHER_NAV_ITEMS}
-        user={{ name: teacherData.name, role: 'teacher' }}
+        role="teacher"
+        user={{ name: teacherData.name }}
         notificationCount={0}
         notificationHref={ROUTES.TEACHER.messages}
         signOutAction={signOut}
