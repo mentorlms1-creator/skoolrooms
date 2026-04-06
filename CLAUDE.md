@@ -40,6 +40,11 @@ Build plan is in `BUILD_PLAN.md`.
 | DNS | Cloudflare DNS API | Auto-creates teacher subdomains on signup. |
 | Email | Brevo (`@getbrevo/brevo`) | NOT Resend. 300 emails/day free tier. |
 | Hosting | Vercel Pro | Required for wildcard subdomain SSL. |
+| UI Components | shadcn/ui (Radix) | Components in `components/ui/`. Install: `npx shadcn@latest add <name>`. |
+| Icons | Lucide React | Tree-shakeable. Import: `import { IconName } from 'lucide-react'` |
+| Dark Mode | next-themes | ThemeProvider in root layout. Toggle in sidebar. |
+| Charts | Recharts | Lazy-loaded via dynamic import. Client components only. |
+| Tables | @tanstack/react-table | Used by DataTable.tsx for sort/filter/pagination. |
 | Language | TypeScript (strict mode) | No `any` types. |
 
 ## Project Structure
@@ -52,6 +57,7 @@ app/
   (teacher-public)/    Teacher subdomain pages ([subdomain].lumscribe.com/*)
   api/                 Webhooks, crons, external integrations ONLY
 lib/
+  utils.ts             cn() utility (clsx + tailwind-merge)
   db/                  Service layer — ALL database queries go here
   payment/             PaymentProvider interface + adapters (mock, safepay, payfast)
   plans/               canUseFeature(), getLimit() — plan enforcement
@@ -61,7 +67,7 @@ lib/
   r2/                  getPresignedUploadUrl() — file uploads
   cloudflare/          createSubdomainRecord() — DNS management
 components/
-  ui/                  Shared primitives — Button, DataTable, StatusBadge, FileUpload, etc.
+  ui/                  shadcn primitives (lowercase) + custom compositions (PascalCase)
   teacher/             Teacher-specific compositions (use ui/ primitives)
   student/             Student-specific compositions
   admin/               Admin-specific compositions
@@ -70,9 +76,9 @@ providers/
   TeacherProvider.tsx   Server → Client data bridge for teacher context
   StudentProvider.tsx   Server → Client data bridge for student context
   UIProvider.tsx        Client-side UI state (toasts, modals)
-hooks/                 useRealtime(), useToast() — client components ONLY
+hooks/                 useRealtime(), useToast(), use-mobile — client components ONLY
 types/                 database.ts (auto-gen), api.ts, domain.ts
-constants/             routes.ts, features.ts, plans.ts
+constants/             routes.ts, features.ts, plans.ts, nav-items.ts
 supabase/
   client.ts            Browser Supabase client
   server.ts            Server Supabase client (@supabase/ssr)
@@ -89,7 +95,8 @@ supabase/
 | Mutations (create, update, delete) | Server Actions in the page/component that needs them | Client-side `fetch()` to API routes |
 | Initial data fetching | Server Components (`page.tsx`, `layout.tsx`) | Client Components via `useEffect` |
 | Realtime subscriptions | `useRealtime()` hook in Client Components | Server Components |
-| UI primitives (Button, Table, Badge) | `components/ui/` | Role-specific folders |
+| shadcn components (button, dialog, table, etc.) | `components/ui/` (lowercase filenames) | Don't create in role folders |
+| Custom compositions (DataTable, SidebarShell, etc.) | `components/ui/` (PascalCase filenames) | Wrap shadcn primitives |
 | Role-specific compositions | `components/teacher/`, `student/`, `admin/`, `public/` | `components/ui/` |
 | Types | `types/*.ts` | Inline in components |
 | Constants (routes, feature keys) | `constants/*.ts` | Hardcoded strings anywhere |
@@ -120,17 +127,18 @@ supabase/
 11. **Client Components NEVER fetch on mount.** No `useEffect(() => fetch(...))`. Data comes from Server Component props or React Context (TeacherProvider).
 12. **Mutations use Server Actions.** NOT client-side `fetch()` to API routes. API routes exist only for: webhooks, crons, and external integrations.
 13. **One component, one source.** Every UI primitive lives in `components/ui/`. Never duplicate a Button, Table, Badge, or FileUpload. If it exists in `ui/`, import it.
-14. **Theme changes = one file.** All colors, fonts, shadows defined in `@theme` block in `globals.css`. Never use raw hex values or Tailwind defaults (`bg-blue-500`) in components. Always use tokens: `bg-brand-500`, `text-ink`, `border-border`.
-15. **Plan limits enforced server-side.** `PlanLimitGuard` is UI-only feedback. Every write route MUST also call `getLimit()` and check. Never trust client-side checks alone.
+14. **OKLCH dual-mode theme in `globals.css`.** Never use raw hex values or Tailwind defaults (`bg-blue-500`) in components. Always use semantic tokens: `bg-primary`, `text-foreground`, `border-border`. Always support dark mode.
+15. **All interactive components must work in dark mode.** Test with both themes before marking complete.
+16. **Plan limits enforced server-side.** `PlanLimitGuard` is UI-only feedback. Every write route MUST also call `getLimit()` and check. Never trust client-side checks alone.
 
 ### Business Rules
-16. **Screenshots go directly to teacher's bank.** Platform never holds this money. `teacher_balances` is credited with the net amount (after cut). Platform cut is collected at payout time.
-17. **Manual "Mark as Paid" enrollments set `platform_cut_pkr = 0`.** Balance NOT credited. Cash went directly to teacher outside the platform.
-18. **Refund deducts `teacher_payout_amount_pkr`** (not full `amount_pkr`). Prevents negative balances.
-19. **One active payout request at a time.** Reject new payout if existing one has status `pending` or `processing`.
-20. **Archived cohorts are permanently read-only.** No un-archive. All content-write routes check `cohort.status != 'archived'` and return 403 `COHORT_ARCHIVED`.
-21. **Free plan never expires.** `plan_expires_at = NULL` = free forever. Grace period and renewal reminders don't apply.
-22. **Trial has no grace period.** Trial ends → auto-downgrade to Free immediately. Grace period is only for paid plan expiry.
+17. **Screenshots go directly to teacher's bank.** Platform never holds this money. `teacher_balances` is credited with the net amount (after cut). Platform cut is collected at payout time.
+18. **Manual "Mark as Paid" enrollments set `platform_cut_pkr = 0`.** Balance NOT credited. Cash went directly to teacher outside the platform.
+19. **Refund deducts `teacher_payout_amount_pkr`** (not full `amount_pkr`). Prevents negative balances.
+20. **One active payout request at a time.** Reject new payout if existing one has status `pending` or `processing`.
+21. **Archived cohorts are permanently read-only.** No un-archive. All content-write routes check `cohort.status != 'archived'` and return 403 `COHORT_ARCHIVED`.
+22. **Free plan never expires.** `plan_expires_at = NULL` = free forever. Grace period and renewal reminders don't apply.
+23. **Trial has no grace period.** Trial ends → auto-downgrade to Free immediately. Grace period is only for paid plan expiry.
 
 ## Workflow Orientation
 
@@ -154,7 +162,7 @@ supabase/
 - Every new page: Server Component by default. Only add `'use client'` if you need hooks.
 - Every new mutation: Server Action. Not a new API route.
 - Every new table query: goes in `lib/db/*.ts`. Never raw Supabase calls in components.
-- Every new component: check if `components/ui/` already has it. If yes, use it. If no, add it to `ui/` (not a role folder).
+- Every new component: check if `shadcn/ui` has it first. If yes, install via `npx shadcn@latest add <name>`. If no, build custom in `components/ui/` using shadcn primitives.
 
 ### After Building
 - Test the user flow end-to-end (not just the happy path).

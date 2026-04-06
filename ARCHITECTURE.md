@@ -190,6 +190,7 @@
 │           └── subscription-nudge/route.ts # Daily 09:00 UTC: 48h admin screenshot nudge
 │
 ├── lib/                                  # All business logic — no raw Supabase in components
+│   ├── utils.ts                          # cn() utility (clsx + tailwind-merge) for class composition
 │   ├── payment/
 │   │   ├── provider.ts                   # PaymentProvider interface + active instance
 │   │   ├── safepay.ts                    # Safepay adapter
@@ -246,25 +247,47 @@
 │
 ├── components/
 │   ├── ui/                               # Generic, reusable primitives — SHARED across all roles
-│   │   ├── Button.tsx                    # Variants: primary, secondary, outline, ghost, danger. Sizes: sm, md, lg. Loading state built-in.
-│   │   ├── Input.tsx                     # Text, email, password, number, textarea. Error state + label + helper text.
-│   │   ├── Select.tsx                    # Dropdown select with search
-│   │   ├── Modal.tsx                     # Base modal shell
-│   │   ├── ConfirmModal.tsx              # Confirm dialog (extends Modal)
-│   │   ├── Toast.tsx                     # Toast notification (success/error/warning)
-│   │   ├── StatusBadge.tsx               # Universal status badge — works for CohortStatus, EnrollmentStatus, PaymentStatus, PayoutStatus. Pass `type` + `status` props.
-│   │   ├── Card.tsx                      # Base card shell (padding, shadow, radius)
-│   │   ├── DataTable.tsx                 # Sortable, filterable, paginated table. Column definitions via props. Used by: teacher student list, admin teacher list, payment queues, payout queue.
-│   │   ├── Tabs.tsx                      # Tab navigation
-│   │   ├── Textarea.tsx                  # Multi-line text input with label + error state
+│   │   │
+│   │   │ # ── shadcn/ui primitives (installed via `npx shadcn@latest add <name>`) ──
+│   │   ├── button.tsx                    # Variants: default, destructive, outline, secondary, ghost, link. Sizes: default, sm, lg, icon.
+│   │   ├── card.tsx                      # Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter
+│   │   ├── input.tsx                     # Base input primitive
+│   │   ├── label.tsx                     # Form label (Radix)
+│   │   ├── select.tsx                    # Radix select with trigger, content, items
+│   │   ├── textarea.tsx                  # Multi-line text input
+│   │   ├── dialog.tsx                    # Modal dialog (replaces old Modal.tsx)
+│   │   ├── alert-dialog.tsx              # Confirm dialog (replaces old ConfirmModal.tsx)
+│   │   ├── badge.tsx                     # Badge variants: default, secondary, destructive, outline
+│   │   ├── sidebar.tsx                   # Collapsible sidebar (desktop) + Sheet (mobile)
+│   │   ├── sheet.tsx                     # Slide-out drawer (used by sidebar mobile + PublicNavbar)
+│   │   ├── command.tsx                   # Command palette (cmdk)
+│   │   ├── table.tsx                     # Table, TableHeader, TableBody, TableRow, TableHead, TableCell
+│   │   ├── dropdown-menu.tsx             # Radix dropdown menu
+│   │   ├── calendar.tsx                  # Date picker calendar
+│   │   ├── popover.tsx                   # Radix popover
+│   │   ├── chart.tsx                     # Recharts wrapper with theme-aware colors
+│   │   ├── progress.tsx                  # Progress bar
+│   │   ├── skeleton.tsx                  # Loading skeleton
+│   │   ├── switch.tsx                    # Toggle switch
+│   │   ├── separator.tsx                 # Horizontal/vertical separator
+│   │   ├── tooltip.tsx                   # Radix tooltip
+│   │   │
+│   │   │ # ── Custom compositions (PascalCase — wrap shadcn primitives) ──
+│   │   ├── SidebarShell.tsx              # Unified sidebar shell for teacher, admin, and student roles
+│   │   ├── ThemeToggle.tsx               # Dark/light mode toggle (uses next-themes)
+│   │   ├── NotificationBell.tsx          # Notification icon with unread count indicator
+│   │   ├── CommandPalette.tsx            # Cmd+K quick navigation (wraps command.tsx)
+│   │   ├── DateRangeFilter.tsx           # Date range picker for dashboards (wraps calendar + popover)
+│   │   ├── StatusBadge.tsx               # Universal status badge — wraps shadcn Badge. Works for CohortStatus, EnrollmentStatus, PaymentStatus, PayoutStatus.
 │   │   ├── Spinner.tsx                   # Loading spinner (sm/md/lg sizes)
-│   │   ├── UsageBars.tsx                 # Plan limit bars (courses/students/storage). Used by: teacher dashboard, admin teacher detail, settings → plan. Amber 80%, red 95%, block 100%.
-│   │   ├── FileUpload.tsx                # Universal R2 upload: accepts fileType prop → auto-validates size from getPlatformSetting() + content type. Shows progress. Returns publicUrl. Includes `capture="environment"` for mobile camera access. Used for ALL uploads (thumbnail, profile, QR, screenshot, assignment, announcement, submission).
+│   │   ├── DataTable.tsx                 # Sortable, filterable, paginated table. Uses @tanstack/react-table + shadcn table primitives.
+│   │   ├── FileUpload.tsx                # Universal R2 upload: accepts fileType prop → auto-validates size + content type. Shows progress. Includes `capture="environment"` for mobile camera.
 │   │   ├── RichTextEditor.tsx            # TipTap wrapper
-│   │   ├── EmptyState.tsx                # Icon + title + description + CTA button
 │   │   ├── PageHeader.tsx                # Page title + optional action button (consistent across all pages)
-│   │   ├── SessionCard.tsx               # Class session display (Meet link, time in PKT, cancelled badge). Used by: teacher calendar, student dashboard, student schedule.
-│   │   ├── PaymentRow.tsx                # Payment record display (amount, status badge, date, method). Used by: teacher payment queue, student payment history, admin queue.
+│   │   ├── EmptyState.tsx                # Icon + title + description + CTA button
+│   │   ├── UsageBars.tsx                 # Plan limit bars (courses/students/storage). Amber 80%, red 95%, block 100%.
+│   │   ├── SessionCard.tsx               # Class session display (Meet link, time in PKT, cancelled badge).
+│   │   ├── PaymentRow.tsx                # Payment record display (amount, status badge, date, method).
 │   │   └── PlanLimitGuard.tsx            # Wraps features — shows UpgradeNudge at 80%, hard block at 100%.
 │   ├── teacher/                          # Teacher-SPECIFIC compositions (use ui/ primitives)
 │   │   ├── PaymentVerificationCard.tsx   # Extends PaymentRow with screenshot viewer + approve/reject
@@ -293,7 +316,8 @@
 │
 ├── hooks/                                # Client-side React hooks — ONLY in 'use client' components
 │   ├── useRealtime.ts                    # Supabase realtime subscription wrapper
-│   └── useToast.ts                       # Toast notification hook
+│   ├── useToast.ts                       # Toast notification hook
+│   └── use-mobile.ts                     # Mobile breakpoint detection (used by sidebar)
 │
 ├── providers/                            # React Context providers (replace Zustand for server/client bridge)
 │   ├── TeacherProvider.tsx               # Server Component fetches teacher data → passes via Context to client children
@@ -308,8 +332,10 @@
 ├── constants/
 │   ├── plans.ts                          # Plan slugs, default values
 │   ├── features.ts                       # Feature key constants
-│   └── routes.ts                         # Route constants (never hardcode paths)
+│   ├── routes.ts                         # Route constants (never hardcode paths)
+│   └── nav-items.ts                      # Sidebar navigation items per role (teacher, admin, student)
 │
+├── components.json                      # shadcn CLI configuration (component paths, aliases, style)
 ├── middleware.ts                         # Subdomain routing
 │
 └── supabase/
@@ -2627,52 +2653,88 @@ submissions/{assignmentId}/...  → category: submissions
 
 ### Theme
 
-```css
-/* app/globals.css — Tailwind CSS v4 (CSS-first config, no tailwind.config.js) */
-/* Theme change = edit THIS ONE FILE. All components use these tokens via Tailwind classes. */
-@import "tailwindcss";
+OKLCH dual-mode (light + dark) theme defined in `app/globals.css`:
 
-@theme {
-  /* Colors — use: bg-brand-500, text-ink, bg-paper, text-muted, bg-success, etc. */
-  --color-brand-50:  #F0F7FF;
-  --color-brand-100: #E0EFFF;
-  --color-brand-500: #2563EB;
-  --color-brand-600: #1D4ED8;
-  --color-brand-900: #1E3A8A;
-  --color-ink: #0D1B2A;
-  --color-muted: #64748B;
-  --color-paper: #FAFAF7;
-  --color-surface: #FFFFFF;
-  --color-border: #E2E8F0;
-  --color-success: #16A34A;
-  --color-warning: #F59E0B;
-  --color-danger: #DC2626;
+- CSS variables in `:root` (light) and `.dark` (dark) define all colors in OKLCH color space
+- `@theme inline` maps CSS variables to Tailwind utilities
+- `@custom-variant dark (&:is(.dark *))` enables dark mode via class strategy
+- `next-themes` ThemeProvider in root layout with `attribute="class"`
+- Color palette: purple primary, orange accent, warm neutral backgrounds
+- Font: Inter loaded via `next/font` in `app/layout.tsx`
 
-  /* Typography — use: font-sans (default for all text) */
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-
-  /* Shadows — use: shadow-card, shadow-card-hover */
-  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.1);
-  --shadow-card-hover: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-}
-
-/* RULE: Never use raw hex (#2563EB) or Tailwind defaults (bg-blue-500) in components. */
-/* Always use theme tokens: bg-brand-500, text-ink, border-border, text-danger, etc. */
-/* To change the entire look: edit the @theme block above. Zero component changes needed. */
+```
+RULE: Never use raw hex (#2563EB) or Tailwind defaults (bg-blue-500) in components.
+Always use semantic tokens: bg-primary, text-foreground, border-border, bg-muted, text-muted-foreground, etc.
+To change the entire look: edit globals.css @theme block + CSS variables. Zero component changes needed.
 ```
 
-> **Font loading:** Use `next/font` to load Inter in `app/layout.tsx`. Apply via CSS variable override — no font imports in individual components.
 > **PostCSS config:** `postcss.config.mjs` uses `@tailwindcss/postcss` only (replaces `tailwindcss` + `autoprefixer`).
-> **Dark mode:** Not in Phase 1. If added later, extend `@theme` with dark variant tokens and use Tailwind's `dark:` modifier. No component refactoring needed since all colors use tokens.
+
+### Component System
+
+All UI components live in `components/ui/`. Two categories:
+
+**shadcn/ui primitives** (lowercase filenames) — installed via `npx shadcn@latest add <name>`:
+- These are owned code, not a library. Customize directly in the file.
+- Built on Radix UI primitives for accessibility (keyboard nav, screen readers, focus management).
+- Examples: `button.tsx`, `dialog.tsx`, `select.tsx`, `table.tsx`, `badge.tsx`, `sidebar.tsx`
+
+**Custom compositions** (PascalCase filenames) — wrap shadcn primitives:
+- `SidebarShell.tsx` — unified sidebar for all 3 roles (teacher, admin, student)
+- `DataTable.tsx` — uses `@tanstack/react-table` + shadcn `table.tsx` for sort/filter/pagination
+- `StatusBadge.tsx` — wraps shadcn `badge.tsx` with status-aware color logic
+- `CommandPalette.tsx` — wraps `command.tsx` for Cmd+K navigation
+- `DateRangeFilter.tsx` — wraps `calendar.tsx` + `popover.tsx` for dashboard date filtering
+- `ThemeToggle.tsx`, `NotificationBell.tsx`, `PageHeader.tsx`, `EmptyState.tsx`, etc.
+
+**Class composition:** Use `cn()` from `lib/utils.ts` (clsx + tailwind-merge) for all conditional class logic.
+
+**Icons:** Use `lucide-react` for all icons. Tree-shakeable. Import: `import { IconName } from 'lucide-react'`.
+
+### Dark Mode
+
+Dark mode is fully supported across the platform:
+
+- `ThemeToggle` in sidebar for all logged-in users (teacher, admin, student)
+- Marketing pages follow system preference
+- All new components MUST work in both light and dark themes
+- Use semantic tokens only — never hardcode light-only or dark-only colors
+- Test with both themes before marking any UI work complete
+
+### Navigation
+
+**Authenticated pages (teacher, admin, student):**
+- Unified `SidebarShell` wrapping shadcn `Sidebar` component
+- Desktop: collapsible sidebar (icon-only or full)
+- Mobile: slides out as a `Sheet` (shadcn) overlay
+- Navigation items defined in `constants/nav-items.ts` per role
+- Command palette (`Cmd+K` / `Ctrl+K`) for quick navigation across all pages
+- `NotificationBell` with unread count indicator in sidebar header
+
+**Public/marketing pages:**
+- `PublicNavbar` with responsive Sheet for mobile menu
+
+### Dashboard Layout
+
+Bento grid layout for all dashboards:
+```
+Grid: grid-cols-1 md:grid-cols-2 lg:grid-cols-4
+Card types:
+  - Stat card (1x1) — single metric with trend indicator
+  - Chart card (2x1) — Recharts line/bar/area via dynamic import (no SSR)
+  - List card (1x1 or 2x1) — recent items with links
+  - Circle card (1x1) — circular progress indicator
+```
+
+- `DateRangeFilter` on teacher + admin dashboards for time-scoped data
+- Charts use Recharts via `next/dynamic` with `ssr: false` (client components only)
+- Chart colors pulled from CSS variables via shadcn `chart.tsx` for theme consistency
 
 ### Shared Component Patterns
 
 ```typescript
 // Every page has consistent structure:
 <PageHeader title="Courses" action={<Button>Create Course</Button>} />
-<PageContent>
-  {/* content */}
-</PageContent>
 
 // Usage bars appear on teacher dashboard header:
 <UsageBars
@@ -2682,7 +2744,6 @@ submissions/{assignmentId}/...  → category: submissions
     { label: 'Storage', current: 1200, max: 2048, unit: 'MB' },
   ]}
 />
-// Amber at ≥80% used, Red block at 100%
 
 // Empty states for every list:
 <EmptyState
@@ -2693,159 +2754,38 @@ submissions/{assignmentId}/...  → category: submissions
 />
 ```
 
-### Toast System
-
-```typescript
-// All user-facing feedback via toasts (not inline error states for mutations)
-const { addToast } = useToast()
-
-addToast({ type: 'success', message: 'Course published!' })
-addToast({ type: 'error', message: 'Something went wrong. Try again.' })
-addToast({ type: 'warning', message: 'Student limit reached. Upgrade to add more.' })
-```
-
 ### Loading States
 
 ```typescript
 // Server components: use Next.js loading.tsx per route segment
 // Client mutations: use local loading state + button disabled
-const [loading, setLoading] = useState(false)
-// Show skeleton components for lists (never blank screens)
-```
-
-### Teacher Dashboard Layout
-
-```
-[Sidebar] [Main Content]
-
-Sidebar:
-  Logo
-  Dashboard
-  Courses
-  Students
-  Payments (badge: pending count)
-  Earnings
-  Analytics
-  Settings
-```
-
-### Student Portal Layout
-
-```
-[Top Nav] [Content]
-
-Top Nav:
-  Logo + "Student Portal"
-  My Courses
-  Schedule
-  Payments
-  Settings
-```
-
-### Admin Layout
-
-```
-[Sidebar] [Main Content]
-
-Sidebar:
-  Dashboard
-  Teachers
-  Payments
-  Payouts
-  Plans
-  Settings
-  Operations
+// Show Skeleton components for lists (never blank screens)
+// Use Spinner for inline loading indicators
 ```
 
 ### Mobile-First Responsive Patterns
 
-> These patterns were established during mobile optimization. All new code MUST follow them.
-
 #### Viewport Height
-Use `min-h-dvh` instead of `min-h-screen` on layout wrappers. Mobile Safari's dynamic viewport makes `100vh` unreliable — `dvh` accounts for the URL bar.
+Use `min-h-dvh` instead of `min-h-screen` on layout wrappers. Mobile Safari's dynamic viewport makes `100vh` unreliable.
 
 #### Touch Targets (44px minimum)
-All interactive elements (buttons, links, inputs, selects, toggles) must have a minimum touch target of 44px (Apple HIG / WCAG). Implementation:
-- `components/ui/Button.tsx`: `min-h-[2.75rem]` on all size variants
-- `components/ui/Input.tsx`, `Select.tsx`: `min-h-[2.75rem]`
-- Icon buttons: `min-h-[2.75rem] min-w-[2.75rem]`
-- For visually compact elements (toolbar buttons, toggles): keep visual size small but ensure the clickable area is 44px via padding or min-height
+All interactive elements must have a minimum 44px touch target (Apple HIG / WCAG). shadcn components handle this via their built-in sizing.
 
-#### Responsive Tables (Card View Pattern)
-Tables with 4+ columns MUST provide a mobile card view alternative:
+#### Responsive Tables
+DataTable provides responsive behavior. For simpler tables, use the card view pattern on mobile:
 ```html
-<!-- Desktop: full table -->
-<div class="hidden md:block">
-  <table>...</table>
-</div>
-
-<!-- Mobile: stacked cards -->
-<div class="md:hidden space-y-3">
-  {items.map(item => (
-    <div class="rounded-lg border border-border bg-paper p-3 sm:p-4">
-      <!-- Key data in a readable card layout -->
-    </div>
-  ))}
-</div>
-```
-Reference implementation: `app/(teacher)/dashboard/courses/[courseId]/cohorts/[cohortId]/students/page.tsx`
-
-#### Prose Overflow Protection
-Rich HTML content (from `dangerouslySetInnerHTML` or RichTextEditor output) must be wrapped with `overflow-x-auto` to prevent wide tables/code blocks from breaking mobile layouts:
-```html
-<div class="prose prose-sm max-w-none overflow-x-auto text-ink">
-  {content}
-</div>
+<div class="hidden md:block"><Table>...</Table></div>
+<div class="md:hidden space-y-3">{/* Stacked cards */}</div>
 ```
 
 #### Image Optimization
-Use `next/image` instead of raw `<img>` tags for:
-- Lazy loading (offscreen images don't block paint)
-- Automatic WebP/AVIF format negotiation
-- Responsive `sizes` attribute
+Use `next/image` for lazy loading, WebP/AVIF format negotiation, and responsive `sizes`.
 
-#### Camera Capture (FileUpload)
-`FileUpload` component includes `capture="environment"` on image inputs, enabling direct camera access on mobile for screenshot uploads.
-
-#### Safe Area Insets (iPhone)
-Fixed/sticky mobile navigation drawers must include bottom safe area padding for iPhone home indicator:
-```html
-<nav class="fixed inset-0 ... pb-[env(safe-area-inset-bottom)]">
-```
-Applied to: `components/teacher/Sidebar.tsx`, `components/admin/AdminSidebar.tsx`
+#### Camera Capture
+`FileUpload` includes `capture="environment"` for direct camera access on mobile.
 
 #### Responsive Padding
-Container elements use responsive padding: `p-4 sm:p-6` (tighter on mobile, standard on desktop). Never use fixed large padding that wastes space on 375px screens.
-
-#### Mobile Menus (iOS Safari/Chrome Compatibility)
-React `onClick` on `<button>` elements does not fire reliably on iOS WebKit (Safari/Chrome). This is a long-standing React issue (facebook/react#134). Two patterns are used depending on the menu type:
-
-**Dropdown menus** (PublicNavbar, StudentNav) — use `<details>`/`<summary>`:
-```html
-<details class="sm:hidden group">
-  <summary class="list-none cursor-pointer [&::-webkit-details-marker]:hidden">
-    <!-- Hamburger icon (group-open:hidden) / X icon (hidden group-open:block) -->
-  </summary>
-  <nav class="absolute left-0 right-0 border-t border-border bg-surface">
-    <!-- Menu links -->
-  </nav>
-</details>
-```
-This is native HTML — works before React hydrates, no JavaScript needed. Used by GitHub and GOV.UK.
-
-**Slide-out drawers** (teacher Sidebar, admin AdminSidebar) — use `onTouchEnd` alongside `onClick`:
-```tsx
-<button
-  onClick={() => setMobileOpen(!mobileOpen)}
-  onTouchEnd={(e) => { e.preventDefault(); setMobileOpen((prev) => !prev) }}
->
-```
-These drawers need overlays and animations that require JS state. The `onTouchEnd` fires before `onClick` on iOS and is more reliable.
-
-**Global rules** (in `globals.css`):
-- `cursor: pointer` on all `button` and `[role="button"]` elements (Tailwind v4 preflight sets `cursor: default` which breaks iOS taps)
-- `-webkit-tap-highlight-color` for immediate tap feedback on iOS
-- `pointer-events-none` on SVG icons inside buttons (prevents iOS touch event interception)
+Container elements use `p-4 sm:p-6` (tighter on mobile, standard on desktop).
 
 ---
 
