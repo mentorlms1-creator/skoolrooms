@@ -84,6 +84,26 @@ export type EnrollmentWithStudent = EnrollmentRow & {
   }
 }
 
+// Enrollment joined with student + cohort + course info (for teacher "all students" view)
+export type EnrollmentWithStudentAndCohort = EnrollmentRow & {
+  students: {
+    id: string
+    name: string
+    email: string
+    phone: string
+  }
+  cohorts: {
+    id: string
+    name: string
+    fee_pkr: number
+    fee_type: string
+    courses: {
+      id: string
+      title: string
+    }
+  }
+}
+
 // Enrollment joined with student info + payment info (for pending review)
 export type PendingEnrollmentWithDetails = EnrollmentRow & {
   students: {
@@ -360,4 +380,59 @@ export async function getEnrollmentByIdWithDetails(
 
   if (error || !data) return null
   return data as EnrollmentWithCohortCourseTeacher
+}
+
+// -----------------------------------------------------------------------------
+// getAllStudentsByTeacher — All enrollments across a teacher's cohorts,
+// joined with student + cohort + course info. Used by teacher "All Students" page.
+// Deduplication (student may appear in multiple cohorts) happens at the page level.
+// -----------------------------------------------------------------------------
+export async function getAllStudentsByTeacher(
+  teacherId: string
+): Promise<EnrollmentWithStudentAndCohort[]> {
+  const supabase = createAdminClient()
+
+  const { data, error } = await supabase
+    .from('enrollments')
+    .select(`
+      *,
+      students!inner(id, name, email, phone),
+      cohorts!inner(
+        id, name, fee_pkr, fee_type,
+        courses!inner(id, title)
+      )
+    `)
+    .eq('cohorts.teacher_id', teacherId)
+    .order('created_at', { ascending: false })
+
+  if (error || !data) return []
+  return data as EnrollmentWithStudentAndCohort[]
+}
+
+// -----------------------------------------------------------------------------
+// getEnrollmentsByStudentForTeacher — All enrollments for a specific student
+// that belong to a specific teacher's cohorts. Used by teacher student detail page.
+// -----------------------------------------------------------------------------
+export async function getEnrollmentsByStudentForTeacher(
+  studentId: string,
+  teacherId: string
+): Promise<EnrollmentWithStudentAndCohort[]> {
+  const supabase = createAdminClient()
+
+  const { data, error } = await supabase
+    .from('enrollments')
+    .select(`
+      *,
+      students!inner(id, name, email, phone),
+      cohorts!inner(
+        id, name, fee_pkr, fee_type,
+        courses!inner(id, title)
+      )
+    `)
+    .eq('student_id', studentId)
+    .eq('cohorts.teacher_id', teacherId)
+    .order('created_at', { ascending: false })
+
+  if (error || !data) return []
+  return data as EnrollmentWithStudentAndCohort[]
 }
