@@ -71,7 +71,9 @@ export type ActivityLogItem = {
 export type DashboardStats = {
   mrr: number
   signupsThisWeek: number
+  signupsLastWeek: number
   signupsThisMonth: number
+  signupsLastMonth: number
   planDistribution: { plan: string; count: number }[]
 }
 
@@ -336,20 +338,34 @@ export async function getAdminDashboardStats(): Promise<DashboardStats> {
     return sum + (planPrices[t.plan as string] ?? 0)
   }, 0)
 
-  // Signups this week and month
+  // Signups: this week vs last week, this month vs last month
   const now = new Date()
   const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+  const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000)
   const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+  const twoMonthsAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000)
 
   const { count: signupsThisWeek } = await supabase
     .from('teachers')
     .select('*', { count: 'exact', head: true })
     .gte('created_at', weekAgo.toISOString())
 
+  const { count: signupsLastWeek } = await supabase
+    .from('teachers')
+    .select('*', { count: 'exact', head: true })
+    .gte('created_at', twoWeeksAgo.toISOString())
+    .lt('created_at', weekAgo.toISOString())
+
   const { count: signupsThisMonth } = await supabase
     .from('teachers')
     .select('*', { count: 'exact', head: true })
     .gte('created_at', monthAgo.toISOString())
+
+  const { count: signupsLastMonth } = await supabase
+    .from('teachers')
+    .select('*', { count: 'exact', head: true })
+    .gte('created_at', twoMonthsAgo.toISOString())
+    .lt('created_at', monthAgo.toISOString())
 
   // Plan distribution
   const { data: allTeachers } = await supabase
@@ -372,7 +388,9 @@ export async function getAdminDashboardStats(): Promise<DashboardStats> {
   return {
     mrr,
     signupsThisWeek: signupsThisWeek ?? 0,
+    signupsLastWeek: signupsLastWeek ?? 0,
     signupsThisMonth: signupsThisMonth ?? 0,
+    signupsLastMonth: signupsLastMonth ?? 0,
     planDistribution,
   }
 }

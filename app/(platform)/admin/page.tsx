@@ -57,9 +57,9 @@ export default async function AdminDashboardPage() {
         {/* Row 1: Four stat cards */}
         <div className="col-span-12 sm:col-span-6 lg:col-span-3">
           <StatCard
-            label="In Progress"
+            label="Active Cohorts"
             value={String(ops.totalActiveCohorts)}
-            unit="projects"
+            unit="cohorts"
             icon={Users}
             iconColor="text-foreground"
             iconBg="bg-muted"
@@ -73,6 +73,9 @@ export default async function AdminDashboardPage() {
             icon={UserPlus}
             iconColor="text-primary"
             iconBg="bg-primary/10"
+            trend={stats.signupsLastWeek > 0
+              ? `${stats.signupsThisWeek >= stats.signupsLastWeek ? '+' : ''}${Math.round(((stats.signupsThisWeek - stats.signupsLastWeek) / stats.signupsLastWeek) * 100)}%`
+              : stats.signupsThisWeek > 0 ? '+100%' : undefined}
           />
         </div>
         <div className="col-span-12 sm:col-span-6 lg:col-span-3">
@@ -87,14 +90,20 @@ export default async function AdminDashboardPage() {
         </div>
         <div className="col-span-12 sm:col-span-6 lg:col-span-3">
           <StatCard
-            label="Weekly Revenue"
-            value={(stats.mrr / 1000).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
-            unit="k"
+            label="Monthly Revenue"
+            value={stats.mrr >= 1000
+              ? (stats.mrr / 1000).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+              : String(stats.mrr)}
+            unit={stats.mrr >= 1000 ? 'k' : ''}
             prefix="PKR"
             icon={TrendingUp}
             iconColor="text-accent"
             iconBg="bg-accent/10"
-            trend="+12%"
+            trend={stats.signupsThisMonth > stats.signupsLastMonth
+              ? `+${stats.signupsLastMonth > 0 ? Math.round(((stats.signupsThisMonth - stats.signupsLastMonth) / stats.signupsLastMonth) * 100) : 100}%`
+              : stats.signupsThisMonth < stats.signupsLastMonth
+              ? `${Math.round(((stats.signupsThisMonth - stats.signupsLastMonth) / stats.signupsLastMonth) * 100)}%`
+              : undefined}
           />
         </div>
 
@@ -237,50 +246,66 @@ function StatCard({
   iconColor = 'text-foreground',
   trend,
 }: StatCardProps) {
+  const trendValue = trend ? parseFloat(trend) : null
+  const isPositive = trendValue !== null && trendValue >= 0
+
   return (
-    <Card className="border-none shadow-sm ring-1 ring-foreground/5 rounded-[2.5rem] overflow-hidden bg-card">
-      <CardContent className="px-7 pt-7 pb-6 flex flex-col items-start gap-3">
+    <Card className="border-none shadow-sm ring-1 ring-foreground/5 rounded-[2rem] overflow-hidden bg-card h-full">
+      <CardContent className="px-7 pt-7 pb-6 flex flex-col items-start gap-4 h-full">
+        {/* Icon */}
         {Icon && (
           <div
             className={cn(
-              'flex h-11 w-11 items-center justify-center rounded-2xl',
+              'flex h-11 w-11 items-center justify-center rounded-2xl shrink-0',
               iconBg
             )}
           >
-            <Icon className={cn('h-5 w-5', iconColor)} strokeWidth={2.5} />
+            <Icon className={cn('h-5 w-5', iconColor)} strokeWidth={2} />
           </div>
         )}
-        <div className="flex flex-col">
-          <div className="flex items-baseline gap-1.5 min-h-[42px]">
+
+        {/* Number + unit on same baseline */}
+        <div className="flex flex-col gap-1 flex-1 justify-center">
+          <div className="flex items-baseline gap-1">
             {prefix && (
-              <p className="text-[17px] font-bold text-foreground/80 leading-none pb-1 self-end">
+              <span className="text-sm font-semibold text-muted-foreground">
                 {prefix}
-              </p>
+              </span>
             )}
-            <p className="text-[36px] font-bold tracking-tight text-foreground leading-none">
+            <span className="text-4xl font-extrabold tracking-tight text-foreground leading-none">
               {value}
-            </p>
+            </span>
             {unit && (
-              <p className="text-[17px] font-bold text-foreground/80 leading-none pb-1 self-end">
+              <span className="text-base font-semibold text-muted-foreground leading-none">
                 {unit}
-              </p>
+              </span>
             )}
           </div>
-          <p className="text-[13px] font-bold text-muted-foreground/35 mt-1.5 uppercase tracking-[0.05em]">
+          <p className="text-[11px] font-semibold text-muted-foreground/50 uppercase tracking-[0.08em]">
             {label}
           </p>
         </div>
-        
+
+        {/* Activity dots + trend */}
         {trend && (
-          <div className="mt-2 flex flex-col gap-2">
-             <div className="flex flex-wrap gap-1 max-w-[140px]">
-                {Array.from({ length: 20 }).map((_, i) => (
-                   <div key={i} className={cn("h-1.5 w-1.5 rounded-full", i > 8 ? "bg-accent" : "bg-muted")} />
-                ))}
-             </div>
-             <div className="flex items-center gap-1.5">
-                <span className="text-[10px] font-bold text-accent uppercase tracking-widest">{trend} vs last week</span>
-             </div>
+          <div className="flex flex-col gap-1.5 w-full">
+            <div className="flex flex-wrap gap-[3px]">
+              {Array.from({ length: 21 }).map((_, i) => (
+                <div
+                  key={i}
+                  className={cn(
+                    'h-[6px] w-[6px] rounded-full',
+                    i < 7 ? 'bg-accent' : i < 14 ? 'bg-muted' : 'bg-accent'
+                  )}
+                />
+              ))}
+            </div>
+            <p className={cn(
+              'text-[10px] font-bold uppercase tracking-wider',
+              isPositive ? 'text-accent' : 'text-destructive'
+            )}>
+              {trend} vs last week
+            </p>
           </div>
         )}
       </CardContent>
