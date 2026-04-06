@@ -145,7 +145,7 @@ function StatCard({ label, value }: { label: string; value: string }) {
     <Card>
       <CardHeader>
         <CardDescription className="text-xs text-muted-foreground/70">{label}</CardDescription>
-        <CardTitle className="text-4xl font-bold">{value}</CardTitle>
+        <CardTitle className="text-4xl font-extrabold">{value}</CardTitle>
       </CardHeader>
     </Card>
   )

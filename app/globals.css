@@ -4,7 +4,7 @@
 
 /* ---- Light mode ---- */
 :root {
-  --background: oklch(0.95 0.01 80);
+  --background: oklch(0.96 0.002 260);
   --foreground: oklch(0.15 0.02 260);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.15 0.02 260);

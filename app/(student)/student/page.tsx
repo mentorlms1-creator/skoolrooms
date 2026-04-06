@@ -89,21 +89,21 @@ export default async function StudentDashboardPage() {
         {/* ── Row 1: Stat Cards ── */}
         <Card className="p-7">
           <p className="text-xs text-muted-foreground/70">Enrolled Courses</p>
-          <p className="mt-1 text-4xl font-bold text-foreground">
+          <p className="mt-1 text-4xl font-extrabold text-foreground">
             {activeEnrollments.length}
           </p>
         </Card>
 
         <Card className="p-7">
           <p className="text-xs text-muted-foreground/70">Upcoming Classes</p>
-          <p className="mt-1 text-4xl font-bold text-foreground">
+          <p className="mt-1 text-4xl font-extrabold text-foreground">
             {sessions.length}
           </p>
         </Card>
 
         <Card className="p-7">
           <p className="text-xs text-muted-foreground/70">Pending Fees</p>
-          <p className="mt-1 text-4xl font-bold text-foreground">
+          <p className="mt-1 text-4xl font-extrabold text-foreground">
             {pendingFees}
           </p>
         </Card>

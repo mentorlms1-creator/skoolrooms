@@ -5,6 +5,9 @@
  *
  * Uses shadcn Sidebar primitives (SidebarProvider, Sidebar, SidebarInset)
  * with Sheet-based mobile drawer. Active state via usePathname().
+ *
+ * Sidebar renders as a floating bento card with rounded corners and margin,
+ * exposing the cool gray page background around all edges.
  */
 
 import Link from 'next/link'
@@ -24,6 +27,7 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarHeader,
   SidebarInset,
   SidebarMenu,
@@ -47,6 +51,24 @@ type SidebarShellProps = {
   children: React.ReactNode
 }
 
+/** Group nav items: items without a group come first, then grouped by label */
+function groupNavItems(items: NavItem[]): { label: string | null; items: NavItem[] }[] {
+  const groups: { label: string | null; items: NavItem[] }[] = []
+  let currentGroup: string | null | undefined = undefined
+
+  for (const item of items) {
+    const group = item.group ?? null
+    if (group !== currentGroup) {
+      groups.push({ label: group, items: [item] })
+      currentGroup = group
+    } else {
+      groups[groups.length - 1].items.push(item)
+    }
+  }
+
+  return groups
+}
+
 export function SidebarShell({
   role,
   user,
@@ -59,6 +81,7 @@ export function SidebarShell({
   const navItems = NAV_ITEMS_BY_ROLE[role] || []
   const pathname = usePathname()
   const { open: openCommandPalette } = useCommandPalette()
+  const navGroups = groupNavItems(navItems)
 
   function isActive(href: string): boolean {
     // Dashboard routes: exact match only to avoid matching all sub-routes
@@ -70,7 +93,7 @@ export function SidebarShell({
 
   return (
     <SidebarProvider>
-      <Sidebar>
+      <Sidebar variant="floating">
         {/* Header: Logo + role badge */}
         <SidebarHeader className="border-b border-sidebar-border px-4 py-3">
           <div className="flex items-center justify-between">
@@ -88,45 +111,52 @@ export function SidebarShell({
           </div>
         </SidebarHeader>
 
-        {/* Search trigger — opens CommandPalette (Cmd+K / Ctrl+K) */}
+        {/* Search trigger — styled as input field, opens CommandPalette (Cmd+K / Ctrl+K) */}
         <SidebarGroup className="px-3 pt-3 pb-0">
           <button
             type="button"
             onClick={openCommandPalette}
             className={cn(
-              "flex w-full items-center gap-2 rounded-md border border-sidebar-border bg-sidebar px-3 py-2",
-              "text-sm text-muted-foreground hover:bg-sidebar-accent transition-colors"
+              "flex w-full items-center gap-2 rounded-lg border border-border/40 bg-background px-3 py-2",
+              "text-sm text-muted-foreground hover:bg-accent/50 transition-colors"
             )}
           >
-            <Search className="h-4 w-4" />
-            <span>Search...</span>
-            <kbd className="ml-auto hidden rounded border border-sidebar-border px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground sm:inline">
+            <Search className="h-4 w-4" strokeWidth={1.5} />
+            <span className="flex-1 text-left">Search or type a command...</span>
+            <kbd className="hidden rounded border border-border/40 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground/60 sm:inline-block">
               Ctrl+K
             </kbd>
           </button>
         </SidebarGroup>
 
-        {/* Navigation items */}
+        {/* Navigation items — grouped with section labels */}
         <SidebarContent>
-          <SidebarGroup>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {navItems.map((item) => {
-                  const active = isActive(item.href)
-                  return (
-                    <SidebarMenuItem key={item.href}>
-                      <SidebarMenuButton asChild isActive={active} tooltip={item.label}>
-                        <Link href={item.href}>
-                          <item.icon className="h-4 w-4" />
-                          <span>{item.label}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  )
-                })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
+          {navGroups.map((group, groupIdx) => (
+            <SidebarGroup key={group.label ?? `main-${groupIdx}`}>
+              {group.label && (
+                <SidebarGroupLabel className="px-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/50">
+                  {group.label}
+                </SidebarGroupLabel>
+              )}
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {group.items.map((item) => {
+                    const active = isActive(item.href)
+                    return (
+                      <SidebarMenuItem key={item.href}>
+                        <SidebarMenuButton asChild isActive={active} tooltip={item.label}>
+                          <Link href={item.href}>
+                            <item.icon className="h-5 w-5" strokeWidth={1.5} />
+                            <span>{item.label}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    )
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          ))}
         </SidebarContent>
 
         <SidebarSeparator />
@@ -149,7 +179,7 @@ export function SidebarShell({
               type="submit"
               className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
             >
-              <LogOut className="h-4 w-4" />
+              <LogOut className="h-4 w-4" strokeWidth={1.5} />
               <span>Sign Out</span>
             </button>
           </form>

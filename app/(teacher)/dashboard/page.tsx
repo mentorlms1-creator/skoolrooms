@@ -104,7 +104,7 @@ export default async function DashboardPage({
         <Card>
           <CardContent className="p-8">
             <p className="text-xs text-muted-foreground/70">Active Courses</p>
-            <p className="mt-1 text-4xl font-bold text-foreground">
+            <p className="mt-1 text-4xl font-extrabold text-foreground">
               {stats.activeCourses}
             </p>
           </CardContent>
@@ -114,7 +114,7 @@ export default async function DashboardPage({
         <Card>
           <CardContent className="p-8">
             <p className="text-xs text-muted-foreground/70">Total Students</p>
-            <p className="mt-1 text-4xl font-bold text-foreground">
+            <p className="mt-1 text-4xl font-extrabold text-foreground">
               {stats.totalStudents}
             </p>
           </CardContent>
@@ -124,7 +124,7 @@ export default async function DashboardPage({
         <Card>
           <CardContent className="p-8">
             <p className="text-xs text-muted-foreground/70">Pending Payments</p>
-            <p className="mt-1 text-4xl font-bold text-foreground">
+            <p className="mt-1 text-4xl font-extrabold text-foreground">
               {stats.pendingPayments}
             </p>
             {stats.pendingPayments > 0 && (
