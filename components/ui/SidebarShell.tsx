@@ -29,6 +29,7 @@ import {
 } from '@/components/ui/sidebar'
 import { NotificationBell } from '@/components/ui/NotificationBell'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
+import { CommandPalette, useCommandPalette } from '@/components/ui/CommandPalette'
 
 type SidebarShellProps = {
   navItems: NavItem[]
@@ -50,6 +51,7 @@ export function SidebarShell({
   children,
 }: SidebarShellProps) {
   const pathname = usePathname()
+  const { open: openCommandPalette } = useCommandPalette()
 
   function isActive(href: string): boolean {
     // Dashboard routes: exact match only to avoid matching all sub-routes
@@ -79,10 +81,11 @@ export function SidebarShell({
           </div>
         </SidebarHeader>
 
-        {/* Search trigger (wired to command palette in Task 13) */}
+        {/* Search trigger — opens CommandPalette (Cmd+K / Ctrl+K) */}
         <SidebarGroup className="px-3 pt-3 pb-0">
           <button
             type="button"
+            onClick={openCommandPalette}
             className={cn(
               "flex w-full items-center gap-2 rounded-md border border-sidebar-border bg-sidebar px-3 py-2",
               "text-sm text-muted-foreground hover:bg-sidebar-accent transition-colors"
@@ -171,6 +174,8 @@ export function SidebarShell({
           {children}
         </div>
       </SidebarInset>
+
+      <CommandPalette navItems={navItems} />
     </SidebarProvider>
   )
 }
