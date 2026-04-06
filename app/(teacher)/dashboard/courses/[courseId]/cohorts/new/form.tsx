@@ -11,7 +11,13 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select } from '@/components/ui/Select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { useUIContext } from '@/providers/UIProvider'
 import { createCohortAction } from '@/lib/actions/cohorts'
@@ -121,12 +127,21 @@ export function CreateCohortForm({ courseId }: CreateCohortFormProps) {
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Select
-          label="Fee Type"
-          options={FEE_TYPE_OPTIONS}
-          value={feeType}
-          onChange={(e) => setFeeType(e.target.value)}
-        />
+        <div className="space-y-2">
+          <Label htmlFor="fee-type">Fee Type</Label>
+          <Select value={feeType} onValueChange={setFeeType}>
+            <SelectTrigger id="fee-type" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {FEE_TYPE_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
         <div className="space-y-2">
           <Label htmlFor="fee-pkr">Fee (PKR)</Label>
           <Input

@@ -9,7 +9,13 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Select } from '@/components/ui/Select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Card } from '@/components/ui/card'
 import {
   changePlanAction,
@@ -139,15 +145,16 @@ export function TeacherDetailActions({
         {/* Change Plan */}
         <form onSubmit={handleChangePlan} className="space-y-3">
           <h3 className="text-sm font-medium text-foreground">Change Plan</h3>
-          <Select
-            name="plan"
-            options={[
-              { value: 'free', label: 'Free' },
-              { value: 'solo', label: 'Solo' },
-              { value: 'academy', label: 'Academy' },
-            ]}
-            defaultValue={currentPlan}
-          />
+          <Select name="plan" defaultValue={currentPlan}>
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="free">Free</SelectItem>
+              <SelectItem value="solo">Solo</SelectItem>
+              <SelectItem value="academy">Academy</SelectItem>
+            </SelectContent>
+          </Select>
           <Button
             type="submit"
             variant="secondary"

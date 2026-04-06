@@ -6,7 +6,14 @@
  */
 
 import { useState, useMemo } from 'react'
-import { Select } from '@/components/ui/Select'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { TeacherCard } from '@/components/public/TeacherCard'
 import type { ExplorableTeacher } from '@/lib/db/explore'
 
@@ -68,28 +75,46 @@ export function ExploreFilters({
       {/* Filter controls */}
       <div className="mb-8 flex flex-wrap items-end gap-4 rounded-lg border border-border bg-card p-4">
         {/* Subject filter */}
-        <Select
-          id="filter-subject"
-          label="Subject"
-          value={subject}
-          onChange={(e) => setSubject(e.target.value)}
-          options={[
-            { value: '', label: 'All Subjects' },
-            ...allSubjects.map((s) => ({ value: s, label: s })),
-          ]}
-        />
+        <div className="space-y-1.5">
+          <Label htmlFor="filter-subject">Subject</Label>
+          <Select
+            value={subject || '_all'}
+            onValueChange={(v) => setSubject(v === '_all' ? '' : v)}
+          >
+            <SelectTrigger id="filter-subject" className="w-full sm:w-44">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="_all">All Subjects</SelectItem>
+              {allSubjects.map((s) => (
+                <SelectItem key={s} value={s}>
+                  {s}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
         {/* Level filter */}
-        <Select
-          id="filter-level"
-          label="Level"
-          value={level}
-          onChange={(e) => setLevel(e.target.value)}
-          options={[
-            { value: '', label: 'All Levels' },
-            ...allLevels.map((l) => ({ value: l, label: l })),
-          ]}
-        />
+        <div className="space-y-1.5">
+          <Label htmlFor="filter-level">Level</Label>
+          <Select
+            value={level || '_all'}
+            onValueChange={(v) => setLevel(v === '_all' ? '' : v)}
+          >
+            <SelectTrigger id="filter-level" className="w-full sm:w-44">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="_all">All Levels</SelectItem>
+              {allLevels.map((l) => (
+                <SelectItem key={l} value={l}>
+                  {l}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
         {/* Max fee filter */}
         <div className="flex flex-col gap-1.5">

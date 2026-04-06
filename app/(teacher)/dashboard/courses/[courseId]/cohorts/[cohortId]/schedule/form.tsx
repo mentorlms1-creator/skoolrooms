@@ -14,7 +14,13 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select } from '@/components/ui/Select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { useUIContext } from '@/providers/UIProvider'
 import { createSessionAction } from '@/lib/actions/class-sessions'
@@ -169,12 +175,21 @@ export function SessionCreateForm({ cohortId }: SessionCreateFormProps) {
             required
           />
         </div>
-        <Select
-          label="Duration"
-          options={DURATION_OPTIONS}
-          value={duration}
-          onChange={(e) => setDuration(e.target.value)}
-        />
+        <div className="space-y-2">
+          <Label htmlFor="session-duration">Duration</Label>
+          <Select value={duration} onValueChange={setDuration}>
+            <SelectTrigger id="session-duration" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {DURATION_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Recurring toggle */}
