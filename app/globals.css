@@ -134,22 +134,3 @@
   }
 }
 
-/* CSS-only mobile sidebar toggle (iOS fix — no JS needed for open/close).
-   Uses :has() to check if the hidden checkbox is checked, then shows
-   the overlay and slides in the sidebar. Un-layered so it beats Tailwind
-   utility classes like -translate-x-full. */
-body:has(#admin-sidebar-toggle:checked) .admin-sidebar-overlay,
-body:has(#teacher-sidebar-toggle:checked) .teacher-sidebar-overlay {
-  display: block;
-}
-body:has(#admin-sidebar-toggle:checked) .admin-sidebar-drawer,
-body:has(#teacher-sidebar-toggle:checked) .teacher-sidebar-drawer {
-  transform: translateX(0) !important;
-}
-
-@media (min-width: 768px) {
-  .admin-sidebar-overlay,
-  .teacher-sidebar-overlay {
-    display: none !important;
-  }
-}

@@ -15,8 +15,10 @@ import { getEnrollmentsByStudentWithTeacher } from '@/lib/db/enrollments'
 import { UIProvider } from '@/providers/UIProvider'
 import { StudentProvider } from '@/providers/StudentProvider'
 import type { StudentData, StudentEnrollment } from '@/providers/StudentProvider'
-import { StudentNav } from '@/components/student/StudentNav'
+import { SidebarShell } from '@/components/ui/SidebarShell'
+import { STUDENT_NAV_ITEMS } from '@/constants/nav-items'
 import { ROUTES } from '@/constants/routes'
+import { signOutStudent } from '@/lib/auth/actions'
 
 export default async function StudentLayout({
   children,
@@ -58,12 +60,15 @@ export default async function StudentLayout({
   return (
     <UIProvider>
       <StudentProvider student={studentData} enrollments={studentEnrollments}>
-        <div className="min-h-dvh bg-background">
-          <StudentNav />
-          <main className="mx-auto max-w-6xl p-4 sm:p-6">
-            {children}
-          </main>
-        </div>
+        <SidebarShell
+          navItems={STUDENT_NAV_ITEMS}
+          user={{ name: studentData.name, role: 'student' }}
+          notificationCount={0}
+          notificationHref={ROUTES.STUDENT.messages}
+          signOutAction={signOutStudent}
+        >
+          {children}
+        </SidebarShell>
       </StudentProvider>
     </UIProvider>
   )

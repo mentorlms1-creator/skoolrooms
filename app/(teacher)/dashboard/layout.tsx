@@ -11,12 +11,14 @@
 import { redirect } from 'next/navigation'
 import { requireTeacher } from '@/lib/auth/guards'
 import { getTeacherPlanDetails, getTeacherUsage } from '@/lib/db/teachers'
-import { Sidebar } from '@/components/teacher/Sidebar'
+import { SidebarShell } from '@/components/ui/SidebarShell'
+import { TEACHER_NAV_ITEMS } from '@/constants/nav-items'
 import { TeacherProvider } from '@/providers/TeacherProvider'
 import type { TeacherData } from '@/providers/TeacherProvider'
 import type { PlanSlug } from '@/types/domain'
 import { ExpiryBanner } from '@/components/teacher/ExpiryBanner'
 import { ROUTES } from '@/constants/routes'
+import { signOut } from '@/lib/auth/actions'
 
 export default async function DashboardLayout({
   children,
@@ -79,15 +81,16 @@ export default async function DashboardLayout({
       plan={planDetails ?? defaultPlan}
       usage={usage ?? defaultUsage}
     >
-      <div className="flex min-h-dvh bg-background">
-        <Sidebar />
-        <main className="flex-1 pt-14 md:ml-64 md:pt-0">
-          <div className="mx-auto max-w-6xl p-4 sm:p-6">
-            <ExpiryBanner />
-            {children}
-          </div>
-        </main>
-      </div>
+      <SidebarShell
+        navItems={TEACHER_NAV_ITEMS}
+        user={{ name: teacherData.name, role: 'teacher' }}
+        notificationCount={0}
+        notificationHref={ROUTES.TEACHER.messages}
+        signOutAction={signOut}
+      >
+        <ExpiryBanner />
+        {children}
+      </SidebarShell>
     </TeacherProvider>
   )
 }

@@ -2,10 +2,11 @@
 
 /**
  * components/admin/TeacherListTable.tsx — Teacher list table with links to detail
- * Client component for DataTable with sorting/search.
+ * Client component using DataTable with @tanstack/react-table ColumnDef.
  */
 
 import Link from 'next/link'
+import type { ColumnDef } from '@tanstack/react-table'
 import { DataTable } from '@/components/ui/DataTable'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { ROUTES } from '@/constants/routes'
@@ -22,71 +23,61 @@ type TeacherTableRow = {
   created_at: string
 }
 
+const columns: ColumnDef<TeacherTableRow, unknown>[] = [
+  {
+    accessorKey: 'name',
+    header: 'Name',
+    cell: ({ row }) => (
+      <Link
+        href={ROUTES.ADMIN.teacherDetail(row.original.id)}
+        className="font-medium text-primary hover:text-primary/90"
+      >
+        {row.original.name}
+      </Link>
+    ),
+  },
+  {
+    accessorKey: 'email',
+    header: 'Email',
+  },
+  {
+    accessorKey: 'plan',
+    header: 'Plan',
+    cell: ({ getValue }) => (
+      <span className="capitalize">{getValue() as string}</span>
+    ),
+  },
+  {
+    accessorKey: 'status',
+    header: 'Status',
+    cell: ({ getValue }) => (
+      <StatusBadge status={getValue() as string} size="sm" />
+    ),
+  },
+  {
+    accessorKey: 'student_count',
+    header: 'Students',
+  },
+  {
+    accessorKey: 'created_at',
+    header: 'Joined',
+    cell: ({ getValue }) => (
+      <span className="text-muted-foreground">
+        {formatPKT(getValue() as string, 'date')}
+      </span>
+    ),
+  },
+]
+
 type TeacherListTableProps = {
   data: TeacherTableRow[]
 }
 
 export function TeacherListTable({ data }: TeacherListTableProps) {
-  const columns = [
-    {
-      key: 'name',
-      header: 'Name',
-      sortable: true,
-      render: (value: unknown, row: Record<string, unknown>) => (
-        <Link
-          href={ROUTES.ADMIN.teacherDetail(row.id as string)}
-          className="font-medium text-primary hover:text-primary/90"
-        >
-          {value as string}
-        </Link>
-      ),
-    },
-    {
-      key: 'email',
-      header: 'Email',
-      sortable: true,
-    },
-    {
-      key: 'plan',
-      header: 'Plan',
-      sortable: true,
-      render: (value: unknown) => (
-        <span className="capitalize">{value as string}</span>
-      ),
-    },
-    {
-      key: 'status',
-      header: 'Status',
-      sortable: true,
-      render: (value: unknown) => (
-        <StatusBadge status={value as string} size="sm" />
-      ),
-    },
-    {
-      key: 'student_count',
-      header: 'Students',
-      sortable: true,
-    },
-    {
-      key: 'created_at',
-      header: 'Joined',
-      sortable: true,
-      render: (value: unknown) => (
-        <span className="text-muted-foreground">
-          {formatPKT(value as string, 'date')}
-        </span>
-      ),
-    },
-  ]
-
-  const tableData = data.map((row) => ({
-    ...row,
-  } as Record<string, unknown>))
-
   return (
     <DataTable
       columns={columns}
-      data={tableData}
+      data={data}
       searchable
       searchPlaceholder="Search teachers..."
       emptyMessage="No teachers found."

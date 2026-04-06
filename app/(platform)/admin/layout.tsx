@@ -6,8 +6,10 @@
  */
 
 import { requireAdmin } from '@/lib/auth/guards'
-import { AdminSidebar } from '@/components/admin/AdminSidebar'
+import { SidebarShell } from '@/components/ui/SidebarShell'
+import { ADMIN_NAV_ITEMS } from '@/constants/nav-items'
 import { UIProvider } from '@/providers/UIProvider'
+import { signOut } from '@/lib/auth/actions'
 
 export default async function AdminLayout({
   children,
@@ -19,12 +21,14 @@ export default async function AdminLayout({
 
   return (
     <UIProvider>
-      <div className="flex min-h-dvh bg-background">
-        <AdminSidebar />
-        <main className="flex-1 pt-14 md:ml-64 md:pt-0">
-          <div className="mx-auto max-w-6xl p-4 sm:p-6">{children}</div>
-        </main>
-      </div>
+      <SidebarShell
+        navItems={ADMIN_NAV_ITEMS}
+        user={{ name: 'Admin', role: 'admin' }}
+        roleBadge="Admin"
+        signOutAction={signOut}
+      >
+        {children}
+      </SidebarShell>
     </UIProvider>
   )
 }
