@@ -135,9 +135,9 @@ export function Step2Form({ defaultSubdomain, domain }: Step2FormProps) {
   return (
     <div className="space-y-6">
       {/* Subdomain input */}
-      <div>
+      <div className="rounded-2xl bg-container ring-1 ring-foreground/[0.03] p-5">
         <div className="space-y-2">
-          <Label htmlFor="subdomain">Your subdomain</Label>
+          <Label htmlFor="subdomain" className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/50">Your subdomain</Label>
           <Input
             id="subdomain"
             value={subdomain}
@@ -148,7 +148,7 @@ export function Step2Form({ defaultSubdomain, domain }: Step2FormProps) {
         </div>
 
         {/* Live preview */}
-        <p className="mt-2 text-sm text-muted-foreground">
+        <p className="mt-3 text-sm text-muted-foreground">
           Your page:{' '}
           <span className="font-medium text-foreground">
             {subdomain || 'your-name'}.{domain}
@@ -158,7 +158,7 @@ export function Step2Form({ defaultSubdomain, domain }: Step2FormProps) {
 
       {/* Availability status indicator */}
       {status === 'available' && (
-        <div className="flex items-center gap-2 rounded-md bg-primary/10 px-3 py-2">
+        <div className="flex items-center gap-2.5 rounded-2xl bg-success/10 px-4 py-3">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 20 20"
@@ -186,7 +186,7 @@ export function Step2Form({ defaultSubdomain, domain }: Step2FormProps) {
             loading={status === 'checking'}
             disabled={status === 'checking' || subdomain.length < 3}
             variant="secondary"
-            className="flex-1"
+            className="flex-1 rounded-xl"
             size="lg"
           >
             Check Availability
@@ -196,7 +196,7 @@ export function Step2Form({ defaultSubdomain, domain }: Step2FormProps) {
             onClick={handleConfirm}
             loading={confirming || isPending}
             disabled={confirming || isPending}
-            className="flex-1"
+            className="flex-1 rounded-xl"
             size="lg"
           >
             Confirm & Continue

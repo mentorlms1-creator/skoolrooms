@@ -38,7 +38,7 @@ export function AttendanceSummaryTable({ summaries }: AttendanceSummaryTableProp
                 : 'text-destructive'
 
           return (
-            <div key={s.id} className="rounded-md border border-border p-3 sm:p-4 text-sm">
+            <div key={s.id} className="rounded-2xl ring-1 ring-foreground/[0.03] bg-card p-4 text-sm">
               <p className="font-medium text-foreground">{s.name}</p>
               <div className="mt-2 flex items-center justify-between">
                 <span className="text-muted-foreground">{s.attended} / {s.total} classes</span>
@@ -49,14 +49,14 @@ export function AttendanceSummaryTable({ summaries }: AttendanceSummaryTableProp
         })}
       </div>
       {/* Desktop table view */}
-      <div className="hidden md:block overflow-x-auto">
+      <div className="hidden md:block rounded-[2rem] ring-1 ring-foreground/5 overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-border">
-              <th className="px-3 py-2 text-left font-medium text-muted-foreground">Student</th>
-              <th className="px-3 py-2 text-right font-medium text-muted-foreground">Attended</th>
-              <th className="px-3 py-2 text-right font-medium text-muted-foreground">Total</th>
-              <th className="px-3 py-2 text-right font-medium text-muted-foreground">Rate</th>
+            <tr className="bg-container">
+              <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/50">Student</th>
+              <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/50">Attended</th>
+              <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/50">Total</th>
+              <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/50">Rate</th>
             </tr>
           </thead>
           <tbody>
@@ -69,11 +69,11 @@ export function AttendanceSummaryTable({ summaries }: AttendanceSummaryTableProp
                     : 'text-destructive'
 
               return (
-                <tr key={s.id} className="border-b border-border last:border-b-0">
-                  <td className="px-3 py-2 text-foreground">{s.name}</td>
-                  <td className="px-3 py-2 text-right text-foreground">{s.attended}</td>
-                  <td className="px-3 py-2 text-right text-muted-foreground">{s.total}</td>
-                  <td className={`px-3 py-2 text-right font-medium ${colorClass}`}>
+                <tr key={s.id} className="border-b border-foreground/[0.03] last:border-b-0">
+                  <td className="px-4 py-3 text-foreground">{s.name}</td>
+                  <td className="px-4 py-3 text-right text-foreground">{s.attended}</td>
+                  <td className="px-4 py-3 text-right text-muted-foreground">{s.total}</td>
+                  <td className={`px-4 py-3 text-right font-medium ${colorClass}`}>
                     {s.percentage}%
                   </td>
                 </tr>

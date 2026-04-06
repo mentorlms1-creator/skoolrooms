@@ -120,8 +120,8 @@ export function Step1Form({ defaultSubjects, defaultLevels }: Step1FormProps) {
   return (
     <div className="space-y-6">
       {/* Subjects */}
-      <div>
-        <h3 className="mb-3 text-sm font-medium text-foreground">Subjects</h3>
+      <div className="rounded-2xl bg-container p-5">
+        <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/50">Subjects</h3>
         <div className="flex flex-wrap gap-2">
           {SUBJECTS.map((subject) => {
             const isSelected = selectedSubjects.has(subject)
@@ -131,12 +131,12 @@ export function Step1Form({ defaultSubjects, defaultLevels }: Step1FormProps) {
                 type="button"
                 onClick={() => toggleSubject(subject)}
                 className={`
-                  rounded-full border px-3 py-1.5 text-sm font-medium
+                  rounded-xl px-3 py-1.5 text-sm font-medium
                   transition-colors duration-150
                   ${
                     isSelected
-                      ? 'border-primary bg-primary text-white'
-                      : 'border-border bg-card text-muted-foreground hover:border-primary'
+                      ? 'bg-primary text-primary-foreground ring-1 ring-primary'
+                      : 'ring-1 ring-foreground/5 bg-card text-muted-foreground hover:ring-primary/30'
                   }
                 `}
               >
@@ -148,8 +148,8 @@ export function Step1Form({ defaultSubjects, defaultLevels }: Step1FormProps) {
       </div>
 
       {/* Levels */}
-      <div>
-        <h3 className="mb-3 text-sm font-medium text-foreground">Teaching Levels</h3>
+      <div className="rounded-2xl bg-container p-5">
+        <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/50">Teaching Levels</h3>
         <div className="flex flex-wrap gap-2">
           {LEVELS.map((level) => {
             const isSelected = selectedLevels.has(level)
@@ -159,12 +159,12 @@ export function Step1Form({ defaultSubjects, defaultLevels }: Step1FormProps) {
                 type="button"
                 onClick={() => toggleLevel(level)}
                 className={`
-                  rounded-full border px-3 py-1.5 text-sm font-medium
+                  rounded-xl px-3 py-1.5 text-sm font-medium
                   transition-colors duration-150
                   ${
                     isSelected
-                      ? 'border-primary bg-primary text-white'
-                      : 'border-border bg-card text-muted-foreground hover:border-primary'
+                      ? 'bg-primary text-primary-foreground ring-1 ring-primary'
+                      : 'ring-1 ring-foreground/5 bg-card text-muted-foreground hover:ring-primary/30'
                   }
                 `}
               >
@@ -183,7 +183,7 @@ export function Step1Form({ defaultSubjects, defaultLevels }: Step1FormProps) {
         onClick={handleSubmit}
         loading={isPending}
         disabled={isPending}
-        className="w-full"
+        className="w-full rounded-xl"
         size="lg"
       >
         Continue

@@ -63,25 +63,27 @@ export function Step3Form({
   return (
     <div className="space-y-6">
       {/* Profile photo */}
-      <div>
-        <label className="mb-2 block text-sm font-medium text-foreground">
+      <div className="rounded-2xl bg-container p-5">
+        <label className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/50">
           Profile Photo
         </label>
-        <FileUpload
-          fileType="profile"
-          entityId={teacherId}
-          onUploadComplete={(url) => setPhotoUrl(url)}
-          currentUrl={photoUrl || undefined}
-        />
-        <p className="mt-1 text-xs text-muted-foreground">
+        <div className="rounded-2xl overflow-hidden">
+          <FileUpload
+            fileType="profile"
+            entityId={teacherId}
+            onUploadComplete={(url) => setPhotoUrl(url)}
+            currentUrl={photoUrl || undefined}
+          />
+        </div>
+        <p className="mt-2 text-xs text-muted-foreground">
           Optional. JPEG, PNG, or WebP. Max 2MB.
         </p>
       </div>
 
       {/* Bio */}
-      <div>
+      <div className="rounded-2xl bg-container p-5">
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="bio">Bio</Label>
+          <Label htmlFor="bio" className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/50">Bio</Label>
           <Textarea
             id="bio"
             value={bio}
@@ -91,7 +93,7 @@ export function Step3Form({
           />
           {error && <p className="text-sm text-destructive">{error}</p>}
         </div>
-        <p className="mt-1 text-xs text-muted-foreground">
+        <p className="mt-2 text-xs text-muted-foreground">
           Minimum 10 characters. This appears on your public profile.
         </p>
       </div>
@@ -101,7 +103,7 @@ export function Step3Form({
         onClick={handleSubmit}
         loading={isPending}
         disabled={isPending}
-        className="w-full"
+        className="w-full rounded-xl"
         size="lg"
       >
         Complete Setup

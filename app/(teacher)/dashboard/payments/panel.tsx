@@ -129,21 +129,23 @@ export function PaymentVerificationPanel({
           }
         }}
       >
-        <DialogContent className="sm:max-w-sm">
+        <DialogContent className="sm:max-w-sm rounded-[2rem]">
           <DialogHeader>
             <DialogTitle>Reject Payment</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Please provide a reason for rejecting this payment. The student will
-              be notified with this reason.
-            </p>
+            <div className="rounded-2xl bg-destructive/5 px-4 py-3">
+              <p className="text-sm text-muted-foreground">
+                Please provide a reason for rejecting this payment. The student will
+                be notified with this reason.
+              </p>
+            </div>
             <textarea
               value={rejectReason}
               onChange={(e) => setRejectReason(e.target.value)}
               placeholder="e.g., Screenshot is unclear, amount does not match..."
               rows={3}
-              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring"
+              className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring"
               disabled={rejectLoading}
             />
             <div className="flex items-center justify-end gap-3">
@@ -151,6 +153,7 @@ export function PaymentVerificationPanel({
                 variant="secondary"
                 onClick={() => setRejectModalOpen(false)}
                 disabled={rejectLoading}
+                className="rounded-xl"
               >
                 Cancel
               </Button>
@@ -158,6 +161,7 @@ export function PaymentVerificationPanel({
                 variant="danger"
                 onClick={handleRejectConfirm}
                 loading={rejectLoading}
+                className="rounded-xl"
               >
                 Reject Payment
               </Button>

@@ -119,78 +119,81 @@ export function AttendanceGrid({
   const presentCount = Object.values(attendance).filter(Boolean).length
 
   return (
-    <div>
-      {/* Select all / none controls */}
-      {editable && !hasExistingData && (
-        <div className="mb-3 flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => toggleAll(true)}
-            className="px-2 py-1.5 text-sm font-medium text-primary hover:text-primary/90 transition-colors"
-          >
-            Select All
-          </button>
-          <span className="text-xs text-muted-foreground">/</span>
-          <button
-            type="button"
-            onClick={() => toggleAll(false)}
-            className="px-2 py-1.5 text-sm font-medium text-primary hover:text-primary/90 transition-colors"
-          >
-            Deselect All
-          </button>
-          <span className="ml-auto text-xs text-muted-foreground">
-            {presentCount} of {students.length} present
-          </span>
-        </div>
-      )}
+    <div className="rounded-[2rem] border-none shadow-sm ring-1 ring-foreground/5 bg-card overflow-hidden">
+      <div className="p-5">
+        {/* Select all / none controls */}
+        {editable && !hasExistingData && (
+          <div className="mb-4 flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => toggleAll(true)}
+              className="rounded-xl px-3 py-1.5 text-sm font-medium text-primary hover:bg-primary/5 transition-colors"
+            >
+              Select All
+            </button>
+            <span className="text-xs text-muted-foreground">/</span>
+            <button
+              type="button"
+              onClick={() => toggleAll(false)}
+              className="rounded-xl px-3 py-1.5 text-sm font-medium text-primary hover:bg-primary/5 transition-colors"
+            >
+              Deselect All
+            </button>
+            <span className="ml-auto text-xs text-muted-foreground">
+              {presentCount} of {students.length} present
+            </span>
+          </div>
+        )}
 
-      {/* Student checkboxes */}
-      <div className="flex flex-col gap-2">
-        {students.map((student) => (
-          <label
-            key={student.id}
-            className={`
-              flex items-center gap-3 rounded-md px-3 py-2
-              ${editable ? 'cursor-pointer hover:bg-background' : 'cursor-default'}
-              ${attendance[student.id] ? 'bg-success/5' : ''}
-              transition-colors
-            `}
-          >
-            <input
-              type="checkbox"
-              checked={attendance[student.id] ?? false}
-              onChange={() => handleCheckboxChange(student.id)}
-              disabled={!editable || isPending}
-              className="h-4 w-4 rounded border-border text-primary focus:ring-ring disabled:opacity-50"
-            />
-            <span className="text-sm text-foreground">{student.name}</span>
-            {!editable && hasExistingData && (
-              <span className={`ml-auto text-xs ${attendance[student.id] ? 'text-success' : 'text-destructive'}`}>
-                {attendance[student.id] ? 'Present' : 'Absent'}
-              </span>
-            )}
-          </label>
-        ))}
+        {/* Student checkboxes */}
+        <div className="flex flex-col gap-1.5">
+          {students.map((student) => (
+            <label
+              key={student.id}
+              className={`
+                flex items-center gap-3 rounded-xl px-4 py-2.5
+                ${editable ? 'cursor-pointer hover:bg-container' : 'cursor-default'}
+                ${attendance[student.id] ? 'bg-success/5' : ''}
+                transition-colors
+              `}
+            >
+              <input
+                type="checkbox"
+                checked={attendance[student.id] ?? false}
+                onChange={() => handleCheckboxChange(student.id)}
+                disabled={!editable || isPending}
+                className="h-4 w-4 rounded border-border accent-primary text-primary focus:ring-ring disabled:opacity-50"
+              />
+              <span className="text-sm font-medium text-foreground">{student.name}</span>
+              {!editable && hasExistingData && (
+                <span className={`ml-auto text-xs font-medium ${attendance[student.id] ? 'text-success' : 'text-destructive'}`}>
+                  {attendance[student.id] ? 'Present' : 'Absent'}
+                </span>
+              )}
+            </label>
+          ))}
+        </div>
+
+        {/* Save button for initial marking */}
+        {editable && !hasExistingData && (
+          <div className="mt-5 flex justify-end">
+            <Button
+              onClick={handleBulkSave}
+              loading={isPending}
+              className="rounded-xl"
+            >
+              Save Attendance
+            </Button>
+          </div>
+        )}
+
+        {/* Status indicator for existing data */}
+        {hasExistingData && editable && (
+          <p className="mt-3 text-xs text-muted-foreground">
+            Click checkboxes to update individual attendance. Changes save automatically.
+          </p>
+        )}
       </div>
-
-      {/* Save button for initial marking */}
-      {editable && !hasExistingData && (
-        <div className="mt-4 flex justify-end">
-          <Button
-            onClick={handleBulkSave}
-            loading={isPending}
-          >
-            Save Attendance
-          </Button>
-        </div>
-      )}
-
-      {/* Status indicator for existing data */}
-      {hasExistingData && editable && (
-        <p className="mt-3 text-xs text-muted-foreground">
-          Click checkboxes to update individual attendance. Changes save automatically.
-        </p>
-      )}
     </div>
   )
 }

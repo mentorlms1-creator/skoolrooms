@@ -59,7 +59,7 @@ export function PaymentCard({
 
   return (
     <>
-      <Card className="p-5">
+      <Card className="rounded-[2rem] border-none shadow-sm ring-1 ring-foreground/5 p-5">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           {/* Left side: info */}
           <div className="flex-1 space-y-3">
@@ -74,33 +74,33 @@ export function PaymentCard({
             {/* Details grid */}
             <div className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
               <div>
-                <span className="text-muted-foreground">Email: </span>
+                <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/50">Email </span>
                 <span className="text-foreground">{student.email}</span>
               </div>
               <div>
-                <span className="text-muted-foreground">Phone: </span>
+                <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/50">Phone </span>
                 <span className="text-foreground">{student.phone}</span>
               </div>
               <div>
-                <span className="text-muted-foreground">Cohort: </span>
+                <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/50">Cohort </span>
                 <span className="text-foreground">{cohort.name}</span>
               </div>
               <div>
-                <span className="text-muted-foreground">Amount: </span>
+                <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/50">Amount </span>
                 <span className="font-medium text-foreground">Rs. {formattedAmount}</span>
               </div>
               <div>
-                <span className="text-muted-foreground">Reference: </span>
+                <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/50">Reference </span>
                 <span className="font-mono text-foreground">REF-{referenceCode}</span>
               </div>
               <div>
-                <span className="text-muted-foreground">Uploaded: </span>
+                <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/50">Uploaded </span>
                 <span className="text-foreground">
                   {formatPKT(payment.created_at, 'datetime')}
                 </span>
               </div>
               <div>
-                <span className="text-muted-foreground">Method: </span>
+                <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/50">Method </span>
                 <span className="text-foreground capitalize">{payment.payment_method}</span>
               </div>
             </div>
@@ -112,7 +112,7 @@ export function PaymentCard({
               <button
                 type="button"
                 onClick={() => setScreenshotOpen(true)}
-                className="overflow-hidden rounded-md border border-border transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="overflow-hidden rounded-xl ring-1 ring-foreground/5 transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 aria-label="View payment screenshot"
               >
                 <Image
@@ -125,7 +125,7 @@ export function PaymentCard({
                 />
               </button>
             ) : (
-              <div className="flex h-24 w-24 items-center justify-center rounded-md border border-border bg-background text-xs text-muted-foreground sm:h-28 sm:w-28">
+              <div className="flex h-24 w-24 items-center justify-center rounded-xl ring-1 ring-foreground/5 bg-background text-xs text-muted-foreground sm:h-28 sm:w-28">
                 No screenshot
               </div>
             )}
@@ -133,12 +133,13 @@ export function PaymentCard({
         </div>
 
         {/* Action buttons */}
-        <div className="mt-4 flex items-center justify-end gap-3 border-t border-border pt-4">
+        <div className="mt-4 flex items-center justify-end gap-3 border-t border-foreground/[0.03] pt-4">
           <Button
             variant="danger"
             size="sm"
             onClick={() => onReject(enrollmentId)}
             disabled={disabled}
+            className="rounded-xl"
           >
             Reject
           </Button>
@@ -147,6 +148,7 @@ export function PaymentCard({
             size="sm"
             onClick={() => onApprove(enrollmentId)}
             disabled={disabled}
+            className="rounded-xl"
           >
             Approve
           </Button>
@@ -156,7 +158,7 @@ export function PaymentCard({
       {/* Screenshot full-size dialog */}
       {payment.screenshot_url && (
         <Dialog open={screenshotOpen} onOpenChange={(open) => { if (!open) setScreenshotOpen(false) }}>
-          <DialogContent className="sm:max-w-lg">
+          <DialogContent className="sm:max-w-lg rounded-[2rem]">
             <DialogHeader>
               <DialogTitle>Payment Screenshot</DialogTitle>
             </DialogHeader>
@@ -167,7 +169,7 @@ export function PaymentCard({
                   alt="Payment screenshot full size"
                   width={800}
                   height={600}
-                  className="mx-auto max-h-[70vh] w-auto rounded-md"
+                  className="mx-auto max-h-[70vh] w-auto rounded-2xl"
                   sizes="(max-width: 768px) 100vw, 800px"
                 />
               </div>

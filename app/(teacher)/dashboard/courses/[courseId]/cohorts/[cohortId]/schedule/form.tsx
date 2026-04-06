@@ -139,55 +139,57 @@ export function SessionCreateForm({ cohortId }: SessionCreateFormProps) {
         e.preventDefault()
         handleSubmit()
       }}
-      className="flex flex-col gap-4"
+      className="flex flex-col gap-5"
     >
-      <div className="space-y-2">
-        <Label htmlFor="meet-link">Google Meet Link</Label>
-        <Input
-          id="meet-link"
-          placeholder="https://meet.google.com/abc-defg-hij"
-          value={meetLink}
-          onChange={(e) => setMeetLink(e.target.value)}
-          type="url"
-          required
-        />
-      </div>
+      <div className="rounded-2xl bg-container ring-1 ring-foreground/[0.03] p-5 space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="meet-link" className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/50">Google Meet Link</Label>
+          <Input
+            id="meet-link"
+            placeholder="https://meet.google.com/abc-defg-hij"
+            value={meetLink}
+            onChange={(e) => setMeetLink(e.target.value)}
+            type="url"
+            required
+          />
+        </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <div className="space-y-2">
-          <Label htmlFor="session-date">Date</Label>
-          <Input
-            id="session-date"
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            required
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="session-time">Time</Label>
-          <Input
-            id="session-time"
-            type="time"
-            value={time}
-            onChange={(e) => setTime(e.target.value)}
-            required
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="session-duration">Duration</Label>
-          <Select value={duration} onValueChange={setDuration}>
-            <SelectTrigger id="session-duration" className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {DURATION_OPTIONS.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>
-                  {opt.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <div className="space-y-2">
+            <Label htmlFor="session-date" className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/50">Date</Label>
+            <Input
+              id="session-date"
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="session-time" className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/50">Time</Label>
+            <Input
+              id="session-time"
+              type="time"
+              value={time}
+              onChange={(e) => setTime(e.target.value)}
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="session-duration" className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/50">Duration</Label>
+            <Select value={duration} onValueChange={setDuration}>
+              <SelectTrigger id="session-duration" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {DURATION_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 
@@ -198,7 +200,7 @@ export function SessionCreateForm({ cohortId }: SessionCreateFormProps) {
           id="is-recurring"
           checked={isRecurring}
           onChange={(e) => setIsRecurring(e.target.checked)}
-          className="h-4 w-4 rounded border-border text-primary focus:ring-ring"
+          className="h-4 w-4 rounded border-border accent-primary text-primary focus:ring-ring"
         />
         <label htmlFor="is-recurring" className="text-sm font-medium text-foreground">
           Recurring weekly
@@ -207,8 +209,8 @@ export function SessionCreateForm({ cohortId }: SessionCreateFormProps) {
 
       {/* Day-of-week checkboxes (visible when recurring) */}
       {isRecurring && (
-        <div className="flex flex-col gap-2">
-          <p className="text-sm font-medium text-foreground">Repeat on</p>
+        <div className="rounded-2xl bg-container ring-1 ring-foreground/[0.03] p-5 flex flex-col gap-3">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/50">Repeat on</p>
           <div className="flex flex-wrap gap-2">
             {DAYS_OF_WEEK.map((day) => {
               const isSelected = selectedDays.includes(day.value)
@@ -218,11 +220,11 @@ export function SessionCreateForm({ cohortId }: SessionCreateFormProps) {
                   type="button"
                   onClick={() => toggleDay(day.value)}
                   className={`
-                    rounded-md px-3 py-1.5 text-sm font-medium transition-colors
+                    rounded-xl px-3.5 py-1.5 text-sm font-medium transition-colors
                     ${
                       isSelected
-                        ? 'bg-primary text-white'
-                        : 'border border-border bg-card text-foreground hover:bg-background'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'ring-1 ring-foreground/5 bg-card text-foreground hover:bg-background'
                     }
                   `}
                 >
@@ -237,7 +239,7 @@ export function SessionCreateForm({ cohortId }: SessionCreateFormProps) {
       {error && <p className="text-sm text-destructive">{error}</p>}
 
       <div className="flex justify-end">
-        <Button type="submit" loading={isPending}>
+        <Button type="submit" loading={isPending} className="rounded-xl">
           {isRecurring ? 'Create Recurring Sessions' : 'Add Session'}
         </Button>
       </div>
