@@ -8,7 +8,8 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Input } from '@/components/ui/Input'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { RichTextEditor } from '@/components/ui/RichTextEditor'
 import { FileUpload } from '@/components/ui/FileUpload'
 import { Button } from '@/components/ui/button'
@@ -86,13 +87,16 @@ export function AssignmentCreateForm({ cohortId }: AssignmentCreateFormProps) {
       }}
       className="flex flex-col gap-4"
     >
-      <Input
-        label="Title"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        placeholder="e.g. Chapter 3 Exercises"
-        required
-      />
+      <div className="space-y-2">
+        <Label htmlFor="assignment-title">Title</Label>
+        <Input
+          id="assignment-title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="e.g. Chapter 3 Exercises"
+          required
+        />
+      </div>
 
       <RichTextEditor
         content={description}
@@ -101,13 +105,16 @@ export function AssignmentCreateForm({ cohortId }: AssignmentCreateFormProps) {
         label="Description"
       />
 
-      <Input
-        label="Due Date"
-        type="datetime-local"
-        value={dueDate}
-        onChange={(e) => setDueDate(e.target.value)}
-        required
-      />
+      <div className="space-y-2">
+        <Label htmlFor="due-date">Due Date</Label>
+        <Input
+          id="due-date"
+          type="datetime-local"
+          value={dueDate}
+          onChange={(e) => setDueDate(e.target.value)}
+          required
+        />
+      </div>
 
       <div>
         <p className="mb-2 text-sm font-medium text-foreground">Attachment (optional)</p>

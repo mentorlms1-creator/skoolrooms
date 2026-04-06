@@ -14,7 +14,7 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { Input } from '@/components/ui/Input'
+import { Input } from '@/components/ui/input'
 import { PLANS } from '@/constants/plans'
 import { ROUTES } from '@/constants/routes'
 import {

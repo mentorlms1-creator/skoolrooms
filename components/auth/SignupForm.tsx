@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/Input'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { signUpTeacher } from '@/lib/auth/actions'
 
 export function SignupForm() {
@@ -86,44 +87,56 @@ export function SignupForm() {
         </div>
       )}
 
-      <Input
-        label="Full name"
-        name="name"
-        type="text"
-        placeholder="Your full name"
-        required
-        autoComplete="name"
-        error={fieldErrors.name}
-      />
+      <div className="space-y-2">
+        <Label htmlFor="name">Full name</Label>
+        <Input
+          id="name"
+          name="name"
+          type="text"
+          placeholder="Your full name"
+          required
+          autoComplete="name"
+        />
+        {fieldErrors.name && <p className="text-sm text-destructive">{fieldErrors.name}</p>}
+      </div>
 
-      <Input
-        label="Email"
-        name="email"
-        type="email"
-        placeholder="you@example.com"
-        required
-        autoComplete="email"
-      />
+      <div className="space-y-2">
+        <Label htmlFor="email">Email</Label>
+        <Input
+          id="email"
+          name="email"
+          type="email"
+          placeholder="you@example.com"
+          required
+          autoComplete="email"
+        />
+      </div>
 
-      <Input
-        label="Password"
-        name="password"
-        type="password"
-        placeholder="At least 8 characters"
-        required
-        autoComplete="new-password"
-        error={fieldErrors.password}
-      />
+      <div className="space-y-2">
+        <Label htmlFor="password">Password</Label>
+        <Input
+          id="password"
+          name="password"
+          type="password"
+          placeholder="At least 8 characters"
+          required
+          autoComplete="new-password"
+        />
+        {fieldErrors.password && <p className="text-sm text-destructive">{fieldErrors.password}</p>}
+      </div>
 
-      <Input
-        label="Confirm password"
-        name="confirmPassword"
-        type="password"
-        placeholder="Re-enter your password"
-        required
-        autoComplete="new-password"
-        error={fieldErrors.confirmPassword}
-      />
+      <div className="space-y-2">
+        <Label htmlFor="confirmPassword">Confirm password</Label>
+        <Input
+          id="confirmPassword"
+          name="confirmPassword"
+          type="password"
+          placeholder="Re-enter your password"
+          required
+          autoComplete="new-password"
+        />
+        {fieldErrors.confirmPassword && <p className="text-sm text-destructive">{fieldErrors.confirmPassword}</p>}
+      </div>
 
       <Button type="submit" loading={loading} className="w-full">
         Create account

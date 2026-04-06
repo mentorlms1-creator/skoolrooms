@@ -9,7 +9,8 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Input } from '@/components/ui/Input'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { RichTextEditor } from '@/components/ui/RichTextEditor'
 import { FileUpload } from '@/components/ui/FileUpload'
@@ -104,14 +105,17 @@ export function EditCourseForm({
 
   return (
     <div className="flex flex-col gap-6">
-      <Input
-        label="Course Title"
-        placeholder="e.g. O-Level Mathematics"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        error={error && error.includes('title') ? error : undefined}
-        required
-      />
+      <div className="space-y-2">
+        <Label htmlFor="course-title">Course Title</Label>
+        <Input
+          id="course-title"
+          placeholder="e.g. O-Level Mathematics"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          required
+        />
+        {error && error.includes('title') && <p className="text-sm text-destructive">{error}</p>}
+      </div>
 
       <RichTextEditor
         label="Description"

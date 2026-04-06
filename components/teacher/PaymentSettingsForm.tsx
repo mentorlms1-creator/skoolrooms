@@ -9,7 +9,8 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/Input'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/Textarea'
 import { Card } from '@/components/ui/card'
 import { updatePaymentSettingsAction } from '@/lib/actions/teacher-settings'
@@ -68,24 +69,33 @@ export function PaymentSettingsForm({ initialData }: PaymentSettingsFormProps) {
         <div>
           <h3 className="mb-3 text-sm font-semibold text-foreground">Bank Transfer</h3>
           <div className="space-y-4">
-            <Input
-              label="Bank Name"
-              name="bank_name"
-              defaultValue={initialData.bankName}
-              placeholder="e.g., HBL, Meezan Bank"
-            />
-            <Input
-              label="Account Title"
-              name="account_title"
-              defaultValue={initialData.accountTitle}
-              placeholder="Name on bank account"
-            />
-            <Input
-              label="IBAN"
-              name="iban"
-              defaultValue={initialData.iban}
-              placeholder="PK00ABCD0000000000000000"
-            />
+            <div className="space-y-2">
+              <Label htmlFor="bank_name">Bank Name</Label>
+              <Input
+                id="bank_name"
+                name="bank_name"
+                defaultValue={initialData.bankName}
+                placeholder="e.g., HBL, Meezan Bank"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="account_title">Account Title</Label>
+              <Input
+                id="account_title"
+                name="account_title"
+                defaultValue={initialData.accountTitle}
+                placeholder="Name on bank account"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="iban">IBAN</Label>
+              <Input
+                id="iban"
+                name="iban"
+                defaultValue={initialData.iban}
+                placeholder="PK00ABCD0000000000000000"
+              />
+            </div>
           </div>
         </div>
 
@@ -93,30 +103,39 @@ export function PaymentSettingsForm({ initialData }: PaymentSettingsFormProps) {
         <div>
           <h3 className="mb-3 text-sm font-semibold text-foreground">Mobile Wallets</h3>
           <div className="space-y-4">
-            <Input
-              label="JazzCash Number"
-              name="jazzcash_number"
-              defaultValue={initialData.jazzcashNumber}
-              placeholder="03xx-xxxxxxx"
-            />
-            <Input
-              label="EasyPaisa Number"
-              name="easypaisa_number"
-              defaultValue={initialData.easypaisaNumber}
-              placeholder="03xx-xxxxxxx"
-            />
+            <div className="space-y-2">
+              <Label htmlFor="jazzcash_number">JazzCash Number</Label>
+              <Input
+                id="jazzcash_number"
+                name="jazzcash_number"
+                defaultValue={initialData.jazzcashNumber}
+                placeholder="03xx-xxxxxxx"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="easypaisa_number">EasyPaisa Number</Label>
+              <Input
+                id="easypaisa_number"
+                name="easypaisa_number"
+                defaultValue={initialData.easypaisaNumber}
+                placeholder="03xx-xxxxxxx"
+              />
+            </div>
           </div>
         </div>
 
         {/* QR Code */}
         <div>
           <h3 className="mb-3 text-sm font-semibold text-foreground">QR Code</h3>
-          <Input
-            label="QR Code URL"
-            name="qr_code_url"
-            defaultValue={initialData.qrCodeUrl}
-            placeholder="Upload QR code via File Upload above, paste URL here"
-          />
+          <div className="space-y-2">
+            <Label htmlFor="qr_code_url">QR Code URL</Label>
+            <Input
+              id="qr_code_url"
+              name="qr_code_url"
+              defaultValue={initialData.qrCodeUrl}
+              placeholder="Upload QR code via File Upload above, paste URL here"
+            />
+          </div>
           {initialData.qrCodeUrl && (
             <div className="mt-2">
               <Image

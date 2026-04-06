@@ -6,7 +6,7 @@
  */
 
 import { useState, useMemo, type ReactNode } from 'react'
-import { Input } from '@/components/ui/Input'
+import { Input } from '@/components/ui/input'
 
 type Column = {
   key: string

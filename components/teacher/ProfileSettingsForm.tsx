@@ -7,7 +7,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/Input'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/Textarea'
 import { Card } from '@/components/ui/card'
 import { updateProfileAction } from '@/lib/actions/teacher-settings'
@@ -62,13 +63,16 @@ export function ProfileSettingsForm({ initialData }: ProfileSettingsFormProps) {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <Input
-          label="Name"
-          name="name"
-          defaultValue={initialData.name}
-          required
-          minLength={2}
-        />
+        <div className="space-y-2">
+          <Label htmlFor="name">Name</Label>
+          <Input
+            id="name"
+            name="name"
+            defaultValue={initialData.name}
+            required
+            minLength={2}
+          />
+        </div>
 
         <Textarea
           label="Bio"
@@ -78,26 +82,35 @@ export function ProfileSettingsForm({ initialData }: ProfileSettingsFormProps) {
           rows={3}
         />
 
-        <Input
-          label="City"
-          name="city"
-          defaultValue={initialData.city}
-          placeholder="e.g., Lahore"
-        />
+        <div className="space-y-2">
+          <Label htmlFor="city">City</Label>
+          <Input
+            id="city"
+            name="city"
+            defaultValue={initialData.city}
+            placeholder="e.g., Lahore"
+          />
+        </div>
 
-        <Input
-          label="Subject Tags (comma-separated)"
-          name="subject_tags"
-          defaultValue={initialData.subjectTags}
-          placeholder="e.g., Math, Physics, Chemistry"
-        />
+        <div className="space-y-2">
+          <Label htmlFor="subject_tags">Subject Tags (comma-separated)</Label>
+          <Input
+            id="subject_tags"
+            name="subject_tags"
+            defaultValue={initialData.subjectTags}
+            placeholder="e.g., Math, Physics, Chemistry"
+          />
+        </div>
 
-        <Input
-          label="Teaching Levels (comma-separated)"
-          name="teaching_levels"
-          defaultValue={initialData.teachingLevels}
-          placeholder="e.g., O-Level, A-Level, Matric"
-        />
+        <div className="space-y-2">
+          <Label htmlFor="teaching_levels">Teaching Levels (comma-separated)</Label>
+          <Input
+            id="teaching_levels"
+            name="teaching_levels"
+            defaultValue={initialData.teachingLevels}
+            placeholder="e.g., O-Level, A-Level, Matric"
+          />
+        </div>
 
         <div className="flex items-center gap-3">
           <input

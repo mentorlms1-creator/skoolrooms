@@ -7,7 +7,8 @@
 import { useState, useTransition, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/Input'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { RESERVED_SUBDOMAINS } from '@/constants/plans'
 import { ROUTES } from '@/constants/routes'
 
@@ -135,13 +136,16 @@ export function Step2Form({ defaultSubdomain, domain }: Step2FormProps) {
     <div className="space-y-6">
       {/* Subdomain input */}
       <div>
-        <Input
-          label="Your subdomain"
-          value={subdomain}
-          onChange={(e) => handleChange(e.target.value)}
-          placeholder="your-name"
-          error={error ?? undefined}
-        />
+        <div className="space-y-2">
+          <Label htmlFor="subdomain">Your subdomain</Label>
+          <Input
+            id="subdomain"
+            value={subdomain}
+            onChange={(e) => handleChange(e.target.value)}
+            placeholder="your-name"
+          />
+          {error && <p className="text-sm text-destructive">{error}</p>}
+        </div>
 
         {/* Live preview */}
         <p className="mt-2 text-sm text-muted-foreground">

@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/Input'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { updatePassword } from '@/lib/auth/actions'
 import { ROUTES } from '@/constants/routes'
 
@@ -94,25 +95,31 @@ export function ResetPasswordForm() {
         Enter your new password below. It must be at least 8 characters long.
       </p>
 
-      <Input
-        label="New password"
-        name="password"
-        type="password"
-        placeholder="At least 8 characters"
-        required
-        autoComplete="new-password"
-        error={fieldErrors.password}
-      />
+      <div className="space-y-2">
+        <Label htmlFor="password">New password</Label>
+        <Input
+          id="password"
+          name="password"
+          type="password"
+          placeholder="At least 8 characters"
+          required
+          autoComplete="new-password"
+        />
+        {fieldErrors.password && <p className="text-sm text-destructive">{fieldErrors.password}</p>}
+      </div>
 
-      <Input
-        label="Confirm new password"
-        name="confirmPassword"
-        type="password"
-        placeholder="Re-enter your new password"
-        required
-        autoComplete="new-password"
-        error={fieldErrors.confirmPassword}
-      />
+      <div className="space-y-2">
+        <Label htmlFor="confirmPassword">Confirm new password</Label>
+        <Input
+          id="confirmPassword"
+          name="confirmPassword"
+          type="password"
+          placeholder="Re-enter your new password"
+          required
+          autoComplete="new-password"
+        />
+        {fieldErrors.confirmPassword && <p className="text-sm text-destructive">{fieldErrors.confirmPassword}</p>}
+      </div>
 
       <Button type="submit" loading={loading} className="w-full">
         Reset password

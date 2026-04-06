@@ -3,7 +3,8 @@
 import { useActionState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/Input'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { signInAction } from '@/lib/auth/actions'
 import { ROUTES } from '@/constants/routes'
 
@@ -30,23 +31,29 @@ export function LoginForm({ action, redirectTo }: LoginFormProps) {
         </div>
       )}
 
-      <Input
-        label="Email"
-        name="email"
-        type="email"
-        placeholder="you@example.com"
-        required
-        autoComplete="email"
-      />
+      <div className="space-y-2">
+        <Label htmlFor="email">Email</Label>
+        <Input
+          id="email"
+          name="email"
+          type="email"
+          placeholder="you@example.com"
+          required
+          autoComplete="email"
+        />
+      </div>
 
-      <Input
-        label="Password"
-        name="password"
-        type="password"
-        placeholder="Enter your password"
-        required
-        autoComplete="current-password"
-      />
+      <div className="space-y-2">
+        <Label htmlFor="password">Password</Label>
+        <Input
+          id="password"
+          name="password"
+          type="password"
+          placeholder="Enter your password"
+          required
+          autoComplete="current-password"
+        />
+      </div>
 
       <div className="flex items-center justify-end">
         <Link

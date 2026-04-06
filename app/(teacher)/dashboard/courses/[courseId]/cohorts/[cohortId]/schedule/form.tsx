@@ -12,7 +12,8 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Input } from '@/components/ui/Input'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/Select'
 import { Button } from '@/components/ui/button'
 import { useUIContext } from '@/providers/UIProvider'
@@ -135,30 +136,39 @@ export function SessionCreateForm({ cohortId }: SessionCreateFormProps) {
       }}
       className="flex flex-col gap-4"
     >
-      <Input
-        label="Google Meet Link"
-        placeholder="https://meet.google.com/abc-defg-hij"
-        value={meetLink}
-        onChange={(e) => setMeetLink(e.target.value)}
-        type="url"
-        required
-      />
+      <div className="space-y-2">
+        <Label htmlFor="meet-link">Google Meet Link</Label>
+        <Input
+          id="meet-link"
+          placeholder="https://meet.google.com/abc-defg-hij"
+          value={meetLink}
+          onChange={(e) => setMeetLink(e.target.value)}
+          type="url"
+          required
+        />
+      </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <Input
-          label="Date"
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          required
-        />
-        <Input
-          label="Time"
-          type="time"
-          value={time}
-          onChange={(e) => setTime(e.target.value)}
-          required
-        />
+        <div className="space-y-2">
+          <Label htmlFor="session-date">Date</Label>
+          <Input
+            id="session-date"
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            required
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="session-time">Time</Label>
+          <Input
+            id="session-time"
+            type="time"
+            value={time}
+            onChange={(e) => setTime(e.target.value)}
+            required
+          />
+        </div>
         <Select
           label="Duration"
           options={DURATION_OPTIONS}

@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/Input'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { updateStudentProfileAction } from '@/lib/actions/student-settings'
 
 type Props = {
@@ -48,21 +49,27 @@ export function StudentSettingsForm({ defaultName, defaultPhone, email, memberSi
         <div className="rounded-md bg-success/10 px-4 py-3 text-sm text-success">Profile updated.</div>
       )}
 
-      <Input
-        label="Full Name"
-        name="name"
-        defaultValue={defaultName}
-        required
-      />
+      <div className="space-y-2">
+        <Label htmlFor="name">Full Name</Label>
+        <Input
+          id="name"
+          name="name"
+          defaultValue={defaultName}
+          required
+        />
+      </div>
 
-      <Input
-        label="Phone"
-        name="phone"
-        type="tel"
-        defaultValue={defaultPhone}
-        placeholder="+923001234567"
-        required
-      />
+      <div className="space-y-2">
+        <Label htmlFor="phone">Phone</Label>
+        <Input
+          id="phone"
+          name="phone"
+          type="tel"
+          defaultValue={defaultPhone}
+          placeholder="+923001234567"
+          required
+        />
+      </div>
 
       <div>
         <p className="text-sm font-medium text-muted-foreground">Email</p>

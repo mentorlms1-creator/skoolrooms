@@ -7,7 +7,8 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/Input'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Card } from '@/components/ui/card'
 import { joinWaitlistAction } from '@/lib/actions/waitlist'
 
@@ -66,29 +67,38 @@ export function WaitlistForm({ cohortId, cohortName, courseName }: WaitlistFormP
 
       {message?.type !== 'success' && (
         <form onSubmit={handleSubmit} className="mt-4 space-y-3">
-          <Input
-            label="Full Name"
-            name="student_name"
-            required
-            minLength={2}
-            placeholder="Enter your name"
-          />
+          <div className="space-y-2">
+            <Label htmlFor="student_name">Full Name</Label>
+            <Input
+              id="student_name"
+              name="student_name"
+              required
+              minLength={2}
+              placeholder="Enter your name"
+            />
+          </div>
 
-          <Input
-            label="Email"
-            name="student_email"
-            type="email"
-            required
-            placeholder="your@email.com"
-          />
+          <div className="space-y-2">
+            <Label htmlFor="student_email">Email</Label>
+            <Input
+              id="student_email"
+              name="student_email"
+              type="email"
+              required
+              placeholder="your@email.com"
+            />
+          </div>
 
-          <Input
-            label="Phone Number"
-            name="student_phone"
-            type="tel"
-            required
-            placeholder="03XX-XXXXXXX"
-          />
+          <div className="space-y-2">
+            <Label htmlFor="student_phone">Phone Number</Label>
+            <Input
+              id="student_phone"
+              name="student_phone"
+              type="tel"
+              required
+              placeholder="03XX-XXXXXXX"
+            />
+          </div>
 
           <div className="pt-2">
             <Button type="submit" loading={loading} className="w-full">

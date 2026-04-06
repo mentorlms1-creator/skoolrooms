@@ -9,7 +9,8 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Input } from '@/components/ui/Input'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/Select'
 import { Button } from '@/components/ui/button'
 import { useUIContext } from '@/providers/UIProvider'
@@ -85,29 +86,38 @@ export function CreateCohortForm({ courseId }: CreateCohortFormProps) {
       }}
       className="flex flex-col gap-6"
     >
-      <Input
-        label="Cohort Name"
-        placeholder="e.g. Batch 2026 — January"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        required
-      />
+      <div className="space-y-2">
+        <Label htmlFor="cohort-name">Cohort Name</Label>
+        <Input
+          id="cohort-name"
+          placeholder="e.g. Batch 2026 — January"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required
+        />
+      </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Input
-          label="Start Date"
-          type="date"
-          value={startDate}
-          onChange={(e) => setStartDate(e.target.value)}
-          required
-        />
-        <Input
-          label="End Date"
-          type="date"
-          value={endDate}
-          onChange={(e) => setEndDate(e.target.value)}
-          required
-        />
+        <div className="space-y-2">
+          <Label htmlFor="start-date">Start Date</Label>
+          <Input
+            id="start-date"
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            required
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="end-date">End Date</Label>
+          <Input
+            id="end-date"
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            required
+          />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -117,38 +127,47 @@ export function CreateCohortForm({ courseId }: CreateCohortFormProps) {
           value={feeType}
           onChange={(e) => setFeeType(e.target.value)}
         />
-        <Input
-          label="Fee (PKR)"
-          type="number"
-          min={0}
-          placeholder="e.g. 5000"
-          value={feePkr}
-          onChange={(e) => setFeePkr(e.target.value)}
-          required
-        />
+        <div className="space-y-2">
+          <Label htmlFor="fee-pkr">Fee (PKR)</Label>
+          <Input
+            id="fee-pkr"
+            type="number"
+            min={0}
+            placeholder="e.g. 5000"
+            value={feePkr}
+            onChange={(e) => setFeePkr(e.target.value)}
+            required
+          />
+        </div>
       </div>
 
       {feeType === 'monthly' && (
-        <Input
-          label="Billing Day"
-          type="number"
-          min={1}
-          max={28}
-          placeholder="1–28"
-          value={billingDay}
-          onChange={(e) => setBillingDay(e.target.value)}
-          required
-        />
+        <div className="space-y-2">
+          <Label htmlFor="billing-day">Billing Day</Label>
+          <Input
+            id="billing-day"
+            type="number"
+            min={1}
+            max={28}
+            placeholder="1-28"
+            value={billingDay}
+            onChange={(e) => setBillingDay(e.target.value)}
+            required
+          />
+        </div>
       )}
 
-      <Input
-        label="Max Students (leave empty for unlimited)"
-        type="number"
-        min={1}
-        placeholder="e.g. 30"
-        value={maxStudents}
-        onChange={(e) => setMaxStudents(e.target.value)}
-      />
+      <div className="space-y-2">
+        <Label htmlFor="max-students">Max Students (leave empty for unlimited)</Label>
+        <Input
+          id="max-students"
+          type="number"
+          min={1}
+          placeholder="e.g. 30"
+          value={maxStudents}
+          onChange={(e) => setMaxStudents(e.target.value)}
+        />
+      </div>
 
       <div className="flex flex-col gap-3">
         <label className="flex items-center gap-2 text-sm text-foreground">
