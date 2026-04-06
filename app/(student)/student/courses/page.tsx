@@ -115,15 +115,11 @@ export default async function StudentCoursesPage() {
 
                           {enrollment.cohorts.courses.description && (
                             <p className="mt-4 text-sm text-muted-foreground line-clamp-2">
-                              {enrollment.cohorts.courses.description}
+                              {(enrollment.cohorts.courses.description as string).replace(/<[^>]*>/g, '')}
                             </p>
                           )}
 
-                          <div className="mt-5 flex items-center justify-between">
-                            <StatusBadge
-                              status={enrollment.cohorts.status}
-                              size="sm"
-                            />
+                          <div className="mt-5 flex items-center justify-end">
                             <span className="inline-flex items-center gap-1 text-sm font-medium text-primary">
                               View Details
                               <ArrowRight className="h-3.5 w-3.5" />

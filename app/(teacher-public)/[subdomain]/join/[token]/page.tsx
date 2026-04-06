@@ -140,7 +140,7 @@ export default async function JoinCohortPage({ params }: PageProps) {
           {/* Course description */}
           {course.description && (
             <p className="mt-2 text-sm text-muted-foreground line-clamp-3">
-              {course.description}
+              {(course.description as string).replace(/<[^>]*>/g, '')}
             </p>
           )}
 

@@ -117,9 +117,7 @@ function StudentAssignmentCard({
         </div>
 
         {/* Description */}
-        <p className="mt-4 text-sm text-foreground whitespace-pre-wrap">
-          {assignment.description}
-        </p>
+        <div className="mt-4 prose prose-sm max-w-none text-foreground overflow-x-auto" dangerouslySetInnerHTML={{ __html: assignment.description }} />
 
         {/* Assignment file attachment */}
         {assignment.fileUrl && (
