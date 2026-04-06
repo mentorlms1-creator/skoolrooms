@@ -160,6 +160,38 @@ export async function updatePaymentStatus(
   return data as StudentPaymentRow
 }
 
+// -----------------------------------------------------------------------------
+// getPendingPaymentCountByStudent — Count of payments with status 'pending'
+// or 'screenshot_submitted' across all enrollments for a student.
+// Used by student dashboard to show pending fees count.
+// -----------------------------------------------------------------------------
+export async function getPendingPaymentCountByStudent(
+  studentId: string
+): Promise<number> {
+  const supabase = createAdminClient()
+
+  // 1. Get enrollment IDs
+  const { data: enrollments, error: enrollError } = await supabase
+    .from('enrollments')
+    .select('id')
+    .eq('student_id', studentId)
+    .in('status', ['active', 'pending'])
+
+  if (enrollError || !enrollments || enrollments.length === 0) return 0
+
+  const enrollmentIds = (enrollments as Array<{ id: string }>).map((e) => e.id)
+
+  // 2. Count pending payments
+  const { count, error } = await supabase
+    .from('student_payments')
+    .select('*', { count: 'exact', head: true })
+    .in('enrollment_id', enrollmentIds)
+    .in('status', ['pending', 'screenshot_submitted'])
+
+  if (error) return 0
+  return count ?? 0
+}
+
 // Payment joined with enrollment + cohort + course info (for student billing view)
 export type StudentPaymentWithDetails = StudentPaymentRow & {
   enrollments: {

@@ -426,6 +426,59 @@ export async function getAnnouncementReadsByStudent(
 }
 
 // -----------------------------------------------------------------------------
+// getRecentAnnouncementsByStudent — Recent announcements across all cohorts
+// the student is actively enrolled in. Returns up to `limit` announcements,
+// newest first, with cohort + course + teacher info for dashboard display.
+// -----------------------------------------------------------------------------
+export type AnnouncementForStudentDashboard = AnnouncementRow & {
+  cohorts: {
+    id: string
+    name: string
+    courses: { id: string; title: string }
+    teachers: { id: string; name: string }
+  }
+}
+
+export async function getRecentAnnouncementsByStudent(
+  studentId: string,
+  limit: number
+): Promise<AnnouncementForStudentDashboard[]> {
+  const supabase = createAdminClient()
+
+  // 1. Get cohort IDs for the student's active enrollments
+  const { data: enrollments, error: enrollError } = await supabase
+    .from('enrollments')
+    .select('cohort_id')
+    .eq('student_id', studentId)
+    .eq('status', 'active')
+
+  if (enrollError || !enrollments || enrollments.length === 0) return []
+
+  const cohortIds = (enrollments as Array<{ cohort_id: string }>).map(
+    (e) => e.cohort_id
+  )
+
+  // 2. Fetch recent announcements for those cohorts
+  const { data, error } = await supabase
+    .from('announcements')
+    .select(`
+      *,
+      cohorts!inner(
+        id, name,
+        courses!inner(id, title),
+        teachers!inner(id, name)
+      )
+    `)
+    .in('cohort_id', cohortIds)
+    .is('deleted_at', null)
+    .order('created_at', { ascending: false })
+    .limit(limit)
+
+  if (error || !data) return []
+  return data as AnnouncementForStudentDashboard[]
+}
+
+// -----------------------------------------------------------------------------
 // getUnseenStudents — Students enrolled in cohort who haven't read the
 // announcement. Uses two-step approach (Supabase .in() doesn't accept
 // subqueries — fetch IDs first, then filter).

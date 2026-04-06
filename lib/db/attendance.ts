@@ -181,6 +181,64 @@ export async function getAttendanceSummary(
 }
 
 // -----------------------------------------------------------------------------
+// getOverallAttendanceSummary — Aggregate attendance across ALL cohorts the
+// student is actively enrolled in. Returns total attended / total sessions
+// and an overall percentage.
+// -----------------------------------------------------------------------------
+export async function getOverallAttendanceSummary(
+  studentId: string
+): Promise<AttendanceSummary> {
+  const supabase = createAdminClient()
+
+  // 1. Get active enrollment cohort IDs
+  const { data: enrollments, error: enrollError } = await supabase
+    .from('enrollments')
+    .select('cohort_id')
+    .eq('student_id', studentId)
+    .eq('status', 'active')
+
+  if (enrollError || !enrollments || enrollments.length === 0) {
+    return { attended: 0, total: 0, percentage: 0 }
+  }
+
+  const cohortIds = (enrollments as Array<{ cohort_id: string }>).map(
+    (e) => e.cohort_id
+  )
+
+  // 2. Get all non-cancelled session IDs across those cohorts
+  const { data: sessions, error: sessionError } = await supabase
+    .from('class_sessions')
+    .select('id')
+    .in('cohort_id', cohortIds)
+    .is('cancelled_at', null)
+    .is('deleted_at', null)
+
+  if (sessionError || !sessions || sessions.length === 0) {
+    return { attended: 0, total: 0, percentage: 0 }
+  }
+
+  const sessionIds = (sessions as Array<{ id: string }>).map((s) => s.id)
+  const total = sessionIds.length
+
+  // 3. Count attendance records where present=true
+  const { count, error: attendError } = await supabase
+    .from('attendance')
+    .select('*', { count: 'exact', head: true })
+    .eq('student_id', studentId)
+    .eq('present', true)
+    .in('class_session_id', sessionIds)
+
+  if (attendError) {
+    return { attended: 0, total, percentage: 0 }
+  }
+
+  const attended = count ?? 0
+  const percentage = total > 0 ? Math.round((attended / total) * 100) : 0
+
+  return { attended, total, percentage }
+}
+
+// -----------------------------------------------------------------------------
 // bulkUpsertAttendance — Batch upsert for marking attendance for a whole class.
 // Uses .upsert() with onConflict on the UNIQUE(class_session_id, student_id)
 // constraint.

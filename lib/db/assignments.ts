@@ -395,6 +395,62 @@ export async function getSubmissionsByStudentForCohort(
 }
 
 // -----------------------------------------------------------------------------
+// getUpcomingAssignmentsByStudent — Upcoming (not yet due) assignments across
+// all cohorts the student is actively enrolled in. Returns up to `limit`
+// assignments, soonest due first, with cohort + course + teacher info.
+// -----------------------------------------------------------------------------
+export type AssignmentForStudentDashboard = AssignmentRow & {
+  cohorts: {
+    id: string
+    name: string
+    courses: { id: string; title: string }
+    teachers: { id: string; name: string }
+  }
+}
+
+export async function getUpcomingAssignmentsByStudent(
+  studentId: string,
+  limit: number
+): Promise<AssignmentForStudentDashboard[]> {
+  const supabase = createAdminClient()
+
+  // 1. Get cohort IDs for active enrollments
+  const { data: enrollments, error: enrollError } = await supabase
+    .from('enrollments')
+    .select('cohort_id')
+    .eq('student_id', studentId)
+    .eq('status', 'active')
+
+  if (enrollError || !enrollments || enrollments.length === 0) return []
+
+  const cohortIds = (enrollments as Array<{ cohort_id: string }>).map(
+    (e) => e.cohort_id
+  )
+
+  const now = new Date().toISOString()
+
+  // 2. Fetch upcoming assignments (due_date > now)
+  const { data, error } = await supabase
+    .from('assignments')
+    .select(`
+      *,
+      cohorts!inner(
+        id, name,
+        courses!inner(id, title),
+        teachers!inner(id, name)
+      )
+    `)
+    .in('cohort_id', cohortIds)
+    .is('deleted_at', null)
+    .gt('due_date', now)
+    .order('due_date', { ascending: true })
+    .limit(limit)
+
+  if (error || !data) return []
+  return data as AssignmentForStudentDashboard[]
+}
+
+// -----------------------------------------------------------------------------
 // getOverdueSubmissions — Students who haven't submitted past due_date.
 // Uses two-step approach: fetch past-due assignments, then find enrolled
 // students without submissions.
