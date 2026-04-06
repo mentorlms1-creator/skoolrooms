@@ -99,6 +99,7 @@ export default async function AdminDashboardPage() {
             icon={TrendingUp}
             iconColor="text-accent"
             iconBg="bg-accent/10"
+            activity={stats.dailyActivity}
             trend={stats.signupsThisMonth > stats.signupsLastMonth
               ? `+${stats.signupsLastMonth > 0 ? Math.round(((stats.signupsThisMonth - stats.signupsLastMonth) / stats.signupsLastMonth) * 100) : 100}%`
               : stats.signupsThisMonth < stats.signupsLastMonth
@@ -230,10 +231,12 @@ interface StatCardProps {
   value: string
   unit?: string
   prefix?: string
-  icon?: any
+  icon?: React.ComponentType<{ className?: string; strokeWidth?: number }>
   iconBg?: string
   iconColor?: string
   trend?: string
+  /** Array of daily activity counts — each value drives dot intensity */
+  activity?: number[]
 }
 
 function StatCard({
@@ -245,9 +248,11 @@ function StatCard({
   iconBg = 'bg-card',
   iconColor = 'text-foreground',
   trend,
+  activity,
 }: StatCardProps) {
   const trendValue = trend ? parseFloat(trend) : null
   const isPositive = trendValue !== null && trendValue >= 0
+  const maxActivity = activity ? Math.max(...activity, 1) : 1
 
   return (
     <Card className="border-none shadow-sm ring-1 ring-foreground/5 rounded-[2rem] overflow-hidden bg-card h-full">
@@ -286,26 +291,37 @@ function StatCard({
           </p>
         </div>
 
-        {/* Activity dots + trend */}
-        {trend && (
+        {/* Activity heatmap dots + trend */}
+        {(activity || trend) && (
           <div className="flex flex-col gap-1.5 w-full">
-            <div className="flex flex-wrap gap-[3px]">
-              {Array.from({ length: 21 }).map((_, i) => (
-                <div
-                  key={i}
-                  className={cn(
-                    'h-[6px] w-[6px] rounded-full',
-                    i < 7 ? 'bg-accent' : i < 14 ? 'bg-muted' : 'bg-accent'
-                  )}
-                />
-              ))}
-            </div>
-            <p className={cn(
-              'text-[10px] font-bold uppercase tracking-wider',
-              isPositive ? 'text-accent' : 'text-destructive'
-            )}>
-              {trend} vs last week
-            </p>
+            {activity && (
+              <div className="flex flex-wrap gap-[3px]">
+                {activity.map((count, i) => (
+                  <div
+                    key={i}
+                    className={cn(
+                      'h-[6px] w-[6px] rounded-full transition-colors',
+                      count === 0
+                        ? 'bg-muted'
+                        : count / maxActivity > 0.6
+                        ? 'bg-accent'
+                        : count / maxActivity > 0.3
+                        ? 'bg-accent/60'
+                        : 'bg-accent/30'
+                    )}
+                    title={`${count} activity${count !== 1 ? '' : ''} (${21 - i}d ago)`}
+                  />
+                ))}
+              </div>
+            )}
+            {trend && (
+              <p className={cn(
+                'text-[10px] font-bold uppercase tracking-wider',
+                isPositive ? 'text-accent' : 'text-destructive'
+              )}>
+                {trend} vs last period
+              </p>
+            )}
           </div>
         )}
       </CardContent>

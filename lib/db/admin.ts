@@ -75,6 +75,8 @@ export type DashboardStats = {
   signupsThisMonth: number
   signupsLastMonth: number
   planDistribution: { plan: string; count: number }[]
+  /** Daily activity counts for last 21 days (index 0 = 21 days ago, index 20 = today) */
+  dailyActivity: number[]
 }
 
 export type OperationsStats = {
@@ -367,6 +369,25 @@ export async function getAdminDashboardStats(): Promise<DashboardStats> {
     .gte('created_at', twoMonthsAgo.toISOString())
     .lt('created_at', monthAgo.toISOString())
 
+  // Daily activity: signups + payments per day for last 21 days
+  const twentyOneDaysAgo = new Date(now.getTime() - 21 * 24 * 60 * 60 * 1000)
+  const { data: recentSignups } = await supabase
+    .from('teachers')
+    .select('created_at')
+    .gte('created_at', twentyOneDaysAgo.toISOString())
+
+  // Build daily counts (index 0 = 21 days ago, index 20 = today)
+  const dailyActivity: number[] = Array(21).fill(0)
+  if (recentSignups) {
+    for (const row of recentSignups) {
+      const daysDiff = Math.floor((now.getTime() - new Date(row.created_at as string).getTime()) / (24 * 60 * 60 * 1000))
+      const idx = 20 - daysDiff
+      if (idx >= 0 && idx < 21) {
+        dailyActivity[idx]++
+      }
+    }
+  }
+
   // Plan distribution
   const { data: allTeachers } = await supabase
     .from('teachers')
@@ -392,6 +413,7 @@ export async function getAdminDashboardStats(): Promise<DashboardStats> {
     signupsThisMonth: signupsThisMonth ?? 0,
     signupsLastMonth: signupsLastMonth ?? 0,
     planDistribution,
+    dailyActivity,
   }
 }
 
