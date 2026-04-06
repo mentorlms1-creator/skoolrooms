@@ -52,12 +52,12 @@ export function StudentNav() {
   }
 
   return (
-    <header className="sticky top-0 z-30 border-b border-border bg-surface">
+    <header className="sticky top-0 z-30 border-b border-border bg-card">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
         {/* Brand */}
         <Link
           href={ROUTES.STUDENT.dashboard}
-          className="text-lg font-bold text-brand-600"
+          className="text-lg font-bold text-primary"
         >
           Lumscribe
         </Link>
@@ -74,8 +74,8 @@ export function StudentNav() {
                   px-3 py-2 text-sm font-medium transition-colors
                   ${
                     active
-                      ? 'border-b-2 border-brand-600 text-brand-600'
-                      : 'text-muted hover:text-ink'
+                      ? 'border-b-2 border-primary text-primary'
+                      : 'text-muted-foreground hover:text-foreground'
                   }
                 `}
               >
@@ -90,7 +90,7 @@ export function StudentNav() {
           type="button"
           onClick={handleSignOut}
           disabled={isPending}
-          className="hidden text-sm font-medium text-muted hover:text-ink transition-colors disabled:opacity-50 sm:block"
+          className="hidden text-sm font-medium text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50 sm:block"
         >
           {isPending ? 'Signing out...' : 'Sign Out'}
         </button>
@@ -98,7 +98,7 @@ export function StudentNav() {
         {/* Mobile hamburger — <details>/<summary> for iOS compatibility */}
         <details className="sm:hidden group">
           <summary
-            className="inline-flex min-h-[2.75rem] min-w-[2.75rem] cursor-pointer list-none items-center justify-center rounded-md p-2 text-muted hover:text-ink active:bg-brand-50 transition-colors [&::-webkit-details-marker]:hidden"
+            className="inline-flex min-h-[2.75rem] min-w-[2.75rem] cursor-pointer list-none items-center justify-center rounded-md p-2 text-muted-foreground hover:text-foreground active:bg-primary/10 transition-colors [&::-webkit-details-marker]:hidden"
             aria-label="Toggle navigation menu"
           >
             <svg className="h-6 w-6 group-open:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -109,7 +109,7 @@ export function StudentNav() {
             </svg>
           </summary>
 
-          <nav className="absolute left-0 right-0 border-t border-border bg-surface px-4 pb-4 pt-2">
+          <nav className="absolute left-0 right-0 border-t border-border bg-card px-4 pb-4 pt-2">
             <div className="flex flex-col gap-1">
               {NAV_ITEMS.map((item) => {
                 const active = isActive(item.href)
@@ -119,8 +119,8 @@ export function StudentNav() {
                     href={item.href}
                     className={`rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${
                       active
-                        ? 'bg-brand-50 text-brand-600'
-                        : 'text-muted hover:text-ink active:bg-brand-50'
+                        ? 'bg-primary/10 text-primary'
+                        : 'text-muted-foreground hover:text-foreground active:bg-primary/10'
                     }`}
                   >
                     {item.label}
@@ -131,7 +131,7 @@ export function StudentNav() {
                 type="button"
                 onClick={handleSignOut}
                 disabled={isPending}
-                className="rounded-md px-3 py-2.5 text-left text-sm font-medium text-muted hover:text-ink active:bg-brand-50 transition-colors disabled:opacity-50"
+                className="rounded-md px-3 py-2.5 text-left text-sm font-medium text-muted-foreground hover:text-foreground active:bg-primary/10 transition-colors disabled:opacity-50"
               >
                 {isPending ? 'Signing out...' : 'Sign Out'}
               </button>

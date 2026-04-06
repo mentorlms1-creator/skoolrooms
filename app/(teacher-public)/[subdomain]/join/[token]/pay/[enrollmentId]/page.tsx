@@ -110,12 +110,12 @@ export default async function PaymentPage({ params }: PageProps) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16">
         <Card className="p-8 text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-brand-100">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/20">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 20 20"
               fill="currentColor"
-              className="h-8 w-8 text-brand-600"
+              className="h-8 w-8 text-primary"
               aria-hidden="true"
             >
               <path
@@ -125,10 +125,10 @@ export default async function PaymentPage({ params }: PageProps) {
               />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-ink">Payment Confirmed!</h1>
-          <p className="mt-2 text-sm text-muted">
+          <h1 className="text-2xl font-bold text-foreground">Payment Confirmed!</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
             You are now enrolled in{' '}
-            <span className="font-medium text-ink">{courseName}</span> ({cohort.name}).
+            <span className="font-medium text-foreground">{courseName}</span> ({cohort.name}).
             Your teacher {teacherName} has verified your payment.
           </p>
           <div className="mt-4">
@@ -150,12 +150,12 @@ export default async function PaymentPage({ params }: PageProps) {
           <div className="p-6">
             {/* Header */}
             <div className="mb-4 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-danger/10">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 20 20"
                   fill="currentColor"
-                  className="h-5 w-5 text-danger"
+                  className="h-5 w-5 text-destructive"
                   aria-hidden="true"
                 >
                   <path
@@ -166,25 +166,25 @@ export default async function PaymentPage({ params }: PageProps) {
                 </svg>
               </div>
               <div>
-                <h1 className="text-xl font-bold text-ink">Payment Rejected</h1>
-                <p className="text-sm text-muted">
+                <h1 className="text-xl font-bold text-foreground">Payment Rejected</h1>
+                <p className="text-sm text-muted-foreground">
                   {teacherName} could not verify your payment
                 </p>
               </div>
             </div>
 
             {/* Rejection reason */}
-            <div className="mb-6 rounded-md border border-danger/20 bg-danger/5 p-4">
-              <p className="text-sm font-medium text-danger">Reason:</p>
-              <p className="mt-1 text-sm text-ink">{rejectionReason}</p>
+            <div className="mb-6 rounded-md border border-destructive/20 bg-destructive/5 p-4">
+              <p className="text-sm font-medium text-destructive">Reason:</p>
+              <p className="mt-1 text-sm text-foreground">{rejectionReason}</p>
             </div>
 
             {/* Fee info */}
             <div className="mb-6 flex items-center justify-between border-b border-border pb-4 text-sm">
-              <span className="text-muted">Amount to pay</span>
-              <span className="text-lg font-bold text-ink">
+              <span className="text-muted-foreground">Amount to pay</span>
+              <span className="text-lg font-bold text-foreground">
                 {formatFeePKR(payment?.discounted_amount_pkr ?? cohort.fee_pkr)}{' '}
-                <span className="text-xs font-normal text-muted">{feeLabel}</span>
+                <span className="text-xs font-normal text-muted-foreground">{feeLabel}</span>
               </span>
             </div>
 
@@ -213,12 +213,12 @@ export default async function PaymentPage({ params }: PageProps) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16">
         <Card className="p-8 text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-brand-100">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/20">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 20 20"
               fill="currentColor"
-              className="h-8 w-8 text-brand-600"
+              className="h-8 w-8 text-primary"
               aria-hidden="true"
             >
               <path
@@ -228,18 +228,18 @@ export default async function PaymentPage({ params }: PageProps) {
               />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-ink">Waiting for Verification</h1>
-          <p className="mt-2 text-sm text-muted">
+          <h1 className="text-2xl font-bold text-foreground">Waiting for Verification</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
             Your payment screenshot has been submitted. {teacherName} will review
             and verify your payment soon.
           </p>
           <div className="mt-4 flex flex-col items-center gap-2">
             <StatusBadge status="pending_verification" />
-            <p className="text-xs text-muted">
+            <p className="text-xs text-muted-foreground">
               Reference: <span className="font-mono font-medium">REF-{enrollment.reference_code}</span>
             </p>
             {payment && (
-              <p className="text-xs text-muted">
+              <p className="text-xs text-muted-foreground">
                 Submitted {formatPKT(payment.updated_at, 'relative')}
               </p>
             )}
@@ -255,17 +255,17 @@ export default async function PaymentPage({ params }: PageProps) {
       <Card className="overflow-hidden">
         <div className="p-6">
           {/* Header */}
-          <h1 className="text-xl font-bold text-ink">Complete Your Payment</h1>
-          <p className="mt-1 text-sm text-muted">
-            Pay for <span className="font-medium text-ink">{courseName}</span> ({cohort.name})
+          <h1 className="text-xl font-bold text-foreground">Complete Your Payment</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Pay for <span className="font-medium text-foreground">{courseName}</span> ({cohort.name})
           </p>
 
           {/* Fee amount */}
-          <div className="mt-4 flex items-center justify-between rounded-md bg-paper p-4">
-            <span className="text-sm text-muted">Amount to pay</span>
-            <span className="text-2xl font-bold text-ink">
+          <div className="mt-4 flex items-center justify-between rounded-md bg-background p-4">
+            <span className="text-sm text-muted-foreground">Amount to pay</span>
+            <span className="text-2xl font-bold text-foreground">
               {formatFeePKR(payment?.discounted_amount_pkr ?? cohort.fee_pkr)}{' '}
-              <span className="text-xs font-normal text-muted">{feeLabel}</span>
+              <span className="text-xs font-normal text-muted-foreground">{feeLabel}</span>
             </span>
           </div>
 
@@ -279,7 +279,7 @@ export default async function PaymentPage({ params }: PageProps) {
 
           {/* Screenshot upload form */}
           <div className="mt-6 border-t border-border pt-6">
-            <h2 className="mb-4 text-lg font-semibold text-ink">
+            <h2 className="mb-4 text-lg font-semibold text-foreground">
               Upload Payment Screenshot
             </h2>
             <ScreenshotUploadForm
@@ -332,8 +332,8 @@ function PaymentMethodDetails({
 
   if (!hasBankDetails && !hasMobileWallets && !qrCodeUrl) {
     return (
-      <div className="rounded-md border border-border bg-paper p-4">
-        <p className="text-sm text-muted">
+      <div className="rounded-md border border-border bg-background p-4">
+        <p className="text-sm text-muted-foreground">
           {teacherName} has not set up payment details yet. Please contact them
           directly for payment instructions.
         </p>
@@ -343,33 +343,33 @@ function PaymentMethodDetails({
 
   return (
     <div className="flex flex-col gap-4">
-      <h3 className="text-sm font-semibold uppercase tracking-wider text-muted">
+      <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
         Payment Details
       </h3>
 
       {/* Bank transfer details */}
       {hasBankDetails && (
         <div className="rounded-md border border-border p-4">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Bank Transfer
           </p>
           <div className="flex flex-col gap-1.5">
             {bankName && (
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted">Bank</span>
-                <span className="font-medium text-ink">{bankName}</span>
+                <span className="text-muted-foreground">Bank</span>
+                <span className="font-medium text-foreground">{bankName}</span>
               </div>
             )}
             {accountTitle && (
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted">Account Title</span>
-                <span className="font-medium text-ink">{accountTitle}</span>
+                <span className="text-muted-foreground">Account Title</span>
+                <span className="font-medium text-foreground">{accountTitle}</span>
               </div>
             )}
             {iban && (
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted">IBAN</span>
-                <span className="font-mono text-sm font-medium text-ink break-all">
+                <span className="text-muted-foreground">IBAN</span>
+                <span className="font-mono text-sm font-medium text-foreground break-all">
                   {iban}
                 </span>
               </div>
@@ -381,22 +381,22 @@ function PaymentMethodDetails({
       {/* Mobile wallets */}
       {hasMobileWallets && (
         <div className="rounded-md border border-border p-4">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Mobile Wallet
           </p>
           <div className="flex flex-col gap-1.5">
             {jazzcashNumber && (
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted">JazzCash</span>
-                <span className="font-mono font-medium text-ink">
+                <span className="text-muted-foreground">JazzCash</span>
+                <span className="font-mono font-medium text-foreground">
                   {jazzcashNumber}
                 </span>
               </div>
             )}
             {easypaisaNumber && (
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted">EasyPaisa</span>
-                <span className="font-mono font-medium text-ink">
+                <span className="text-muted-foreground">EasyPaisa</span>
+                <span className="font-mono font-medium text-foreground">
                   {easypaisaNumber}
                 </span>
               </div>
@@ -408,7 +408,7 @@ function PaymentMethodDetails({
       {/* QR code */}
       {qrCodeUrl && (
         <div className="rounded-md border border-border p-4 text-center">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Scan to Pay
           </p>
           <Image
@@ -424,11 +424,11 @@ function PaymentMethodDetails({
 
       {/* Teacher instructions */}
       {instructions && (
-        <div className="rounded-md border border-brand-200 bg-brand-50 p-4">
-          <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-brand-700">
+        <div className="rounded-md border border-primary/20 bg-primary/10 p-4">
+          <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-primary">
             Instructions from {teacherName}
           </p>
-          <p className="text-sm text-brand-800">{instructions}</p>
+          <p className="text-sm text-primary">{instructions}</p>
         </div>
       )}
     </div>

@@ -9,17 +9,17 @@ import { PublicNavbar } from '@/components/public/PublicNavbar'
 
 export default function HomePage() {
   return (
-    <div className="min-h-dvh bg-paper">
+    <div className="min-h-dvh bg-background">
       {/* ── Header ── */}
       <PublicNavbar />
 
       <main>
       {/* ── Hero ── */}
       <section className="mx-auto max-w-4xl px-4 py-12 sm:py-24 text-center">
-        <h1 className="text-4xl font-bold tracking-tight text-ink sm:text-5xl">
+        <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
           Your Teaching, Your Brand, One Platform
         </h1>
-        <p className="mx-auto mt-4 max-w-2xl text-lg text-muted">
+        <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
           Lumscribe gives independent tutors and coaching centers a branded LMS
           with course management, scheduling, payments, and a public profile
           &mdash; all in one place.
@@ -27,13 +27,13 @@ export default function HomePage() {
         <div className="mt-8 flex flex-wrap justify-center gap-4">
           <Link
             href={ROUTES.PLATFORM.signup}
-            className="inline-flex items-center rounded-md bg-brand-600 px-6 py-3 text-base font-medium text-white hover:bg-brand-500 transition-colors"
+            className="inline-flex items-center rounded-md bg-primary px-6 py-3 text-base font-medium text-white hover:bg-primary/90 transition-colors"
           >
             Start Free
           </Link>
           <Link
             href={ROUTES.PLATFORM.explore}
-            className="inline-flex items-center rounded-md border border-brand-600 bg-transparent px-6 py-3 text-base font-medium text-brand-600 hover:bg-brand-50 transition-colors"
+            className="inline-flex items-center rounded-md border border-primary bg-transparent px-6 py-3 text-base font-medium text-primary hover:bg-primary/10 transition-colors"
           >
             Find a Teacher
           </Link>
@@ -41,12 +41,12 @@ export default function HomePage() {
       </section>
 
       {/* ── Features ── */}
-      <section className="border-t border-border bg-surface py-20">
+      <section className="border-t border-border bg-card py-20">
         <div className="mx-auto max-w-6xl px-4">
-          <h2 className="text-center text-2xl font-bold text-ink">
+          <h2 className="text-center text-2xl font-bold text-foreground">
             Everything you need to teach online
           </h2>
-          <p className="mx-auto mt-2 max-w-xl text-center text-muted">
+          <p className="mx-auto mt-2 max-w-xl text-center text-muted-foreground">
             Set up in minutes. No coding, no hassle.
           </p>
 
@@ -54,15 +54,15 @@ export default function HomePage() {
             {FEATURES.map((feature) => (
               <div
                 key={feature.title}
-                className="rounded-lg border border-border bg-paper p-6"
+                className="rounded-lg border border-border bg-background p-6"
               >
-                <div className="flex h-10 w-10 items-center justify-center rounded-md bg-brand-50 text-brand-600">
+                <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary/10 text-primary">
                   {feature.icon}
                 </div>
-                <h3 className="mt-4 text-lg font-semibold text-ink">
+                <h3 className="mt-4 text-lg font-semibold text-foreground">
                   {feature.title}
                 </h3>
-                <p className="mt-2 text-sm text-muted">{feature.description}</p>
+                <p className="mt-2 text-sm text-muted-foreground">{feature.description}</p>
               </div>
             ))}
           </div>
@@ -71,7 +71,7 @@ export default function HomePage() {
       </main>
 
       {/* ── Footer ── */}
-      <footer className="border-t border-border bg-paper py-8 text-center text-sm text-muted">
+      <footer className="border-t border-border bg-background py-8 text-center text-sm text-muted-foreground">
         Lumscribe &mdash; LMS for Tutors
       </footer>
     </div>

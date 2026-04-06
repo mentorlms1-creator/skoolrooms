@@ -110,7 +110,7 @@ export function AssignmentCreateForm({ cohortId }: AssignmentCreateFormProps) {
       />
 
       <div>
-        <p className="mb-2 text-sm font-medium text-ink">Attachment (optional)</p>
+        <p className="mb-2 text-sm font-medium text-foreground">Attachment (optional)</p>
         <FileUpload
           fileType="assignment"
           entityId={cohortId}
@@ -119,7 +119,7 @@ export function AssignmentCreateForm({ cohortId }: AssignmentCreateFormProps) {
         />
       </div>
 
-      {error && <p className="text-sm text-danger">{error}</p>}
+      {error && <p className="text-sm text-destructive">{error}</p>}
 
       <div className="flex justify-end">
         <Button type="submit" loading={isPending}>

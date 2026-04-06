@@ -42,7 +42,7 @@ export function StudentSettingsForm({ defaultName, defaultPhone, email, memberSi
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
       {error && (
-        <div className="rounded-md bg-danger/10 px-4 py-3 text-sm text-danger">{error}</div>
+        <div className="rounded-md bg-destructive/10 px-4 py-3 text-sm text-destructive">{error}</div>
       )}
       {success && (
         <div className="rounded-md bg-success/10 px-4 py-3 text-sm text-success">Profile updated.</div>
@@ -65,14 +65,14 @@ export function StudentSettingsForm({ defaultName, defaultPhone, email, memberSi
       />
 
       <div>
-        <p className="text-sm font-medium text-muted">Email</p>
-        <p className="mt-1 text-ink">{email}</p>
-        <p className="mt-0.5 text-xs text-muted">Email cannot be changed here.</p>
+        <p className="text-sm font-medium text-muted-foreground">Email</p>
+        <p className="mt-1 text-foreground">{email}</p>
+        <p className="mt-0.5 text-xs text-muted-foreground">Email cannot be changed here.</p>
       </div>
 
       <div>
-        <p className="text-sm font-medium text-muted">Member Since</p>
-        <p className="mt-1 text-ink">{memberSince}</p>
+        <p className="text-sm font-medium text-muted-foreground">Member Since</p>
+        <p className="mt-1 text-foreground">{memberSince}</p>
       </div>
 
       <div className="flex justify-end">

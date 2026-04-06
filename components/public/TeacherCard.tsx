@@ -25,7 +25,7 @@ export function TeacherCard({ teacher, platformDomain }: TeacherCardProps) {
     <Card hover className="flex flex-col overflow-hidden">
       <a href={profileUrl} className="block">
         {/* Teacher photo */}
-        <div className="flex items-center justify-center bg-paper p-6 pb-4">
+        <div className="flex items-center justify-center bg-background p-6 pb-4">
           {teacher.profile_photo_url ? (
             <Image
               src={teacher.profile_photo_url}
@@ -36,7 +36,7 @@ export function TeacherCard({ teacher, platformDomain }: TeacherCardProps) {
               sizes="80px"
             />
           ) : (
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-brand-100 text-2xl font-bold text-brand-600">
+            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/20 text-2xl font-bold text-primary">
               {teacher.name.charAt(0).toUpperCase()}
             </div>
           )}
@@ -45,14 +45,14 @@ export function TeacherCard({ teacher, platformDomain }: TeacherCardProps) {
         {/* Teacher info */}
         <div className="flex flex-1 flex-col p-4 pt-0">
           {/* Name + City */}
-          <h3 className="text-lg font-semibold text-ink">{teacher.name}</h3>
+          <h3 className="text-lg font-semibold text-foreground">{teacher.name}</h3>
           {teacher.city && (
-            <p className="mt-0.5 text-sm text-muted">{teacher.city}</p>
+            <p className="mt-0.5 text-sm text-muted-foreground">{teacher.city}</p>
           )}
 
           {/* Bio */}
           {teacher.bio && (
-            <p className="mt-2 text-sm text-muted line-clamp-2">{teacher.bio}</p>
+            <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{teacher.bio}</p>
           )}
 
           {/* Subject tags */}
@@ -61,13 +61,13 @@ export function TeacherCard({ teacher, platformDomain }: TeacherCardProps) {
               {teacher.subject_tags.slice(0, 4).map((tag) => (
                 <span
                   key={tag}
-                  className="rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700"
+                  className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary"
                 >
                   {tag}
                 </span>
               ))}
               {teacher.subject_tags.length > 4 && (
-                <span className="rounded-full bg-paper px-2 py-0.5 text-xs text-muted">
+                <span className="rounded-full bg-background px-2 py-0.5 text-xs text-muted-foreground">
                   +{teacher.subject_tags.length - 4}
                 </span>
               )}
@@ -80,13 +80,13 @@ export function TeacherCard({ teacher, platformDomain }: TeacherCardProps) {
               {teacher.teaching_levels.slice(0, 3).map((level) => (
                 <span
                   key={level}
-                  className="rounded-full bg-surface px-2 py-0.5 text-xs text-muted border border-border"
+                  className="rounded-full bg-card px-2 py-0.5 text-xs text-muted-foreground border border-border"
                 >
                   {level}
                 </span>
               ))}
               {teacher.teaching_levels.length > 3 && (
-                <span className="text-xs text-muted">
+                <span className="text-xs text-muted-foreground">
                   +{teacher.teaching_levels.length - 3}
                 </span>
               )}
@@ -96,19 +96,19 @@ export function TeacherCard({ teacher, platformDomain }: TeacherCardProps) {
           {/* Stats row */}
           <div className="mt-auto flex items-center justify-between border-t border-border pt-3">
             <div className="text-sm">
-              <span className="font-semibold text-ink">
+              <span className="font-semibold text-foreground">
                 {formatFeePKR(teacher.starting_fee_pkr)}
               </span>
-              <span className="text-xs text-muted"> starting</span>
+              <span className="text-xs text-muted-foreground"> starting</span>
             </div>
-            <div className="text-sm text-muted">
+            <div className="text-sm text-muted-foreground">
               {teacher.student_count} {teacher.student_count === 1 ? 'student' : 'students'}
             </div>
           </div>
 
           {/* Availability indicator */}
           {!teacher.has_open_cohorts && (
-            <div className="mt-2 rounded-md bg-muted/10 px-3 py-1.5 text-center text-xs font-medium text-muted">
+            <div className="mt-2 rounded-md bg-muted/10 px-3 py-1.5 text-center text-xs font-medium text-muted-foreground">
               Not accepting students
             </div>
           )}

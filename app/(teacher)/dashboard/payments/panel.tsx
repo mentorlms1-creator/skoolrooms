@@ -143,7 +143,7 @@ export function PaymentVerificationPanel({
         size="sm"
       >
         <div className="space-y-4">
-          <p className="text-sm text-muted">
+          <p className="text-sm text-muted-foreground">
             Please provide a reason for rejecting this payment. The student will
             be notified with this reason.
           </p>
@@ -152,7 +152,7 @@ export function PaymentVerificationPanel({
             onChange={(e) => setRejectReason(e.target.value)}
             placeholder="e.g., Screenshot is unclear, amount does not match..."
             rows={3}
-            className="w-full rounded-md border border-border bg-paper px-3 py-2 text-sm text-ink placeholder:text-muted focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring"
             disabled={rejectLoading}
           />
           <div className="flex items-center justify-end gap-3">

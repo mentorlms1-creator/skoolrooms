@@ -65,7 +65,7 @@ export function PaymentCard({
           <div className="flex-1 space-y-3">
             {/* Student name + status */}
             <div className="flex items-center gap-3">
-              <h3 className="text-base font-semibold text-ink">
+              <h3 className="text-base font-semibold text-foreground">
                 {student.name}
               </h3>
               <StatusBadge status={payment.status} size="sm" />
@@ -74,34 +74,34 @@ export function PaymentCard({
             {/* Details grid */}
             <div className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
               <div>
-                <span className="text-muted">Email: </span>
-                <span className="text-ink">{student.email}</span>
+                <span className="text-muted-foreground">Email: </span>
+                <span className="text-foreground">{student.email}</span>
               </div>
               <div>
-                <span className="text-muted">Phone: </span>
-                <span className="text-ink">{student.phone}</span>
+                <span className="text-muted-foreground">Phone: </span>
+                <span className="text-foreground">{student.phone}</span>
               </div>
               <div>
-                <span className="text-muted">Cohort: </span>
-                <span className="text-ink">{cohort.name}</span>
+                <span className="text-muted-foreground">Cohort: </span>
+                <span className="text-foreground">{cohort.name}</span>
               </div>
               <div>
-                <span className="text-muted">Amount: </span>
-                <span className="font-medium text-ink">Rs. {formattedAmount}</span>
+                <span className="text-muted-foreground">Amount: </span>
+                <span className="font-medium text-foreground">Rs. {formattedAmount}</span>
               </div>
               <div>
-                <span className="text-muted">Reference: </span>
-                <span className="font-mono text-ink">REF-{referenceCode}</span>
+                <span className="text-muted-foreground">Reference: </span>
+                <span className="font-mono text-foreground">REF-{referenceCode}</span>
               </div>
               <div>
-                <span className="text-muted">Uploaded: </span>
-                <span className="text-ink">
+                <span className="text-muted-foreground">Uploaded: </span>
+                <span className="text-foreground">
                   {formatPKT(payment.created_at, 'datetime')}
                 </span>
               </div>
               <div>
-                <span className="text-muted">Method: </span>
-                <span className="text-ink capitalize">{payment.payment_method}</span>
+                <span className="text-muted-foreground">Method: </span>
+                <span className="text-foreground capitalize">{payment.payment_method}</span>
               </div>
             </div>
           </div>
@@ -112,7 +112,7 @@ export function PaymentCard({
               <button
                 type="button"
                 onClick={() => setScreenshotOpen(true)}
-                className="overflow-hidden rounded-md border border-border transition-shadow hover:shadow-card-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                className="overflow-hidden rounded-md border border-border transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 aria-label="View payment screenshot"
               >
                 <Image
@@ -125,7 +125,7 @@ export function PaymentCard({
                 />
               </button>
             ) : (
-              <div className="flex h-24 w-24 items-center justify-center rounded-md border border-border bg-paper text-xs text-muted sm:h-28 sm:w-28">
+              <div className="flex h-24 w-24 items-center justify-center rounded-md border border-border bg-background text-xs text-muted-foreground sm:h-28 sm:w-28">
                 No screenshot
               </div>
             )}

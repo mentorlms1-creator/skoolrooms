@@ -151,45 +151,45 @@ export function CreateCohortForm({ courseId }: CreateCohortFormProps) {
       />
 
       <div className="flex flex-col gap-3">
-        <label className="flex items-center gap-2 text-sm text-ink">
+        <label className="flex items-center gap-2 text-sm text-foreground">
           <input
             type="checkbox"
             checked={isRegistrationOpen}
             onChange={(e) => setIsRegistrationOpen(e.target.checked)}
-            className="h-4 w-4 rounded border-border text-brand-600 focus:ring-brand-500"
+            className="h-4 w-4 rounded border-border text-primary focus:ring-ring"
           />
           Registration open
         </label>
-        <label className="flex items-center gap-2 text-sm text-ink">
+        <label className="flex items-center gap-2 text-sm text-foreground">
           <input
             type="checkbox"
             checked={waitlistEnabled}
             onChange={(e) => setWaitlistEnabled(e.target.checked)}
-            className="h-4 w-4 rounded border-border text-brand-600 focus:ring-brand-500"
+            className="h-4 w-4 rounded border-border text-primary focus:ring-ring"
           />
           Enable waitlist (when cohort is full)
         </label>
-        <label className="flex items-center gap-2 text-sm text-ink">
+        <label className="flex items-center gap-2 text-sm text-foreground">
           <input
             type="checkbox"
             checked={pendingCanSeeSchedule}
             onChange={(e) => setPendingCanSeeSchedule(e.target.checked)}
-            className="h-4 w-4 rounded border-border text-brand-600 focus:ring-brand-500"
+            className="h-4 w-4 rounded border-border text-primary focus:ring-ring"
           />
           Pending students can see schedule
         </label>
-        <label className="flex items-center gap-2 text-sm text-ink">
+        <label className="flex items-center gap-2 text-sm text-foreground">
           <input
             type="checkbox"
             checked={pendingCanSeeAnnouncements}
             onChange={(e) => setPendingCanSeeAnnouncements(e.target.checked)}
-            className="h-4 w-4 rounded border-border text-brand-600 focus:ring-brand-500"
+            className="h-4 w-4 rounded border-border text-primary focus:ring-ring"
           />
           Pending students can see announcements
         </label>
       </div>
 
-      {error && <p className="text-sm text-danger">{error}</p>}
+      {error && <p className="text-sm text-destructive">{error}</p>}
 
       <div className="flex items-center justify-end gap-3">
         <Button

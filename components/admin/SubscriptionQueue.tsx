@@ -60,7 +60,7 @@ export function SubscriptionQueue({ subscriptions }: SubscriptionQueueProps) {
           className={`rounded-md px-4 py-3 text-sm ${
             message.type === 'success'
               ? 'bg-success/10 text-success'
-              : 'bg-danger/10 text-danger'
+              : 'bg-destructive/10 text-destructive'
           }`}
         >
           {message.text}
@@ -72,32 +72,32 @@ export function SubscriptionQueue({ subscriptions }: SubscriptionQueueProps) {
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex-1 space-y-2">
               <div className="flex items-center gap-2">
-                <h3 className="text-sm font-semibold text-ink">{sub.teacher_name}</h3>
+                <h3 className="text-sm font-semibold text-foreground">{sub.teacher_name}</h3>
                 <StatusBadge status={sub.status} size="sm" />
               </div>
-              <p className="text-xs text-muted">{sub.teacher_email}</p>
+              <p className="text-xs text-muted-foreground">{sub.teacher_email}</p>
               <div className="grid gap-2 text-sm sm:grid-cols-3">
                 <div>
-                  <span className="text-xs text-muted">Plan:</span>{' '}
-                  <span className="font-medium text-ink capitalize">{sub.plan}</span>
+                  <span className="text-xs text-muted-foreground">Plan:</span>{' '}
+                  <span className="font-medium text-foreground capitalize">{sub.plan}</span>
                 </div>
                 <div>
-                  <span className="text-xs text-muted">Amount:</span>{' '}
-                  <span className="font-medium text-ink">PKR {sub.amount_pkr.toLocaleString()}</span>
+                  <span className="text-xs text-muted-foreground">Amount:</span>{' '}
+                  <span className="font-medium text-foreground">PKR {sub.amount_pkr.toLocaleString()}</span>
                 </div>
                 <div>
-                  <span className="text-xs text-muted">Method:</span>{' '}
-                  <span className="font-medium text-ink capitalize">{sub.payment_method}</span>
+                  <span className="text-xs text-muted-foreground">Method:</span>{' '}
+                  <span className="font-medium text-foreground capitalize">{sub.payment_method}</span>
                 </div>
                 <div>
-                  <span className="text-xs text-muted">Period:</span>{' '}
-                  <span className="text-ink">
+                  <span className="text-xs text-muted-foreground">Period:</span>{' '}
+                  <span className="text-foreground">
                     {formatPKT(sub.period_start, 'date')} - {formatPKT(sub.period_end, 'date')}
                   </span>
                 </div>
                 <div>
-                  <span className="text-xs text-muted">Submitted:</span>{' '}
-                  <span className="text-ink">{formatPKT(sub.created_at, 'datetime')}</span>
+                  <span className="text-xs text-muted-foreground">Submitted:</span>{' '}
+                  <span className="text-foreground">{formatPKT(sub.created_at, 'datetime')}</span>
                 </div>
               </div>
               {sub.screenshot_url && (
@@ -106,7 +106,7 @@ export function SubscriptionQueue({ subscriptions }: SubscriptionQueueProps) {
                     href={sub.screenshot_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-sm text-brand-600 hover:text-brand-500"
+                    className="text-sm text-primary hover:text-primary/90"
                   >
                     View Screenshot
                   </a>

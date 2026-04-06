@@ -186,8 +186,8 @@ export function FileUpload({
           flex cursor-pointer flex-col items-center justify-center
           rounded-lg border-2 border-dashed p-6
           transition-colors duration-150
-          ${isDragOver ? 'border-brand-500 bg-brand-50' : 'border-border hover:border-brand-500 hover:bg-paper'}
-          ${state === 'error' ? 'border-danger' : ''}
+          ${isDragOver ? 'border-primary bg-primary/10' : 'border-border hover:border-primary hover:bg-background'}
+          ${state === 'error' ? 'border-destructive' : ''}
         `}
         role="button"
         tabIndex={0}
@@ -202,7 +202,7 @@ export function FileUpload({
         {state === 'uploading' ? (
           <div className="flex flex-col items-center gap-2">
             <Spinner size="md" />
-            <p className="text-sm text-muted">Uploading...</p>
+            <p className="text-sm text-muted-foreground">Uploading...</p>
           </div>
         ) : preview ? (
           <div className="flex flex-col items-center gap-2">
@@ -212,7 +212,7 @@ export function FileUpload({
               alt="Upload preview"
               className="max-h-64 w-full rounded-md object-contain"
             />
-            <p className="text-sm text-muted">Click or drag to replace</p>
+            <p className="text-sm text-muted-foreground">Click or drag to replace</p>
           </div>
         ) : fileName ? (
           <div className="flex flex-col items-center gap-1">
@@ -220,16 +220,16 @@ export function FileUpload({
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 20 20"
               fill="currentColor"
-              className="h-8 w-8 text-muted"
+              className="h-8 w-8 text-muted-foreground"
               aria-hidden="true"
             >
               <path d="M3 3.5A1.5 1.5 0 014.5 2h6.879a1.5 1.5 0 011.06.44l4.122 4.12A1.5 1.5 0 0117 7.622V16.5a1.5 1.5 0 01-1.5 1.5h-11A1.5 1.5 0 013 16.5v-13z" />
             </svg>
-            <p className="text-sm font-medium text-ink">{fileName}</p>
+            <p className="text-sm font-medium text-foreground">{fileName}</p>
             {fileSize && (
-              <p className="text-xs text-muted">{formatFileSize(fileSize)}</p>
+              <p className="text-xs text-muted-foreground">{formatFileSize(fileSize)}</p>
             )}
-            <p className="text-sm text-muted">Click or drag to replace</p>
+            <p className="text-sm text-muted-foreground">Click or drag to replace</p>
           </div>
         ) : (
           <div className="flex flex-col items-center gap-1">
@@ -237,16 +237,16 @@ export function FileUpload({
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 20 20"
               fill="currentColor"
-              className="h-8 w-8 text-muted"
+              className="h-8 w-8 text-muted-foreground"
               aria-hidden="true"
             >
               <path d="M9.25 13.25a.75.75 0 001.5 0V4.636l2.955 3.129a.75.75 0 001.09-1.03l-4.25-4.5a.75.75 0 00-1.09 0l-4.25 4.5a.75.75 0 101.09 1.03L9.25 4.636v8.614z" />
               <path d="M3.5 12.75a.75.75 0 00-1.5 0v2.5A2.75 2.75 0 004.75 18h10.5A2.75 2.75 0 0018 15.25v-2.5a.75.75 0 00-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5z" />
             </svg>
-            <p className="text-sm font-medium text-ink">
+            <p className="text-sm font-medium text-foreground">
               Click to upload or drag and drop
             </p>
-            <p className="text-sm text-muted">
+            <p className="text-sm text-muted-foreground">
               Max {maxLabel}
             </p>
           </div>
@@ -265,7 +265,7 @@ export function FileUpload({
 
       {/* Error message */}
       {error && (
-        <p className="text-sm text-danger">{error}</p>
+        <p className="text-sm text-destructive">{error}</p>
       )}
     </div>
   )

@@ -40,15 +40,15 @@ export default async function StudentBillingPage() {
       {/* Pending payments alert */}
       {pendingEnrollments.length > 0 && (
         <Card className="mb-6 border-warning/30 bg-warning/5 p-4">
-          <h3 className="font-medium text-ink">Pending Payments</h3>
-          <p className="mt-1 text-sm text-muted">
+          <h3 className="font-medium text-foreground">Pending Payments</h3>
+          <p className="mt-1 text-sm text-muted-foreground">
             You have {pendingEnrollments.length} enrollment
             {pendingEnrollments.length > 1 ? 's' : ''} awaiting payment
             verification.
           </p>
           <ul className="mt-2 space-y-1">
             {pendingEnrollments.map((e) => (
-              <li key={e.id} className="text-sm text-muted">
+              <li key={e.id} className="text-sm text-muted-foreground">
                 {e.cohorts.courses.title} &mdash; {e.cohorts.name} (
                 PKR {e.cohorts.fee_pkr.toLocaleString()})
               </li>
@@ -70,16 +70,16 @@ export default async function StudentBillingPage() {
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <h3 className="font-medium text-ink">
+                    <h3 className="font-medium text-foreground">
                       {payment.enrollments.cohorts.courses.title}
                     </h3>
                     <StatusBadge status={payment.status} size="sm" />
                   </div>
-                  <p className="mt-1 text-sm text-muted">
+                  <p className="mt-1 text-sm text-muted-foreground">
                     {payment.enrollments.cohorts.name} &middot;{' '}
                     {payment.enrollments.cohorts.teachers.name}
                   </p>
-                  <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted">
+                  <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
                     <span>
                       Amount: PKR{' '}
                       {payment.discounted_amount_pkr.toLocaleString()}
@@ -101,18 +101,18 @@ export default async function StudentBillingPage() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm text-muted">
+                  <p className="text-sm text-muted-foreground">
                     {formatPKT(payment.created_at, 'datetime')}
                   </p>
                   {payment.payment_month && (
-                    <p className="mt-1 text-xs text-muted">
+                    <p className="mt-1 text-xs text-muted-foreground">
                       For: {payment.payment_month}
                     </p>
                   )}
                 </div>
               </div>
               {payment.rejection_reason && (
-                <div className="mt-3 rounded-md bg-danger/5 p-2 text-sm text-danger">
+                <div className="mt-3 rounded-md bg-destructive/5 p-2 text-sm text-destructive">
                   Rejected: {payment.rejection_reason}
                 </div>
               )}

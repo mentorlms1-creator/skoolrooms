@@ -37,7 +37,7 @@ export default async function AdminTeacherDetailPage(
         <div className="space-y-6 lg:col-span-2">
           {/* Profile Card */}
           <Card className="p-6">
-            <h2 className="mb-4 text-lg font-semibold text-ink">Profile</h2>
+            <h2 className="mb-4 text-lg font-semibold text-foreground">Profile</h2>
             <dl className="grid gap-3 sm:grid-cols-2">
               <InfoItem label="Subdomain" value={teacher.subdomain} />
               <InfoItem label="City" value={teacher.city ?? 'Not set'} />
@@ -72,9 +72,9 @@ export default async function AdminTeacherDetailPage(
 
           {/* Subscription History */}
           <Card className="p-6">
-            <h2 className="mb-4 text-lg font-semibold text-ink">Subscription History</h2>
+            <h2 className="mb-4 text-lg font-semibold text-foreground">Subscription History</h2>
             {teacher.subscription_history.length === 0 ? (
-              <p className="text-sm text-muted">No subscriptions yet.</p>
+              <p className="text-sm text-muted-foreground">No subscriptions yet.</p>
             ) : (
               <>
               {/* Mobile card view */}
@@ -82,15 +82,15 @@ export default async function AdminTeacherDetailPage(
                 {teacher.subscription_history.map((sub) => (
                   <div key={sub.id} className="rounded-md border border-border p-3 sm:p-4 text-sm">
                     <div className="flex items-center justify-between">
-                      <span className="font-medium text-ink capitalize">{sub.plan}</span>
+                      <span className="font-medium text-foreground capitalize">{sub.plan}</span>
                       <StatusBadge status={sub.status} size="sm" />
                     </div>
-                    <p className="mt-1 text-ink">PKR {sub.amount_pkr.toLocaleString()}</p>
-                    <p className="mt-1 text-muted capitalize">{sub.payment_method}</p>
-                    <p className="mt-1 text-muted">
+                    <p className="mt-1 text-foreground">PKR {sub.amount_pkr.toLocaleString()}</p>
+                    <p className="mt-1 text-muted-foreground capitalize">{sub.payment_method}</p>
+                    <p className="mt-1 text-muted-foreground">
                       {formatPKT(sub.period_start, 'date')} - {formatPKT(sub.period_end, 'date')}
                     </p>
-                    <p className="mt-1 text-muted">{formatPKT(sub.created_at, 'date')}</p>
+                    <p className="mt-1 text-muted-foreground">{formatPKT(sub.created_at, 'date')}</p>
                   </div>
                 ))}
               </div>
@@ -99,27 +99,27 @@ export default async function AdminTeacherDetailPage(
                 <table className="w-full text-left text-sm">
                   <thead>
                     <tr className="border-b border-border">
-                      <th className="px-3 py-2 font-medium text-muted">Plan</th>
-                      <th className="px-3 py-2 font-medium text-muted">Amount</th>
-                      <th className="px-3 py-2 font-medium text-muted">Method</th>
-                      <th className="px-3 py-2 font-medium text-muted">Status</th>
-                      <th className="px-3 py-2 font-medium text-muted">Period</th>
-                      <th className="px-3 py-2 font-medium text-muted">Date</th>
+                      <th className="px-3 py-2 font-medium text-muted-foreground">Plan</th>
+                      <th className="px-3 py-2 font-medium text-muted-foreground">Amount</th>
+                      <th className="px-3 py-2 font-medium text-muted-foreground">Method</th>
+                      <th className="px-3 py-2 font-medium text-muted-foreground">Status</th>
+                      <th className="px-3 py-2 font-medium text-muted-foreground">Period</th>
+                      <th className="px-3 py-2 font-medium text-muted-foreground">Date</th>
                     </tr>
                   </thead>
                   <tbody>
                     {teacher.subscription_history.map((sub) => (
                       <tr key={sub.id} className="border-b border-border last:border-0">
-                        <td className="px-3 py-2 capitalize text-ink">{sub.plan}</td>
-                        <td className="px-3 py-2 text-ink">PKR {sub.amount_pkr.toLocaleString()}</td>
-                        <td className="px-3 py-2 text-ink capitalize">{sub.payment_method}</td>
+                        <td className="px-3 py-2 capitalize text-foreground">{sub.plan}</td>
+                        <td className="px-3 py-2 text-foreground">PKR {sub.amount_pkr.toLocaleString()}</td>
+                        <td className="px-3 py-2 text-foreground capitalize">{sub.payment_method}</td>
                         <td className="px-3 py-2">
                           <StatusBadge status={sub.status} size="sm" />
                         </td>
-                        <td className="px-3 py-2 text-muted">
+                        <td className="px-3 py-2 text-muted-foreground">
                           {formatPKT(sub.period_start, 'date')} - {formatPKT(sub.period_end, 'date')}
                         </td>
-                        <td className="px-3 py-2 text-muted">
+                        <td className="px-3 py-2 text-muted-foreground">
                           {formatPKT(sub.created_at, 'date')}
                         </td>
                       </tr>
@@ -133,22 +133,22 @@ export default async function AdminTeacherDetailPage(
 
           {/* Activity Log */}
           <Card className="p-6">
-            <h2 className="mb-4 text-lg font-semibold text-ink">Activity Log</h2>
+            <h2 className="mb-4 text-lg font-semibold text-foreground">Activity Log</h2>
             {teacher.activity_log.length === 0 ? (
-              <p className="text-sm text-muted">No admin activity recorded.</p>
+              <p className="text-sm text-muted-foreground">No admin activity recorded.</p>
             ) : (
               <div className="space-y-3">
                 {teacher.activity_log.map((entry) => (
                   <div key={entry.id} className="flex items-start gap-3 border-b border-border pb-3 last:border-0">
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-ink">
+                      <p className="text-sm font-medium text-foreground">
                         {formatActionType(entry.action_type)}
                       </p>
-                      <p className="text-xs text-muted">
+                      <p className="text-xs text-muted-foreground">
                         by {entry.performed_by} — {formatPKT(entry.created_at, 'datetime')}
                       </p>
                       {entry.metadata && (
-                        <p className="mt-1 max-w-xs break-all truncate text-xs text-muted">
+                        <p className="mt-1 max-w-xs break-all truncate text-xs text-muted-foreground">
                           {JSON.stringify(entry.metadata)}
                         </p>
                       )}
@@ -164,7 +164,7 @@ export default async function AdminTeacherDetailPage(
         <div className="space-y-6">
           {/* Plan Info */}
           <Card className="p-6">
-            <h2 className="mb-4 text-lg font-semibold text-ink">Plan</h2>
+            <h2 className="mb-4 text-lg font-semibold text-foreground">Plan</h2>
             <dl className="space-y-3">
               <InfoItem label="Current Plan" value={teacher.plan} />
               <InfoItem
@@ -207,8 +207,8 @@ export default async function AdminTeacherDetailPage(
 function InfoItem({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <dt className="text-xs font-medium text-muted">{label}</dt>
-      <dd className="mt-0.5 text-sm text-ink capitalize">{value}</dd>
+      <dt className="text-xs font-medium text-muted-foreground">{label}</dt>
+      <dd className="mt-0.5 text-sm text-foreground capitalize">{value}</dd>
     </div>
   )
 }

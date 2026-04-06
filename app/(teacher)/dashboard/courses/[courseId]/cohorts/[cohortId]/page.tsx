@@ -74,36 +74,36 @@ export default async function CohortDetailPage({ params }: CohortDetailPageProps
       {/* Cohort info */}
       <div className="flex flex-col gap-6">
         <Card className="p-6">
-          <h2 className="mb-4 text-lg font-semibold text-ink">Details</h2>
+          <h2 className="mb-4 text-lg font-semibold text-foreground">Details</h2>
           <dl className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
             <div>
-              <dt className="font-medium text-muted">Course</dt>
-              <dd className="mt-1 text-ink">{course.title}</dd>
+              <dt className="font-medium text-muted-foreground">Course</dt>
+              <dd className="mt-1 text-foreground">{course.title}</dd>
             </div>
             <div>
-              <dt className="font-medium text-muted">Date Range</dt>
-              <dd className="mt-1 text-ink">
+              <dt className="font-medium text-muted-foreground">Date Range</dt>
+              <dd className="mt-1 text-foreground">
                 {formatPKT(cohort.start_date, 'date')} &ndash;{' '}
                 {formatPKT(cohort.end_date, 'date')}
               </dd>
             </div>
             <div>
-              <dt className="font-medium text-muted">Fee</dt>
-              <dd className="mt-1 text-ink">{feeLabel}</dd>
+              <dt className="font-medium text-muted-foreground">Fee</dt>
+              <dd className="mt-1 text-foreground">{feeLabel}</dd>
             </div>
             <div>
-              <dt className="font-medium text-muted">Enrollment</dt>
-              <dd className="mt-1 text-ink">{spotsLabel}</dd>
+              <dt className="font-medium text-muted-foreground">Enrollment</dt>
+              <dd className="mt-1 text-foreground">{spotsLabel}</dd>
             </div>
             <div>
-              <dt className="font-medium text-muted">Registration</dt>
-              <dd className="mt-1 text-ink">
+              <dt className="font-medium text-muted-foreground">Registration</dt>
+              <dd className="mt-1 text-foreground">
                 {cohort.is_registration_open ? 'Open' : 'Closed'}
               </dd>
             </div>
             <div>
-              <dt className="font-medium text-muted">Waitlist</dt>
-              <dd className="mt-1 text-ink">
+              <dt className="font-medium text-muted-foreground">Waitlist</dt>
+              <dd className="mt-1 text-foreground">
                 {cohort.waitlist_enabled ? 'Enabled' : 'Disabled'}
               </dd>
             </div>
@@ -119,7 +119,7 @@ export default async function CohortDetailPage({ params }: CohortDetailPageProps
 
         {/* Quick links */}
         <Card className="p-6">
-          <h2 className="mb-4 text-lg font-semibold text-ink">Manage</h2>
+          <h2 className="mb-4 text-lg font-semibold text-foreground">Manage</h2>
           <div className="flex flex-wrap gap-3">
             <Link href={ROUTES.TEACHER.cohortSchedule(courseId, cohortId)}>
               <Button variant="secondary">Schedule</Button>

@@ -45,8 +45,8 @@ export function WaitlistForm({ cohortId, cohortName, courseName }: WaitlistFormP
 
   return (
     <Card className="p-6">
-      <h3 className="text-lg font-semibold text-ink">Join the Waitlist</h3>
-      <p className="mt-1 text-sm text-muted">
+      <h3 className="text-lg font-semibold text-foreground">Join the Waitlist</h3>
+      <p className="mt-1 text-sm text-muted-foreground">
         All spots in <span className="font-medium">{cohortName}</span> for{' '}
         <span className="font-medium">{courseName}</span> are currently taken.
         Join the waitlist to be notified when a spot opens up.
@@ -57,7 +57,7 @@ export function WaitlistForm({ cohortId, cohortName, courseName }: WaitlistFormP
           className={`mt-4 rounded-md px-4 py-3 text-sm ${
             message.type === 'success'
               ? 'bg-success/10 text-success'
-              : 'bg-danger/10 text-danger'
+              : 'bg-destructive/10 text-destructive'
           }`}
         >
           {message.text}

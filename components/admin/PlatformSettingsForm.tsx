@@ -64,7 +64,7 @@ export function PlatformSettingsForm({ settings }: PlatformSettingsFormProps) {
   if (settings.length === 0) {
     return (
       <Card className="p-8 text-center">
-        <p className="text-muted">No platform settings configured yet.</p>
+        <p className="text-muted-foreground">No platform settings configured yet.</p>
       </Card>
     )
   }
@@ -76,7 +76,7 @@ export function PlatformSettingsForm({ settings }: PlatformSettingsFormProps) {
           className={`mb-4 rounded-md px-4 py-3 text-sm ${
             message.type === 'success'
               ? 'bg-success/10 text-success'
-              : 'bg-danger/10 text-danger'
+              : 'bg-destructive/10 text-destructive'
           }`}
         >
           {message.text}
@@ -90,8 +90,8 @@ export function PlatformSettingsForm({ settings }: PlatformSettingsFormProps) {
           return (
             <div key={setting.key} className="flex items-center justify-between gap-4 px-6 py-4">
               <div className="flex-1">
-                <h3 className="text-sm font-medium text-ink">{formatSettingKey(setting.key)}</h3>
-                <p className="mt-0.5 text-xs text-muted">{setting.description}</p>
+                <h3 className="text-sm font-medium text-foreground">{formatSettingKey(setting.key)}</h3>
+                <p className="mt-0.5 text-xs text-muted-foreground">{setting.description}</p>
               </div>
               <div className="shrink-0">
                 {isToggle ? (
@@ -107,11 +107,11 @@ export function PlatformSettingsForm({ settings }: PlatformSettingsFormProps) {
                         )
                       }
                       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                        values[setting.key] === 'true' ? 'bg-brand-600' : 'bg-border'
+                        values[setting.key] === 'true' ? 'bg-primary' : 'bg-border'
                       }`}
                     >
                       <span
-                        className={`inline-block h-4 w-4 transform rounded-full bg-surface transition-transform ${
+                        className={`inline-block h-4 w-4 transform rounded-full bg-card transition-transform ${
                           values[setting.key] === 'true' ? 'translate-x-6' : 'translate-x-1'
                         }`}
                       />

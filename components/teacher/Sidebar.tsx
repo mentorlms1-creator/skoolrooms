@@ -5,7 +5,7 @@
  * Uses usePathname() for active state highlighting.
  */
 
-import { useState } from 'react'
+import { useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { ROUTES } from '@/constants/routes'
@@ -99,7 +99,12 @@ const NAV_ITEMS: NavItem[] = [
 
 export function Sidebar() {
   const pathname = usePathname()
-  const [mobileOpen, setMobileOpen] = useState(false)
+  const checkboxRef = useRef<HTMLInputElement>(null)
+
+  // Close mobile sidebar on navigation
+  useEffect(() => {
+    if (checkboxRef.current) checkboxRef.current.checked = false
+  }, [pathname])
 
   function isActive(href: string): boolean {
     if (href === ROUTES.TEACHER.dashboard) {
@@ -119,11 +124,11 @@ export function Sidebar() {
               <li key={item.href}>
                 <Link
                   href={item.href}
-                  onClick={() => setMobileOpen(false)}
+
                   className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
                     active
-                      ? 'bg-brand-50 text-brand-600'
-                      : 'text-muted hover:bg-paper hover:text-ink'
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-muted-foreground hover:bg-background hover:text-foreground'
                   }`}
                 >
                   {item.icon}
@@ -140,7 +145,7 @@ export function Sidebar() {
         <form action={signOut}>
           <button
             type="submit"
-            className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted hover:bg-paper hover:text-ink transition-colors"
+            className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-background hover:text-foreground transition-colors"
           >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5" aria-hidden="true">
               <path fillRule="evenodd" d="M3 4.25A2.25 2.25 0 015.25 2h5.5A2.25 2.25 0 0113 4.25v2a.75.75 0 01-1.5 0v-2a.75.75 0 00-.75-.75h-5.5a.75.75 0 00-.75.75v11.5c0 .414.336.75.75.75h5.5a.75.75 0 00.75-.75v-2a.75.75 0 011.5 0v2A2.25 2.25 0 0110.75 18h-5.5A2.25 2.25 0 013 15.75V4.25z" clipRule="evenodd" />
@@ -155,52 +160,45 @@ export function Sidebar() {
 
   return (
     <>
+      {/* Mobile: checkbox + overlay + drawer are siblings so peer-checked works.
+          The checkbox is toggled by <label> in the top bar. No JS needed for iOS. */}
+      <input ref={checkboxRef} type="checkbox" id="teacher-sidebar-toggle" className="hidden" aria-hidden="true" />
+
       {/* Mobile top bar */}
-      <div className="fixed left-0 right-0 top-0 z-40 flex h-14 items-center justify-between border-b border-border bg-surface px-4 md:hidden">
-        <Link href={ROUTES.TEACHER.dashboard} className="text-xl font-bold text-brand-600">
+      <div className="fixed left-0 right-0 top-0 z-40 flex h-14 items-center justify-between border-b border-border bg-card px-4 md:hidden">
+        <Link href={ROUTES.TEACHER.dashboard} className="text-xl font-bold text-primary">
           Lumscribe
         </Link>
-        <button
-          type="button"
-          onClick={() => setMobileOpen(!mobileOpen)}
-          className="rounded-md p-2 text-muted hover:text-ink"
+        <label
+          htmlFor="teacher-sidebar-toggle"
+          className="inline-flex min-h-[2.75rem] min-w-[2.75rem] cursor-pointer items-center justify-center rounded-md p-2 text-muted-foreground hover:text-foreground active:bg-primary/10 transition-colors"
           aria-label="Toggle sidebar"
         >
-          {mobileOpen ? (
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          ) : (
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          )}
-        </button>
+          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </label>
       </div>
 
-      {/* Mobile overlay */}
-      {mobileOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/30 md:hidden"
-          onClick={() => setMobileOpen(false)}
-        />
-      )}
+      {/* Mobile overlay — click to close */}
+      <label
+        htmlFor="teacher-sidebar-toggle"
+        className="teacher-sidebar-overlay fixed inset-0 z-40 hidden bg-black/30"
+      />
 
       {/* Mobile slide-out sidebar */}
       <aside
-        className={`fixed left-0 top-14 z-50 flex h-[calc(100%-3.5rem)] w-64 flex-col border-r border-border bg-surface transition-transform md:hidden pb-[env(safe-area-inset-bottom)] ${
-          mobileOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        className="teacher-sidebar-drawer fixed left-0 top-14 z-50 flex h-[calc(100%-3.5rem)] w-64 -translate-x-full flex-col border-r border-border bg-card transition-transform md:hidden pb-[env(safe-area-inset-bottom)]"
       >
         {sidebarContent}
       </aside>
 
       {/* Desktop sidebar */}
-      <aside className="fixed left-0 top-0 z-30 hidden h-full w-64 flex-col border-r border-border bg-surface md:flex">
+      <aside className="fixed left-0 top-0 z-30 hidden h-full w-64 flex-col border-r border-border bg-card md:flex">
         {/* Brand */}
         <div className="flex h-16 items-center border-b border-border px-6">
           <Link href={ROUTES.TEACHER.dashboard} className="flex items-center gap-2">
-            <span className="text-xl font-bold text-brand-600">Lumscribe</span>
+            <span className="text-xl font-bold text-primary">Lumscribe</span>
           </Link>
         </div>
         {sidebarContent}

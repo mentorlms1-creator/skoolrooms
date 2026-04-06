@@ -26,7 +26,7 @@ export default async function AdminPaymentsPage() {
 
       {pending.length === 0 ? (
         <Card className="p-8 text-center">
-          <p className="text-muted">No pending subscriptions to review.</p>
+          <p className="text-muted-foreground">No pending subscriptions to review.</p>
         </Card>
       ) : (
         <SubscriptionQueue subscriptions={pending} />

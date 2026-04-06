@@ -60,10 +60,10 @@ export default async function DashboardPage() {
         <OnboardingChecklist />
 
         <Card className="p-6">
-          <h2 className="mb-4 text-lg font-semibold text-ink">Plan Usage</h2>
+          <h2 className="mb-4 text-lg font-semibold text-foreground">Plan Usage</h2>
           <UsageBars items={usageItems} />
           {planDetails && (
-            <p className="mt-4 text-xs text-muted">
+            <p className="mt-4 text-xs text-muted-foreground">
               Current plan: {planDetails.name} ({planDetails.slug})
             </p>
           )}

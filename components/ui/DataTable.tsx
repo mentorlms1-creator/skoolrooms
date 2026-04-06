@@ -124,12 +124,12 @@ export function DataTable({
               />
             </div>
           )}
-          <div className="flex items-center gap-2 text-sm text-muted">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <span>Show</span>
             <select
               value={pageSize}
               onChange={(e) => handlePageSizeChange(Number(e.target.value))}
-              className="rounded border border-border bg-surface px-2 py-2 text-sm text-ink min-h-[2.75rem]"
+              className="rounded border border-border bg-card px-2 py-2 text-sm text-foreground min-h-[2.75rem]"
             >
               {PAGE_SIZE_OPTIONS.map((opt) => (
                 <option key={opt} value={opt}>
@@ -146,13 +146,13 @@ export function DataTable({
       <div className="overflow-x-auto rounded-lg border border-border">
         <table className="w-full text-left text-sm">
           <thead>
-            <tr className="border-b border-border bg-paper">
+            <tr className="border-b border-border bg-background">
               {columns.map((col) => (
                 <th
                   key={col.key}
                   className={`
-                    px-4 py-3 font-medium text-muted whitespace-nowrap
-                    ${col.sortable ? 'cursor-pointer select-none hover:text-ink' : ''}
+                    px-4 py-3 font-medium text-muted-foreground whitespace-nowrap
+                    ${col.sortable ? 'cursor-pointer select-none hover:text-foreground' : ''}
                   `}
                   onClick={col.sortable ? () => handleSort(col.key) : undefined}
                 >
@@ -174,7 +174,7 @@ export function DataTable({
               <tr>
                 <td
                   colSpan={columns.length}
-                  className="px-4 py-8 text-center text-muted"
+                  className="px-4 py-8 text-center text-muted-foreground"
                 >
                   {emptyMessage}
                 </td>
@@ -183,10 +183,10 @@ export function DataTable({
               paginatedData.map((row, rowIndex) => (
                 <tr
                   key={rowIndex}
-                  className="border-b border-border last:border-b-0 hover:bg-paper/50"
+                  className="border-b border-border last:border-b-0 hover:bg-background/50"
                 >
                   {columns.map((col) => (
-                    <td key={col.key} className="px-4 py-3 text-ink whitespace-nowrap">
+                    <td key={col.key} className="px-4 py-3 text-foreground whitespace-nowrap">
                       {col.render
                         ? col.render(row[col.key], row)
                         : String(row[col.key] ?? '')}
@@ -202,7 +202,7 @@ export function DataTable({
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex flex-wrap items-center justify-between text-sm gap-2">
-          <p className="text-muted">
+          <p className="text-muted-foreground">
             Showing {page * pageSize + 1} to{' '}
             {Math.min((page + 1) * pageSize, sortedData.length)} of{' '}
             {sortedData.length} entries
@@ -211,7 +211,7 @@ export function DataTable({
             <button
               onClick={() => setPage((p) => Math.max(0, p - 1))}
               disabled={page === 0}
-              className="rounded border border-border px-3 py-2 text-muted hover:bg-paper disabled:opacity-50 disabled:cursor-not-allowed"
+              className="rounded border border-border px-3 py-2 text-muted-foreground hover:bg-background disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Previous
             </button>
@@ -234,7 +234,7 @@ export function DataTable({
               }, [])
               .map((item, idx) =>
                 item === 'ellipsis' ? (
-                  <span key={`ellipsis-${idx}`} className="px-2 text-muted">
+                  <span key={`ellipsis-${idx}`} className="px-2 text-muted-foreground">
                     ...
                   </span>
                 ) : (
@@ -245,8 +245,8 @@ export function DataTable({
                       rounded border px-3 py-2
                       ${
                         page === item
-                          ? 'border-brand-500 bg-brand-50 text-brand-600 font-medium'
-                          : 'border-border text-muted hover:bg-paper'
+                          ? 'border-primary bg-primary/10 text-primary font-medium'
+                          : 'border-border text-muted-foreground hover:bg-background'
                       }
                     `}
                   >
@@ -257,7 +257,7 @@ export function DataTable({
             <button
               onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
               disabled={page === totalPages - 1}
-              className="rounded border border-border px-3 py-2 text-muted hover:bg-paper disabled:opacity-50 disabled:cursor-not-allowed"
+              className="rounded border border-border px-3 py-2 text-muted-foreground hover:bg-background disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Next
             </button>
@@ -282,7 +282,7 @@ function SortIcon({
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 16 16"
       fill="currentColor"
-      className={`h-4 w-4 ${active ? 'text-brand-600' : 'text-muted/50'}`}
+      className={`h-4 w-4 ${active ? 'text-primary' : 'text-muted-foreground/50'}`}
       aria-hidden="true"
     >
       <path

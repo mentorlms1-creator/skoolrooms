@@ -73,7 +73,7 @@ export function ScheduleSessionList({ sessions, isArchived }: ScheduleSessionLis
                   size="sm"
                   onClick={() => handleCancel(session.id)}
                   disabled={isPending}
-                  className="text-danger hover:text-danger"
+                  className="text-destructive hover:text-destructive"
                 >
                   Cancel
                 </Button>

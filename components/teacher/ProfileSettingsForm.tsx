@@ -54,7 +54,7 @@ export function ProfileSettingsForm({ initialData }: ProfileSettingsFormProps) {
           className={`mb-4 rounded-md px-4 py-3 text-sm ${
             message.type === 'success'
               ? 'bg-success/10 text-success'
-              : 'bg-danger/10 text-danger'
+              : 'bg-destructive/10 text-destructive'
           }`}
         >
           {message.text}
@@ -105,9 +105,9 @@ export function ProfileSettingsForm({ initialData }: ProfileSettingsFormProps) {
             name="is_publicly_listed"
             id="is_publicly_listed"
             defaultChecked={initialData.isPubliclyListed}
-            className="h-4 w-4 rounded border-border text-brand-600 focus:ring-brand-500"
+            className="h-4 w-4 rounded border-border text-primary focus:ring-ring"
           />
-          <label htmlFor="is_publicly_listed" className="text-sm text-ink">
+          <label htmlFor="is_publicly_listed" className="text-sm text-foreground">
             Show my profile on the public explore page
           </label>
         </div>

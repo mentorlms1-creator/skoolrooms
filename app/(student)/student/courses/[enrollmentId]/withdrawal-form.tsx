@@ -71,8 +71,8 @@ export function WithdrawalForm({ enrollmentId }: WithdrawalFormProps) {
   }
 
   return (
-    <div className="rounded-md border border-border bg-paper p-4">
-      <h4 className="mb-3 text-sm font-medium text-ink">Request Withdrawal</h4>
+    <div className="rounded-md border border-border bg-background p-4">
+      <h4 className="mb-3 text-sm font-medium text-foreground">Request Withdrawal</h4>
       <Textarea
         label="Reason (optional)"
         value={reason}
@@ -81,7 +81,7 @@ export function WithdrawalForm({ enrollmentId }: WithdrawalFormProps) {
         rows={3}
       />
 
-      {error && <p className="mt-2 text-sm text-danger">{error}</p>}
+      {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
 
       <div className="mt-4 flex gap-2">
         <Button

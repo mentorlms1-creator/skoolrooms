@@ -20,7 +20,7 @@ export function PageHeader({ title, description, action, backHref }: PageHeaderP
           {backHref && (
             <Link
               href={backHref}
-              className="flex items-center justify-center rounded-md p-2.5 min-h-[44px] min-w-[44px] text-muted hover:bg-paper hover:text-ink transition-colors"
+              className="flex items-center justify-center rounded-md p-2.5 min-h-[44px] min-w-[44px] text-muted-foreground hover:bg-background hover:text-foreground transition-colors"
               aria-label="Go back"
             >
               <svg
@@ -39,9 +39,9 @@ export function PageHeader({ title, description, action, backHref }: PageHeaderP
             </Link>
           )}
           <div className="min-w-0">
-            <h1 className="text-2xl font-bold text-ink">{title}</h1>
+            <h1 className="text-2xl font-bold text-foreground">{title}</h1>
             {description && (
-              <p className="mt-1 text-sm text-muted">{description}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{description}</p>
             )}
           </div>
         </div>

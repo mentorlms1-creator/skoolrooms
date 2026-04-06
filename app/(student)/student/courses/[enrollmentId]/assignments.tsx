@@ -96,11 +96,11 @@ function StudentAssignmentCard({
       {/* Header */}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <h3 className="font-medium text-ink">{assignment.title}</h3>
-          <p className="mt-1 text-sm text-muted">
+          <h3 className="font-medium text-foreground">{assignment.title}</h3>
+          <p className="mt-1 text-sm text-muted-foreground">
             Due: {formatPKT(assignment.dueDate, 'datetime')}
             {isPastDue && !hasSubmission && (
-              <span className="ml-2 text-danger font-medium">Overdue</span>
+              <span className="ml-2 text-destructive font-medium">Overdue</span>
             )}
           </p>
         </div>
@@ -108,7 +108,7 @@ function StudentAssignmentCard({
       </div>
 
       {/* Description */}
-      <p className="mt-3 text-sm text-ink whitespace-pre-wrap">
+      <p className="mt-3 text-sm text-foreground whitespace-pre-wrap">
         {assignment.description}
       </p>
 
@@ -119,7 +119,7 @@ function StudentAssignmentCard({
             href={assignment.fileUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm text-brand-600 hover:bg-paper transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm text-primary hover:bg-background transition-colors"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -137,15 +137,15 @@ function StudentAssignmentCard({
 
       {/* Existing submission info */}
       {hasSubmission && (
-        <div className="mt-4 rounded-md border border-border bg-paper p-4">
+        <div className="mt-4 rounded-md border border-border bg-background p-4">
           <div className="flex items-center justify-between gap-2">
-            <p className="text-sm font-medium text-ink">Your Submission</p>
-            <span className="text-xs text-muted">
+            <p className="text-sm font-medium text-foreground">Your Submission</p>
+            <span className="text-xs text-muted-foreground">
               Submitted: {formatPKT(assignment.submission!.submittedAt, 'datetime')}
             </span>
           </div>
           {assignment.submission!.textAnswer && (
-            <p className="mt-2 text-sm text-ink whitespace-pre-wrap">
+            <p className="mt-2 text-sm text-foreground whitespace-pre-wrap">
               {assignment.submission!.textAnswer}
             </p>
           )}
@@ -154,7 +154,7 @@ function StudentAssignmentCard({
               href={assignment.submission!.fileUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-2 inline-flex items-center gap-1.5 text-sm text-brand-600 hover:text-brand-500"
+              className="mt-2 inline-flex items-center gap-1.5 text-sm text-primary hover:text-primary/90"
             >
               View submitted file
             </a>
@@ -244,8 +244,8 @@ function SubmissionForm({
   }
 
   return (
-    <div className="rounded-md border border-border bg-paper p-4">
-      <h4 className="mb-3 text-sm font-medium text-ink">
+    <div className="rounded-md border border-border bg-background p-4">
+      <h4 className="mb-3 text-sm font-medium text-foreground">
         {existingSubmission ? 'Re-submit Assignment' : 'Submit Assignment'}
       </h4>
 
@@ -258,7 +258,7 @@ function SubmissionForm({
       />
 
       <div className="mt-3">
-        <p className="mb-1.5 text-sm font-medium text-ink">
+        <p className="mb-1.5 text-sm font-medium text-foreground">
           Or upload a file
         </p>
         <FileUpload
@@ -269,7 +269,7 @@ function SubmissionForm({
         />
       </div>
 
-      {error && <p className="mt-2 text-sm text-danger">{error}</p>}
+      {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
 
       <div className="mt-4 flex gap-2">
         <Button

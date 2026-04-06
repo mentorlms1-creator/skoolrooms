@@ -130,19 +130,19 @@ export function AttendanceGrid({
           <button
             type="button"
             onClick={() => toggleAll(true)}
-            className="px-2 py-1.5 text-sm font-medium text-brand-600 hover:text-brand-500 transition-colors"
+            className="px-2 py-1.5 text-sm font-medium text-primary hover:text-primary/90 transition-colors"
           >
             Select All
           </button>
-          <span className="text-xs text-muted">/</span>
+          <span className="text-xs text-muted-foreground">/</span>
           <button
             type="button"
             onClick={() => toggleAll(false)}
-            className="px-2 py-1.5 text-sm font-medium text-brand-600 hover:text-brand-500 transition-colors"
+            className="px-2 py-1.5 text-sm font-medium text-primary hover:text-primary/90 transition-colors"
           >
             Deselect All
           </button>
-          <span className="ml-auto text-xs text-muted">
+          <span className="ml-auto text-xs text-muted-foreground">
             {presentCount} of {students.length} present
           </span>
         </div>
@@ -155,7 +155,7 @@ export function AttendanceGrid({
             key={student.id}
             className={`
               flex items-center gap-3 rounded-md px-3 py-2
-              ${editable ? 'cursor-pointer hover:bg-paper' : 'cursor-default'}
+              ${editable ? 'cursor-pointer hover:bg-background' : 'cursor-default'}
               ${attendance[student.id] ? 'bg-success/5' : ''}
               transition-colors
             `}
@@ -165,11 +165,11 @@ export function AttendanceGrid({
               checked={attendance[student.id] ?? false}
               onChange={() => handleCheckboxChange(student.id)}
               disabled={!editable || isPending}
-              className="h-4 w-4 rounded border-border text-brand-600 focus:ring-brand-500 disabled:opacity-50"
+              className="h-4 w-4 rounded border-border text-primary focus:ring-ring disabled:opacity-50"
             />
-            <span className="text-sm text-ink">{student.name}</span>
+            <span className="text-sm text-foreground">{student.name}</span>
             {!editable && hasExistingData && (
-              <span className={`ml-auto text-xs ${attendance[student.id] ? 'text-success' : 'text-danger'}`}>
+              <span className={`ml-auto text-xs ${attendance[student.id] ? 'text-success' : 'text-destructive'}`}>
                 {attendance[student.id] ? 'Present' : 'Absent'}
               </span>
             )}
@@ -191,7 +191,7 @@ export function AttendanceGrid({
 
       {/* Status indicator for existing data */}
       {hasExistingData && editable && (
-        <p className="mt-3 text-xs text-muted">
+        <p className="mt-3 text-xs text-muted-foreground">
           Click checkboxes to update individual attendance. Changes save automatically.
         </p>
       )}

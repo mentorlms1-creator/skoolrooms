@@ -129,7 +129,7 @@ export default async function AttendancePage({ params }: PageProps) {
       />
 
       {isArchived && (
-        <div className="mb-6 rounded-md border border-border bg-muted/5 p-4 text-sm text-muted">
+        <div className="mb-6 rounded-md border border-border bg-muted/5 p-4 text-sm text-muted-foreground">
           This cohort is archived. Attendance records are read-only.
         </div>
       )}
@@ -159,27 +159,27 @@ export default async function AttendancePage({ params }: PageProps) {
             <Card key={session.id} className="p-6">
               <div className="mb-4 flex items-center justify-between">
                 <div>
-                  <h3 className="text-sm font-semibold text-ink">
+                  <h3 className="text-sm font-semibold text-foreground">
                     {formatPKT(session.scheduledAt, 'datetime')}
                   </h3>
-                  <p className="text-xs text-muted">
+                  <p className="text-xs text-muted-foreground">
                     {session.durationMinutes} min
                   </p>
                 </div>
                 {session.isCancelled && (
-                  <span className="rounded-full bg-danger/10 px-2.5 py-1 text-xs font-medium text-danger">
+                  <span className="rounded-full bg-destructive/10 px-2.5 py-1 text-xs font-medium text-destructive">
                     Cancelled
                   </span>
                 )}
                 {!session.isCancelled && session.hasAttendance && !session.editable && (
-                  <span className="rounded-full bg-muted/10 px-2.5 py-1 text-xs font-medium text-muted">
+                  <span className="rounded-full bg-muted/10 px-2.5 py-1 text-xs font-medium text-muted-foreground">
                     Locked
                   </span>
                 )}
               </div>
 
               {session.isCancelled ? (
-                <p className="text-sm text-muted">
+                <p className="text-sm text-muted-foreground">
                   Cancelled sessions are excluded from attendance tracking.
                 </p>
               ) : (
@@ -197,7 +197,7 @@ export default async function AttendancePage({ params }: PageProps) {
           {/* Summary table */}
           {totalNonCancelledSessions > 0 && (
             <Card className="p-6">
-              <h2 className="mb-4 text-lg font-semibold text-ink">
+              <h2 className="mb-4 text-lg font-semibold text-foreground">
                 Attendance Summary
               </h2>
               <AttendanceSummaryTable summaries={studentSummaries} />

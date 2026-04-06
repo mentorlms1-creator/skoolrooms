@@ -53,7 +53,7 @@ export default async function StudentSchedulePage() {
           {Array.from(sessionsByDate.entries()).map(
             ([dateLabel, dateSessions]) => (
               <div key={dateLabel}>
-                <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted">
+                <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
                   {dateLabel}
                 </h2>
                 <div className="space-y-3">
@@ -62,17 +62,17 @@ export default async function StudentSchedulePage() {
                       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
-                            <span className="font-medium text-ink">
+                            <span className="font-medium text-foreground">
                               {formatPKT(session.scheduled_at, 'time')}
                             </span>
-                            <span className="text-sm text-muted">
+                            <span className="text-sm text-muted-foreground">
                               &middot; {session.duration_minutes} min
                             </span>
                           </div>
-                          <p className="mt-1 text-sm text-ink">
+                          <p className="mt-1 text-sm text-foreground">
                             {session.cohorts.courses.title}
                           </p>
-                          <p className="text-sm text-muted">
+                          <p className="text-sm text-muted-foreground">
                             {session.cohorts.name} &middot;{' '}
                             {session.cohorts.teachers.name}
                           </p>
@@ -82,7 +82,7 @@ export default async function StudentSchedulePage() {
                             href={session.meet_link}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex shrink-0 items-center gap-1 rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-500 transition-colors"
+                            className="inline-flex shrink-0 items-center gap-1 rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 transition-colors"
                           >
                             Join Class
                           </a>

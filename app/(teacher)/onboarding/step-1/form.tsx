@@ -121,7 +121,7 @@ export function Step1Form({ defaultSubjects, defaultLevels }: Step1FormProps) {
     <div className="space-y-6">
       {/* Subjects */}
       <div>
-        <h3 className="mb-3 text-sm font-medium text-ink">Subjects</h3>
+        <h3 className="mb-3 text-sm font-medium text-foreground">Subjects</h3>
         <div className="flex flex-wrap gap-2">
           {SUBJECTS.map((subject) => {
             const isSelected = selectedSubjects.has(subject)
@@ -135,8 +135,8 @@ export function Step1Form({ defaultSubjects, defaultLevels }: Step1FormProps) {
                   transition-colors duration-150
                   ${
                     isSelected
-                      ? 'border-brand-600 bg-brand-600 text-white'
-                      : 'border-border bg-surface text-muted hover:border-brand-500'
+                      ? 'border-primary bg-primary text-white'
+                      : 'border-border bg-card text-muted-foreground hover:border-primary'
                   }
                 `}
               >
@@ -149,7 +149,7 @@ export function Step1Form({ defaultSubjects, defaultLevels }: Step1FormProps) {
 
       {/* Levels */}
       <div>
-        <h3 className="mb-3 text-sm font-medium text-ink">Teaching Levels</h3>
+        <h3 className="mb-3 text-sm font-medium text-foreground">Teaching Levels</h3>
         <div className="flex flex-wrap gap-2">
           {LEVELS.map((level) => {
             const isSelected = selectedLevels.has(level)
@@ -163,8 +163,8 @@ export function Step1Form({ defaultSubjects, defaultLevels }: Step1FormProps) {
                   transition-colors duration-150
                   ${
                     isSelected
-                      ? 'border-brand-600 bg-brand-600 text-white'
-                      : 'border-border bg-surface text-muted hover:border-brand-500'
+                      ? 'border-primary bg-primary text-white'
+                      : 'border-border bg-card text-muted-foreground hover:border-primary'
                   }
                 `}
               >
@@ -176,7 +176,7 @@ export function Step1Form({ defaultSubjects, defaultLevels }: Step1FormProps) {
       </div>
 
       {/* Error */}
-      {error && <p className="text-sm text-danger">{error}</p>}
+      {error && <p className="text-sm text-destructive">{error}</p>}
 
       {/* Continue */}
       <Button

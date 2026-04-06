@@ -66,7 +66,7 @@ export function ExploreFilters({
   return (
     <div>
       {/* Filter controls */}
-      <div className="mb-8 flex flex-wrap items-end gap-4 rounded-lg border border-border bg-surface p-4">
+      <div className="mb-8 flex flex-wrap items-end gap-4 rounded-lg border border-border bg-card p-4">
         {/* Subject filter */}
         <Select
           id="filter-subject"
@@ -93,7 +93,7 @@ export function ExploreFilters({
 
         {/* Max fee filter */}
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="filter-max-fee" className="text-sm font-medium text-ink">
+          <label htmlFor="filter-max-fee" className="text-sm font-medium text-foreground">
             Max Fee (PKR)
           </label>
           <input
@@ -103,7 +103,7 @@ export function ExploreFilters({
             onChange={(e) => setMaxFee(e.target.value)}
             placeholder="e.g., 5000"
             min="0"
-            className="w-full sm:w-32 rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand-500"
+            className="w-full sm:w-32 rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
           />
         </div>
 
@@ -114,9 +114,9 @@ export function ExploreFilters({
             id="filter-open-only"
             checked={openOnly}
             onChange={(e) => setOpenOnly(e.target.checked)}
-            className="h-4 w-4 rounded border-border text-brand-600 focus:ring-brand-500"
+            className="h-4 w-4 rounded border-border text-primary focus:ring-ring"
           />
-          <label htmlFor="filter-open-only" className="text-sm text-ink">
+          <label htmlFor="filter-open-only" className="text-sm text-foreground">
             Open cohorts only
           </label>
         </div>
@@ -131,7 +131,7 @@ export function ExploreFilters({
               setMaxFee('')
               setOpenOnly(false)
             }}
-            className="pb-1 text-sm text-brand-600 hover:text-brand-500 underline"
+            className="pb-1 text-sm text-primary hover:text-primary/90 underline"
           >
             Clear filters
           </button>
@@ -139,15 +139,15 @@ export function ExploreFilters({
       </div>
 
       {/* Results count */}
-      <p className="mb-4 text-sm text-muted">
+      <p className="mb-4 text-sm text-muted-foreground">
         {filtered.length} {filtered.length === 1 ? 'teacher' : 'teachers'} found
       </p>
 
       {/* Teacher grid */}
       {filtered.length === 0 ? (
-        <div className="rounded-lg border border-border bg-surface p-12 text-center">
-          <p className="text-lg font-medium text-ink">No teachers found</p>
-          <p className="mt-1 text-sm text-muted">
+        <div className="rounded-lg border border-border bg-card p-12 text-center">
+          <p className="text-lg font-medium text-foreground">No teachers found</p>
+          <p className="mt-1 text-sm text-muted-foreground">
             Try adjusting your filters to see more results.
           </p>
         </div>

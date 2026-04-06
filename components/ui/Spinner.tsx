@@ -1,6 +1,6 @@
 /**
  * components/ui/Spinner.tsx — Simple spinning loader SVG
- * Uses text-brand-600 by default. Server-compatible (no 'use client' needed).
+ * Uses text-primary by default. Server-compatible (no 'use client' needed).
  */
 
 type SpinnerSize = 'sm' | 'md' | 'lg'
@@ -19,7 +19,7 @@ const sizeClasses: Record<SpinnerSize, string> = {
 export function Spinner({ size = 'md', className = '' }: SpinnerProps) {
   return (
     <svg
-      className={`animate-spin text-brand-600 ${sizeClasses[size]} ${className}`}
+      className={`animate-spin text-primary ${sizeClasses[size]} ${className}`}
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
       viewBox="0 0 24 24"

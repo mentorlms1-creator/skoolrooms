@@ -60,12 +60,12 @@ export function ScreenshotUploadForm({
   if (submitted) {
     return (
       <Card className="p-6 text-center">
-        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-brand-100">
+        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/20">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 20 20"
             fill="currentColor"
-            className="h-6 w-6 text-brand-600"
+            className="h-6 w-6 text-primary"
             aria-hidden="true"
           >
             <path
@@ -75,8 +75,8 @@ export function ScreenshotUploadForm({
             />
           </svg>
         </div>
-        <h3 className="text-lg font-semibold text-ink">Screenshot Submitted</h3>
-        <p className="mt-2 text-sm text-muted">
+        <h3 className="text-lg font-semibold text-foreground">Screenshot Submitted</h3>
+        <p className="mt-2 text-sm text-muted-foreground">
           Your payment screenshot has been submitted. The teacher will review and
           verify your payment soon.
         </p>
@@ -87,18 +87,18 @@ export function ScreenshotUploadForm({
   return (
     <div className="flex flex-col gap-4">
       {/* Reference code reminder */}
-      <Card className="border-brand-200 bg-brand-50 p-4">
-        <p className="text-sm font-medium text-brand-800">
+      <Card className="border-primary/20 bg-primary/10 p-4">
+        <p className="text-sm font-medium text-primary">
           Include this reference in your bank transfer:
         </p>
-        <p className="mt-1 text-2xl font-bold tracking-wider text-brand-700">
+        <p className="mt-1 text-2xl font-bold tracking-wider text-primary">
           REF-{referenceCode}
         </p>
       </Card>
 
       {/* Upload area */}
       <div>
-        <label className="mb-2 block text-sm font-medium text-ink">
+        <label className="mb-2 block text-sm font-medium text-foreground">
           Upload payment screenshot
         </label>
         <FileUpload
@@ -110,7 +110,7 @@ export function ScreenshotUploadForm({
       </div>
 
       {/* Error message */}
-      {error && <p className="text-sm text-danger">{error}</p>}
+      {error && <p className="text-sm text-destructive">{error}</p>}
 
       {/* Submit button */}
       <Button

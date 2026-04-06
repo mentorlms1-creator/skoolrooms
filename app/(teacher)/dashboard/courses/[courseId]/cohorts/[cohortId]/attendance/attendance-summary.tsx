@@ -18,7 +18,7 @@ type AttendanceSummaryTableProps = {
 export function AttendanceSummaryTable({ summaries }: AttendanceSummaryTableProps) {
   if (summaries.length === 0) {
     return (
-      <p className="text-sm text-muted">No students to show.</p>
+      <p className="text-sm text-muted-foreground">No students to show.</p>
     )
   }
 
@@ -35,13 +35,13 @@ export function AttendanceSummaryTable({ summaries }: AttendanceSummaryTableProp
               ? 'text-success'
               : s.percentage >= 50
                 ? 'text-warning'
-                : 'text-danger'
+                : 'text-destructive'
 
           return (
             <div key={s.id} className="rounded-md border border-border p-3 sm:p-4 text-sm">
-              <p className="font-medium text-ink">{s.name}</p>
+              <p className="font-medium text-foreground">{s.name}</p>
               <div className="mt-2 flex items-center justify-between">
-                <span className="text-muted">{s.attended} / {s.total} classes</span>
+                <span className="text-muted-foreground">{s.attended} / {s.total} classes</span>
                 <span className={`font-medium ${colorClass}`}>{s.percentage}%</span>
               </div>
             </div>
@@ -53,10 +53,10 @@ export function AttendanceSummaryTable({ summaries }: AttendanceSummaryTableProp
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border">
-              <th className="px-3 py-2 text-left font-medium text-muted">Student</th>
-              <th className="px-3 py-2 text-right font-medium text-muted">Attended</th>
-              <th className="px-3 py-2 text-right font-medium text-muted">Total</th>
-              <th className="px-3 py-2 text-right font-medium text-muted">Rate</th>
+              <th className="px-3 py-2 text-left font-medium text-muted-foreground">Student</th>
+              <th className="px-3 py-2 text-right font-medium text-muted-foreground">Attended</th>
+              <th className="px-3 py-2 text-right font-medium text-muted-foreground">Total</th>
+              <th className="px-3 py-2 text-right font-medium text-muted-foreground">Rate</th>
             </tr>
           </thead>
           <tbody>
@@ -66,13 +66,13 @@ export function AttendanceSummaryTable({ summaries }: AttendanceSummaryTableProp
                   ? 'text-success'
                   : s.percentage >= 50
                     ? 'text-warning'
-                    : 'text-danger'
+                    : 'text-destructive'
 
               return (
                 <tr key={s.id} className="border-b border-border last:border-b-0">
-                  <td className="px-3 py-2 text-ink">{s.name}</td>
-                  <td className="px-3 py-2 text-right text-ink">{s.attended}</td>
-                  <td className="px-3 py-2 text-right text-muted">{s.total}</td>
+                  <td className="px-3 py-2 text-foreground">{s.name}</td>
+                  <td className="px-3 py-2 text-right text-foreground">{s.attended}</td>
+                  <td className="px-3 py-2 text-right text-muted-foreground">{s.total}</td>
                   <td className={`px-3 py-2 text-right font-medium ${colorClass}`}>
                     {s.percentage}%
                   </td>

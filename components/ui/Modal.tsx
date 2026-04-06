@@ -121,18 +121,18 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
         tabIndex={-1}
         className={`
           w-full ${sizeClasses[size]}
-          rounded-lg border border-border bg-surface shadow-card-hover
+          rounded-lg border border-border bg-card shadow-md
           outline-none
         `}
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border px-6 py-4">
-          <h2 id="modal-title" className="text-lg font-semibold text-ink">
+          <h2 id="modal-title" className="text-lg font-semibold text-foreground">
             {title}
           </h2>
           <button
             onClick={onClose}
-            className="rounded-md p-2 text-muted hover:bg-paper hover:text-ink transition-colors"
+            className="rounded-md p-2 text-muted-foreground hover:bg-background hover:text-foreground transition-colors"
             aria-label="Close modal"
           >
             <svg

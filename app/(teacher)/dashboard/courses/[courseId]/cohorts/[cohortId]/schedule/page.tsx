@@ -44,13 +44,13 @@ export default async function SchedulePage({ params }: PageProps) {
       {/* Session creation form — hidden for archived cohorts */}
       {!isArchived && (
         <Card className="mb-6 p-6">
-          <h2 className="mb-4 text-lg font-semibold text-ink">Add Session</h2>
+          <h2 className="mb-4 text-lg font-semibold text-foreground">Add Session</h2>
           <SessionCreateForm cohortId={cohortId} />
         </Card>
       )}
 
       {isArchived && (
-        <div className="mb-6 rounded-md border border-border bg-muted/5 p-4 text-sm text-muted">
+        <div className="mb-6 rounded-md border border-border bg-muted/5 p-4 text-sm text-muted-foreground">
           This cohort is archived. No new sessions can be added.
         </div>
       )}

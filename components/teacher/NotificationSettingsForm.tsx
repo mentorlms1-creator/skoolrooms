@@ -105,7 +105,7 @@ export function NotificationSettingsForm({
           className={`mb-4 rounded-md px-4 py-3 text-sm ${
             message.type === 'success'
               ? 'bg-success/10 text-success'
-              : 'bg-danger/10 text-danger'
+              : 'bg-destructive/10 text-destructive'
           }`}
         >
           {message.text}
@@ -120,18 +120,18 @@ export function NotificationSettingsForm({
               <label
                 key={opt.key}
                 htmlFor={opt.key}
-                className="flex cursor-pointer items-center justify-between gap-4 px-6 py-4 hover:bg-paper"
+                className="flex cursor-pointer items-center justify-between gap-4 px-6 py-4 hover:bg-background"
               >
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-ink">{opt.label}</p>
-                  <p className="mt-0.5 text-xs text-muted">{opt.description}</p>
+                  <p className="text-sm font-medium text-foreground">{opt.label}</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">{opt.description}</p>
                 </div>
                 <input
                   type="checkbox"
                   name={opt.key}
                   id={opt.key}
                   defaultChecked={isChecked}
-                  className="h-4 w-4 rounded border-border text-brand-600 focus:ring-brand-500"
+                  className="h-4 w-4 rounded border-border text-primary focus:ring-ring"
                 />
               </label>
             )
@@ -140,8 +140,8 @@ export function NotificationSettingsForm({
 
         {/* Locked notifications */}
         <Card className="mt-4 divide-y divide-border">
-          <div className="px-6 py-3 bg-paper">
-            <p className="text-xs font-medium text-muted">
+          <div className="px-6 py-3 bg-background">
+            <p className="text-xs font-medium text-muted-foreground">
               Business-critical (always sent, cannot be disabled)
             </p>
           </div>
@@ -151,14 +151,14 @@ export function NotificationSettingsForm({
               className="flex items-center justify-between gap-4 px-6 py-4 opacity-60"
             >
               <div className="flex-1">
-                <p className="text-sm font-medium text-ink">{opt.label}</p>
-                <p className="mt-0.5 text-xs text-muted">{opt.description}</p>
+                <p className="text-sm font-medium text-foreground">{opt.label}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">{opt.description}</p>
               </div>
               <input
                 type="checkbox"
                 checked
                 disabled
-                className="h-4 w-4 rounded border-border text-brand-600"
+                className="h-4 w-4 rounded border-border text-primary"
               />
             </div>
           ))}

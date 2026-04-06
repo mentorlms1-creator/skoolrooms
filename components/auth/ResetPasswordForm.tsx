@@ -73,8 +73,8 @@ export function ResetPasswordForm() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <h3 className="text-lg font-semibold text-ink">Password updated</h3>
-        <p className="text-sm text-muted">
+        <h3 className="text-lg font-semibold text-foreground">Password updated</h3>
+        <p className="text-sm text-muted-foreground">
           Your password has been reset successfully. Redirecting you to the
           login page...
         </p>
@@ -85,12 +85,12 @@ export function ResetPasswordForm() {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       {error && (
-        <div className="rounded-md bg-danger/10 px-4 py-3 text-sm text-danger">
+        <div className="rounded-md bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {error}
         </div>
       )}
 
-      <p className="text-sm text-muted">
+      <p className="text-sm text-muted-foreground">
         Enter your new password below. It must be at least 8 characters long.
       </p>
 

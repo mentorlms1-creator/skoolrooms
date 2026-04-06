@@ -57,17 +57,17 @@ export default async function AdminDashboardPage() {
           value={String(ops.totalStudents)}
         />
         <Card className="p-6">
-          <h3 className="text-sm font-medium text-muted">Plan Distribution</h3>
+          <h3 className="text-sm font-medium text-muted-foreground">Plan Distribution</h3>
           <div className="mt-3 space-y-2">
             {stats.planDistribution.length === 0 ? (
-              <p className="text-sm text-muted">No teachers yet.</p>
+              <p className="text-sm text-muted-foreground">No teachers yet.</p>
             ) : (
               stats.planDistribution.map((item) => (
                 <div key={item.plan} className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-ink capitalize">
+                  <span className="text-sm font-medium text-foreground capitalize">
                     {item.plan}
                   </span>
-                  <span className="rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-600">
+                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
                     {item.count}
                   </span>
                 </div>
@@ -83,8 +83,8 @@ export default async function AdminDashboardPage() {
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
     <Card className="p-6">
-      <h3 className="text-sm font-medium text-muted">{label}</h3>
-      <p className="mt-2 text-3xl font-bold text-ink">{value}</p>
+      <h3 className="text-sm font-medium text-muted-foreground">{label}</h3>
+      <p className="mt-2 text-3xl font-bold text-foreground">{value}</p>
     </Card>
   )
 }

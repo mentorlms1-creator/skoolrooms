@@ -64,7 +64,7 @@ function getBannerState(ctx: {
 const bannerStyles: Record<string, string> = {
   expiry_warning: 'bg-warning/10 border-warning/30 text-warning',
   grace_period: 'bg-warning/15 border-warning/40 text-warning',
-  hard_lock: 'bg-danger/10 border-danger/30 text-danger',
+  hard_lock: 'bg-destructive/10 border-destructive/30 text-destructive',
   trial_ending: 'bg-warning/10 border-warning/30 text-warning',
 }
 
@@ -85,14 +85,14 @@ export function ExpiryBanner() {
       {state !== 'hard_lock' ? (
         <Link
           href={ROUTES.PLATFORM.subscribe}
-          className="w-full sm:w-auto text-center shrink-0 rounded-full bg-brand-600 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-brand-500"
+          className="w-full sm:w-auto text-center shrink-0 rounded-full bg-primary px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-primary/90"
         >
           Renew Now
         </Link>
       ) : (
         <Link
           href={ROUTES.PLATFORM.subscribe}
-          className="w-full sm:w-auto text-center shrink-0 rounded-full bg-danger px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-danger/90"
+          className="w-full sm:w-auto text-center shrink-0 rounded-full bg-destructive px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-destructive/90"
         >
           Renew to Unlock
         </Link>

@@ -144,9 +144,9 @@ export function Step2Form({ defaultSubdomain, domain }: Step2FormProps) {
         />
 
         {/* Live preview */}
-        <p className="mt-2 text-sm text-muted">
+        <p className="mt-2 text-sm text-muted-foreground">
           Your page:{' '}
-          <span className="font-medium text-ink">
+          <span className="font-medium text-foreground">
             {subdomain || 'your-name'}.{domain}
           </span>
         </p>
@@ -154,7 +154,7 @@ export function Step2Form({ defaultSubdomain, domain }: Step2FormProps) {
 
       {/* Availability status indicator */}
       {status === 'available' && (
-        <div className="flex items-center gap-2 rounded-md bg-brand-50 px-3 py-2">
+        <div className="flex items-center gap-2 rounded-md bg-primary/10 px-3 py-2">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 20 20"

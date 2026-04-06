@@ -37,8 +37,8 @@ function ToolbarButton({ onClick, isActive, children, title }: ToolbarButtonProp
         min-h-[2.75rem] flex items-center justify-center rounded px-2.5 py-2 text-sm font-medium transition-colors
         ${
           isActive
-            ? 'bg-brand-100 text-brand-600'
-            : 'text-muted hover:bg-paper'
+            ? 'bg-primary/20 text-primary'
+            : 'text-muted-foreground hover:bg-background'
         }
       `}
     >
@@ -116,7 +116,7 @@ export function RichTextEditor({
       Link.configure({
         openOnClick: false,
         HTMLAttributes: {
-          class: 'text-brand-600 underline',
+          class: 'text-primary underline',
         },
       }),
     ],
@@ -147,7 +147,7 @@ export function RichTextEditor({
       {label && (
         <label
           htmlFor={editorId}
-          className="text-sm font-medium text-ink"
+          className="text-sm font-medium text-foreground"
         >
           {label}
         </label>
@@ -155,18 +155,18 @@ export function RichTextEditor({
       <div
         className={`
           rounded-md border
-          ${error ? 'border-danger' : 'border-border'}
+          ${error ? 'border-destructive' : 'border-border'}
         `}
       >
         {editor && <Toolbar editor={editor} />}
         <EditorContent
           id={editorId}
           editor={editor}
-          className="prose prose-sm max-w-none px-3 py-2 min-h-[200px] text-ink [&_.tiptap]:outline-none [&_.tiptap]:min-h-[200px] [&_.tiptap_p.is-editor-empty:first-child::before]:text-muted [&_.tiptap_p.is-editor-empty:first-child::before]:content-[attr(data-placeholder)] [&_.tiptap_p.is-editor-empty:first-child::before]:float-left [&_.tiptap_p.is-editor-empty:first-child::before]:h-0 [&_.tiptap_p.is-editor-empty:first-child::before]:pointer-events-none"
+          className="prose prose-sm max-w-none px-3 py-2 min-h-[200px] text-foreground [&_.tiptap]:outline-none [&_.tiptap]:min-h-[200px] [&_.tiptap_p.is-editor-empty:first-child::before]:text-muted-foreground [&_.tiptap_p.is-editor-empty:first-child::before]:content-[attr(data-placeholder)] [&_.tiptap_p.is-editor-empty:first-child::before]:float-left [&_.tiptap_p.is-editor-empty:first-child::before]:h-0 [&_.tiptap_p.is-editor-empty:first-child::before]:pointer-events-none"
         />
       </div>
       {error && (
-        <p className="text-sm text-danger">{error}</p>
+        <p className="text-sm text-destructive">{error}</p>
       )}
     </div>
   )

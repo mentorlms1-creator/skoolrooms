@@ -48,14 +48,14 @@ export function CohortCard({
       <Card hover className="p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
-            <h3 className="truncate text-base font-semibold text-ink">
+            <h3 className="truncate text-base font-semibold text-foreground">
               {cohort.name}
             </h3>
-            <p className="mt-1 text-sm text-muted">
+            <p className="mt-1 text-sm text-muted-foreground">
               {formatPKT(cohort.start_date, 'date')} &ndash;{' '}
               {formatPKT(cohort.end_date, 'date')}
             </p>
-            <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-muted">
+            <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
               <span>{feeLabel}</span>
               <span>&middot;</span>
               <span>{spotsLabel}</span>

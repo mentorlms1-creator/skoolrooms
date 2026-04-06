@@ -134,8 +134,8 @@ function AnnouncementCard({
       {/* Header: pinned badge + date + actions */}
       <div className="mb-3 flex items-start justify-between gap-3">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-ink">{teacherName}</span>
-          <span className="text-xs text-muted">
+          <span className="text-sm font-medium text-foreground">{teacherName}</span>
+          <span className="text-xs text-muted-foreground">
             {formatPKT(announcement.createdAt, 'datetime')}
           </span>
           {announcement.pinned && <StatusBadge status="pinned" size="sm" />}
@@ -155,7 +155,7 @@ function AnnouncementCard({
               size="sm"
               onClick={handleDelete}
               disabled={isPending}
-              className="text-danger hover:text-danger"
+              className="text-destructive hover:text-destructive"
             >
               Delete
             </Button>
@@ -165,7 +165,7 @@ function AnnouncementCard({
 
       {/* Body (sanitized HTML) */}
       <div
-        className="prose prose-sm max-w-none overflow-x-auto text-ink"
+        className="prose prose-sm max-w-none overflow-x-auto text-foreground"
         dangerouslySetInnerHTML={{ __html: sanitizedBody }}
       />
 
@@ -176,7 +176,7 @@ function AnnouncementCard({
             href={announcement.fileUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm text-brand-600 hover:bg-paper transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm text-primary hover:bg-background transition-colors"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -197,7 +197,7 @@ function AnnouncementCard({
         <button
           type="button"
           onClick={() => setShowSeenList(!showSeenList)}
-          className="min-h-[2.75rem] py-2 px-1 text-xs text-muted hover:text-ink transition-colors"
+          className="min-h-[2.75rem] py-2 px-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
         >
           Seen by {announcement.seenByCount} of {announcement.totalStudents} student
           {announcement.totalStudents === 1 ? '' : 's'}
@@ -210,7 +210,7 @@ function AnnouncementCard({
             {announcement.readStudentNames.map((name) => (
               <li
                 key={name}
-                className="rounded-full bg-paper px-2.5 py-0.5 text-xs text-muted"
+                className="rounded-full bg-background px-2.5 py-0.5 text-xs text-muted-foreground"
               >
                 {name}
               </li>
@@ -224,7 +224,7 @@ function AnnouncementCard({
         <button
           type="button"
           onClick={() => setShowComments(!showComments)}
-          className="min-h-[2.75rem] py-2 px-1 text-xs font-medium text-muted hover:text-ink transition-colors"
+          className="min-h-[2.75rem] py-2 px-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
         >
           {announcement.comments.length} comment
           {announcement.comments.length === 1 ? '' : 's'}
@@ -289,18 +289,18 @@ function CommentItem({
   }
 
   return (
-    <div className="flex items-start justify-between gap-2 rounded-md bg-paper p-3">
+    <div className="flex items-start justify-between gap-2 rounded-md bg-background p-3">
       <div className="flex-1">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-ink">{comment.authorName}</span>
-          <span className="rounded-full bg-surface px-1.5 py-0.5 text-xs text-muted">
+          <span className="text-sm font-medium text-foreground">{comment.authorName}</span>
+          <span className="rounded-full bg-card px-1.5 py-0.5 text-xs text-muted-foreground">
             {comment.authorType === 'teacher' ? 'Teacher' : 'Student'}
           </span>
-          <span className="text-xs text-muted">
+          <span className="text-xs text-muted-foreground">
             {formatPKT(comment.createdAt, 'relative')}
           </span>
         </div>
-        <p className="mt-1 text-sm text-ink">{comment.body}</p>
+        <p className="mt-1 text-sm text-foreground">{comment.body}</p>
       </div>
       {/* Teacher can delete any comment (moderation) */}
       {!isArchived && (
@@ -309,7 +309,7 @@ function CommentItem({
           size="sm"
           onClick={handleDelete}
           disabled={isPending}
-          className="shrink-0 text-danger hover:text-danger"
+          className="shrink-0 text-destructive hover:text-destructive"
         >
           Delete
         </Button>
@@ -369,12 +369,12 @@ function CommentForm({ announcementId }: { announcementId: string }) {
         onChange={(e) => setBody(e.target.value)}
         placeholder="Write a comment..."
         maxLength={2000}
-        className="flex-1 rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+        className="flex-1 rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary"
       />
       <Button type="submit" size="sm" loading={isPending}>
         Comment
       </Button>
-      {error && <p className="self-center text-sm text-danger">{error}</p>}
+      {error && <p className="self-center text-sm text-destructive">{error}</p>}
     </form>
   )
 }

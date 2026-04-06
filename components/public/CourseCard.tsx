@@ -44,9 +44,9 @@ export function CourseCard({
 
       {/* Content */}
       <div className="p-4">
-        <h3 className="text-lg font-semibold text-ink">{title}</h3>
+        <h3 className="text-lg font-semibold text-foreground">{title}</h3>
         {description && (
-          <p className="mt-1 text-sm text-muted">
+          <p className="mt-1 text-sm text-muted-foreground">
             {stripAndTruncate(description, 150)}
           </p>
         )}

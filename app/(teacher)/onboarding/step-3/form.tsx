@@ -63,7 +63,7 @@ export function Step3Form({
     <div className="space-y-6">
       {/* Profile photo */}
       <div>
-        <label className="mb-2 block text-sm font-medium text-ink">
+        <label className="mb-2 block text-sm font-medium text-foreground">
           Profile Photo
         </label>
         <FileUpload
@@ -72,7 +72,7 @@ export function Step3Form({
           onUploadComplete={(url) => setPhotoUrl(url)}
           currentUrl={photoUrl || undefined}
         />
-        <p className="mt-1 text-xs text-muted">
+        <p className="mt-1 text-xs text-muted-foreground">
           Optional. JPEG, PNG, or WebP. Max 2MB.
         </p>
       </div>
@@ -87,7 +87,7 @@ export function Step3Form({
           rows={5}
           error={error ?? undefined}
         />
-        <p className="mt-1 text-xs text-muted">
+        <p className="mt-1 text-xs text-muted-foreground">
           Minimum 10 characters. This appears on your public profile.
         </p>
       </div>

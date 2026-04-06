@@ -10,13 +10,13 @@ export const metadata: Metadata = {
 
 export default function SignupPage() {
   return (
-    <main className="flex min-h-dvh items-center justify-center bg-paper px-4 py-12">
+    <main className="flex min-h-dvh items-center justify-center bg-background px-4 py-12">
       <div className="w-full max-w-md">
-        <div className="rounded-lg border border-border bg-surface p-8 shadow-card">
+        <div className="rounded-lg border border-border bg-card p-8 shadow-sm">
           {/* Brand */}
           <div className="mb-8 text-center">
-            <h1 className="text-2xl font-bold text-ink">Lumscribe</h1>
-            <p className="mt-1 text-sm text-muted">
+            <h1 className="text-2xl font-bold text-foreground">Lumscribe</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
               Create your teacher account
             </p>
           </div>
@@ -25,11 +25,11 @@ export default function SignupPage() {
 
           {/* Footer links */}
           <div className="mt-6 text-center text-sm">
-            <p className="text-muted">
+            <p className="text-muted-foreground">
               Already have an account?{' '}
               <Link
                 href={ROUTES.PLATFORM.login}
-                className="font-medium text-brand-600 hover:text-brand-500"
+                className="font-medium text-primary hover:text-primary/90"
               >
                 Sign in
               </Link>

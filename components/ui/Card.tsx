@@ -13,8 +13,8 @@ export function Card({ children, className = '', hover = false }: CardProps) {
   return (
     <div
       className={`
-        rounded-lg border border-border bg-surface shadow-card
-        ${hover ? 'hover:shadow-card-hover transition-shadow duration-200' : ''}
+        rounded-lg border border-border bg-card shadow-sm
+        ${hover ? 'hover:shadow-md transition-shadow duration-200' : ''}
         ${className}
       `}
     >

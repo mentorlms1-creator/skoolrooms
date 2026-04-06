@@ -42,8 +42,8 @@ export function ForgotPasswordForm() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <h3 className="text-lg font-semibold text-ink">Check your email</h3>
-        <p className="text-sm text-muted">
+        <h3 className="text-lg font-semibold text-foreground">Check your email</h3>
+        <p className="text-sm text-muted-foreground">
           If an account exists with that email, we&apos;ve sent a password
           reset link. Please check your inbox and follow the instructions.
         </p>
@@ -54,12 +54,12 @@ export function ForgotPasswordForm() {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       {error && (
-        <div className="rounded-md bg-danger/10 px-4 py-3 text-sm text-danger">
+        <div className="rounded-md bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {error}
         </div>
       )}
 
-      <p className="text-sm text-muted">
+      <p className="text-sm text-muted-foreground">
         Enter your email address and we&apos;ll send you a link to reset your
         password.
       </p>

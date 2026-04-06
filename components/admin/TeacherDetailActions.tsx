@@ -108,14 +108,14 @@ export function TeacherDetailActions({
 
   return (
     <Card className="p-6">
-      <h2 className="mb-4 text-lg font-semibold text-ink">Admin Actions</h2>
+      <h2 className="mb-4 text-lg font-semibold text-foreground">Admin Actions</h2>
 
       {message && (
         <div
           className={`mb-4 rounded-md px-4 py-3 text-sm ${
             message.type === 'success'
               ? 'bg-success/10 text-success'
-              : 'bg-danger/10 text-danger'
+              : 'bg-destructive/10 text-destructive'
           }`}
         >
           {message.text}
@@ -138,7 +138,7 @@ export function TeacherDetailActions({
 
         {/* Change Plan */}
         <form onSubmit={handleChangePlan} className="space-y-3">
-          <h3 className="text-sm font-medium text-ink">Change Plan</h3>
+          <h3 className="text-sm font-medium text-foreground">Change Plan</h3>
           <Select
             name="plan"
             options={[
@@ -161,7 +161,7 @@ export function TeacherDetailActions({
 
         {/* Extend Plan Expiry */}
         <form onSubmit={handleExtendExpiry} className="space-y-3">
-          <h3 className="text-sm font-medium text-ink">Extend Plan Expiry</h3>
+          <h3 className="text-sm font-medium text-foreground">Extend Plan Expiry</h3>
           <Input
             name="days"
             type="number"
@@ -183,7 +183,7 @@ export function TeacherDetailActions({
 
         {/* Extend Trial */}
         <form onSubmit={handleExtendTrial} className="space-y-3">
-          <h3 className="text-sm font-medium text-ink">Extend Trial</h3>
+          <h3 className="text-sm font-medium text-foreground">Extend Trial</h3>
           <Input
             name="days"
             type="number"

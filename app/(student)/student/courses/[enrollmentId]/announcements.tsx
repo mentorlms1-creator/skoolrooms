@@ -111,14 +111,14 @@ function StudentAnnouncementCard({
       {/* Header: pinned badge + date */}
       <div className="mb-3 flex items-start justify-between gap-3">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-ink">{teacherName}</span>
-          <span className="text-xs text-muted">
+          <span className="text-sm font-medium text-foreground">{teacherName}</span>
+          <span className="text-xs text-muted-foreground">
             {formatPKT(announcement.createdAt, 'datetime')}
           </span>
           {announcement.pinned && <StatusBadge status="pinned" size="sm" />}
         </div>
         {!markedRead && (
-          <span className="rounded-full bg-brand-500 px-2 py-0.5 text-xs font-medium text-white">
+          <span className="rounded-full bg-primary/90 px-2 py-0.5 text-xs font-medium text-white">
             New
           </span>
         )}
@@ -126,7 +126,7 @@ function StudentAnnouncementCard({
 
       {/* Body (sanitized HTML) */}
       <div
-        className="prose prose-sm max-w-none overflow-x-auto text-ink"
+        className="prose prose-sm max-w-none overflow-x-auto text-foreground"
         dangerouslySetInnerHTML={{ __html: sanitizedBody }}
       />
 
@@ -137,7 +137,7 @@ function StudentAnnouncementCard({
             href={announcement.fileUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm text-brand-600 hover:bg-paper transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm text-primary hover:bg-background transition-colors"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -158,7 +158,7 @@ function StudentAnnouncementCard({
         <button
           type="button"
           onClick={() => setShowComments(!showComments)}
-          className="min-h-[2.75rem] py-2 px-1 text-xs font-medium text-muted hover:text-ink transition-colors"
+          className="min-h-[2.75rem] py-2 px-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
         >
           {announcement.comments.length} comment
           {announcement.comments.length === 1 ? '' : 's'}
@@ -171,24 +171,24 @@ function StudentAnnouncementCard({
             {announcement.comments.map((comment) => (
               <div
                 key={comment.id}
-                className="rounded-md bg-paper p-3"
+                className="rounded-md bg-background p-3"
               >
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-ink">
+                  <span className="text-sm font-medium text-foreground">
                     {comment.authorType === 'teacher'
                       ? teacherName
                       : comment.authorId === studentId
                         ? 'You'
                         : 'Student'}
                   </span>
-                  <span className="rounded-full bg-surface px-1.5 py-0.5 text-xs text-muted">
+                  <span className="rounded-full bg-card px-1.5 py-0.5 text-xs text-muted-foreground">
                     {comment.authorType === 'teacher' ? 'Teacher' : 'Student'}
                   </span>
-                  <span className="text-xs text-muted">
+                  <span className="text-xs text-muted-foreground">
                     {formatPKT(comment.createdAt, 'relative')}
                   </span>
                 </div>
-                <p className="mt-1 text-sm text-ink">{comment.body}</p>
+                <p className="mt-1 text-sm text-foreground">{comment.body}</p>
               </div>
             ))}
 
@@ -263,12 +263,12 @@ function StudentCommentForm({
         onChange={(e) => setBody(e.target.value)}
         placeholder="Write a comment..."
         maxLength={2000}
-        className="flex-1 rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+        className="flex-1 rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary"
       />
       <Button type="submit" size="sm" loading={isPending}>
         Comment
       </Button>
-      {error && <p className="self-center text-sm text-danger">{error}</p>}
+      {error && <p className="self-center text-sm text-destructive">{error}</p>}
     </form>
   )
 }

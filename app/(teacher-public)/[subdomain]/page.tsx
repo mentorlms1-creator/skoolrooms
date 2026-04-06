@@ -37,7 +37,7 @@ export default async function TeacherPublicPage({ params }: PageProps) {
 
       {/* Courses section */}
       <section className="mt-8">
-        <h2 className="text-xl font-semibold text-ink">Courses</h2>
+        <h2 className="text-xl font-semibold text-foreground">Courses</h2>
 
         {courses.length > 0 ? (
           <div className="mt-4 grid gap-6 sm:grid-cols-2">

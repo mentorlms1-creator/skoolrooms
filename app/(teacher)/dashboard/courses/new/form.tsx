@@ -75,7 +75,7 @@ export function CreateCourseForm() {
       />
 
       {error && !error.includes('title') && (
-        <p className="text-sm text-danger">{error}</p>
+        <p className="text-sm text-destructive">{error}</p>
       )}
 
       <div className="flex items-center justify-end gap-3">

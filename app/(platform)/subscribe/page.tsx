@@ -33,16 +33,16 @@ export default async function SubscribePage() {
   }
 
   return (
-    <div className="min-h-dvh bg-paper">
+    <div className="min-h-dvh bg-background">
       {/* Header */}
-      <header className="border-b border-border bg-surface">
+      <header className="border-b border-border bg-card">
         <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-4">
-          <a href={ROUTES.TEACHER.dashboard} className="text-xl font-bold text-brand-600">
+          <a href={ROUTES.TEACHER.dashboard} className="text-xl font-bold text-primary">
             Lumscribe
           </a>
           <a
             href={ROUTES.TEACHER.settings.plan}
-            className="text-sm font-medium text-muted hover:text-ink"
+            className="text-sm font-medium text-muted-foreground hover:text-foreground"
           >
             Back to Settings
           </a>
@@ -52,10 +52,10 @@ export default async function SubscribePage() {
       {/* Content */}
       <div className="mx-auto max-w-2xl px-4 py-12">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-ink sm:text-3xl">
+          <h1 className="text-2xl font-bold text-foreground sm:text-3xl">
             {teacher.plan === 'free' ? 'Upgrade Your Plan' : 'Renew Your Subscription'}
           </h1>
-          <p className="mt-2 text-muted">
+          <p className="mt-2 text-muted-foreground">
             {teacher.plan === 'free'
               ? 'Choose a plan to unlock more features and grow your teaching business.'
               : 'Renew your subscription to continue using premium features.'}

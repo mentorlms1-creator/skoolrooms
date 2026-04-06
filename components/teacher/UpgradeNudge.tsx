@@ -21,7 +21,7 @@ type UpgradeNudgeProps = {
 
 const severityClasses: Record<'warning' | 'danger', string> = {
   warning: 'bg-warning/10 border-warning/20 text-warning',
-  danger: 'bg-danger/10 border-danger/20 text-danger',
+  danger: 'bg-destructive/10 border-destructive/20 text-destructive',
 }
 
 export function UpgradeNudge({ label, current, max, severity }: UpgradeNudgeProps) {
@@ -35,7 +35,7 @@ export function UpgradeNudge({ label, current, max, severity }: UpgradeNudgeProp
       </p>
       <Link
         href={ROUTES.TEACHER.settings.plan}
-        className="w-full sm:w-auto text-center shrink-0 rounded-full bg-brand-600 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-brand-500"
+        className="w-full sm:w-auto text-center shrink-0 rounded-full bg-primary px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-primary/90"
       >
         Upgrade
       </Link>

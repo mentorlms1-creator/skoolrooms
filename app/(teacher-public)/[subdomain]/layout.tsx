@@ -12,14 +12,14 @@ export default function TeacherPublicLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="flex min-h-dvh flex-col bg-paper">
+    <div className="flex min-h-dvh flex-col bg-background">
       <main className="flex-1">{children}</main>
 
-      <footer className="border-t border-border py-6 text-center text-sm text-muted">
+      <footer className="border-t border-border py-6 text-center text-sm text-muted-foreground">
         Powered by{' '}
         <Link
           href={ROUTES.PLATFORM.home}
-          className="font-medium text-brand-600 hover:underline"
+          className="font-medium text-primary hover:underline"
         >
           Lumscribe
         </Link>

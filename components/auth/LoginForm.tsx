@@ -1,12 +1,10 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useActionState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { signIn } from '@/lib/auth/actions'
-import { createClient } from '@/supabase/client'
+import { signInAction } from '@/lib/auth/actions'
 import { ROUTES } from '@/constants/routes'
 
 type LoginFormProps = {
@@ -14,51 +12,21 @@ type LoginFormProps = {
   redirectTo: string
 }
 
+/**
+ * LoginForm — uses useActionState with a Server Action for progressive enhancement.
+ * The form works as a native <form> submission even before React hydrates,
+ * and upgrades to AJAX-style once JS loads. This fixes the iOS Safari issue
+ * where React onClick/onSubmit doesn't fire before hydration.
+ */
 export function LoginForm({ action, redirectTo }: LoginFormProps) {
-  const router = useRouter()
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
-
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    setError(null)
-    setLoading(true)
-
-    const formData = new FormData(e.currentTarget)
-    const result = await signIn(formData)
-
-    if (!result.success) {
-      setError(result.error)
-      setLoading(false)
-      return
-    }
-
-    const { role } = result.data
-
-    // Verify the user is logging into the correct portal
-    if (action === 'teacher' && role === 'student') {
-      const supabase = createClient()
-      await supabase.auth.signOut()
-      setError('This is the teacher login. Please use the student portal to sign in.')
-      setLoading(false)
-      return
-    }
-    if (action === 'student' && role === 'teacher') {
-      const supabase = createClient()
-      await supabase.auth.signOut()
-      setError('This is the student portal. Please use the teacher login to sign in.')
-      setLoading(false)
-      return
-    }
-
-    router.push(redirectTo)
-  }
+  const boundAction = signInAction.bind(null, action, redirectTo)
+  const [state, formAction, isPending] = useActionState(boundAction, { error: null })
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      {error && (
-        <div className="rounded-md bg-danger/10 px-4 py-3 text-sm text-danger">
-          {error}
+    <form action={formAction} className="flex flex-col gap-4">
+      {state?.error && (
+        <div className="rounded-md bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {state.error}
         </div>
       )}
 
@@ -82,14 +50,14 @@ export function LoginForm({ action, redirectTo }: LoginFormProps) {
 
       <div className="flex items-center justify-end">
         <Link
-          href={ROUTES.PLATFORM.forgotPassword}
-          className="text-sm text-brand-600 hover:text-brand-500"
+          href={action === 'student' ? ROUTES.PLATFORM.studentForgotPassword : ROUTES.PLATFORM.forgotPassword}
+          className="text-sm text-primary hover:text-primary/90"
         >
           Forgot password?
         </Link>
       </div>
 
-      <Button type="submit" loading={loading} className="w-full">
+      <Button type="submit" loading={isPending} className="w-full">
         Sign in
       </Button>
     </form>

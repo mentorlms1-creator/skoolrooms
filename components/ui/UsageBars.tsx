@@ -20,9 +20,9 @@ type UsageBarsProps = {
 }
 
 function getBarColor(percent: number): string {
-  if (percent >= USAGE_THRESHOLDS.DANGER_PERCENT) return 'bg-danger'
+  if (percent >= USAGE_THRESHOLDS.DANGER_PERCENT) return 'bg-destructive'
   if (percent >= USAGE_THRESHOLDS.WARNING_PERCENT) return 'bg-warning'
-  return 'bg-brand-500'
+  return 'bg-primary/90'
 }
 
 function formatValue(value: number, unit?: string): string {
@@ -40,14 +40,14 @@ export function UsageBars({ items }: UsageBarsProps) {
       {items.map((item) => {
         const unlimited = isUnlimited(item.max)
         const percent = unlimited ? 0 : Math.min(100, (item.current / item.max!) * 100)
-        const barColor = unlimited ? 'bg-brand-500' : getBarColor(percent)
+        const barColor = unlimited ? 'bg-primary/90' : getBarColor(percent)
         const barWidth = unlimited ? Math.min(30, item.current > 0 ? 15 : 0) : percent
 
         return (
           <div key={item.label} className="flex flex-col gap-1">
             <div className="flex items-center justify-between text-sm">
-              <span className="font-medium text-ink">{item.label}</span>
-              <span className="text-muted">
+              <span className="font-medium text-foreground">{item.label}</span>
+              <span className="text-muted-foreground">
                 {formatValue(item.current, item.unit)} /{' '}
                 {unlimited ? 'Unlimited' : formatValue(item.max!, item.unit)}
               </span>

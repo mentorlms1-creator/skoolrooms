@@ -19,7 +19,7 @@ export default async function AdminLayout({
 
   return (
     <UIProvider>
-      <div className="flex min-h-dvh bg-paper">
+      <div className="flex min-h-dvh bg-background">
         <AdminSidebar />
         <main className="flex-1 pt-14 md:ml-64 md:pt-0">
           <div className="mx-auto max-w-6xl p-4 sm:p-6">{children}</div>

@@ -174,9 +174,9 @@ export function SessionCreateForm({ cohortId }: SessionCreateFormProps) {
           id="is-recurring"
           checked={isRecurring}
           onChange={(e) => setIsRecurring(e.target.checked)}
-          className="h-4 w-4 rounded border-border text-brand-600 focus:ring-brand-500"
+          className="h-4 w-4 rounded border-border text-primary focus:ring-ring"
         />
-        <label htmlFor="is-recurring" className="text-sm font-medium text-ink">
+        <label htmlFor="is-recurring" className="text-sm font-medium text-foreground">
           Recurring weekly
         </label>
       </div>
@@ -184,7 +184,7 @@ export function SessionCreateForm({ cohortId }: SessionCreateFormProps) {
       {/* Day-of-week checkboxes (visible when recurring) */}
       {isRecurring && (
         <div className="flex flex-col gap-2">
-          <p className="text-sm font-medium text-ink">Repeat on</p>
+          <p className="text-sm font-medium text-foreground">Repeat on</p>
           <div className="flex flex-wrap gap-2">
             {DAYS_OF_WEEK.map((day) => {
               const isSelected = selectedDays.includes(day.value)
@@ -197,8 +197,8 @@ export function SessionCreateForm({ cohortId }: SessionCreateFormProps) {
                     rounded-md px-3 py-1.5 text-sm font-medium transition-colors
                     ${
                       isSelected
-                        ? 'bg-brand-600 text-white'
-                        : 'border border-border bg-surface text-ink hover:bg-paper'
+                        ? 'bg-primary text-white'
+                        : 'border border-border bg-card text-foreground hover:bg-background'
                     }
                   `}
                 >
@@ -210,7 +210,7 @@ export function SessionCreateForm({ cohortId }: SessionCreateFormProps) {
         </div>
       )}
 
-      {error && <p className="text-sm text-danger">{error}</p>}
+      {error && <p className="text-sm text-destructive">{error}</p>}
 
       <div className="flex justify-end">
         <Button type="submit" loading={isPending}>

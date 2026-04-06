@@ -79,8 +79,8 @@ export function OnboardingChecklist() {
     <Card className="p-6">
       {/* Header */}
       <div className="mb-4">
-        <h2 className="text-lg font-semibold text-ink">Get started with Lumscribe</h2>
-        <p className="mt-1 text-sm text-muted">
+        <h2 className="text-lg font-semibold text-foreground">Get started with Lumscribe</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
           Complete these steps to set up your teaching platform.
         </p>
       </div>
@@ -88,14 +88,14 @@ export function OnboardingChecklist() {
       {/* Progress bar */}
       <div className="mb-6">
         <div className="mb-1 flex items-center justify-between text-sm">
-          <span className="font-medium text-ink">
+          <span className="font-medium text-foreground">
             {completedCount} of {totalSteps} completed
           </span>
-          <span className="text-muted">{Math.round(progressPercent)}%</span>
+          <span className="text-muted-foreground">{Math.round(progressPercent)}%</span>
         </div>
         <div className="h-2 w-full rounded-full bg-border">
           <div
-            className="h-2 rounded-full bg-brand-500 transition-all duration-300"
+            className="h-2 rounded-full bg-primary/90 transition-all duration-300"
             style={{ width: `${progressPercent}%` }}
           />
         </div>
@@ -113,7 +113,7 @@ export function OnboardingChecklist() {
                 className={`flex items-start gap-3 rounded-md p-3 transition-colors ${
                   isDone
                     ? 'cursor-default'
-                    : 'hover:bg-paper'
+                    : 'hover:bg-background'
                 }`}
               >
                 {/* Check circle */}
@@ -151,12 +151,12 @@ export function OnboardingChecklist() {
                 <div>
                   <span
                     className={`text-sm font-medium ${
-                      isDone ? 'text-muted line-through' : 'text-ink'
+                      isDone ? 'text-muted-foreground line-through' : 'text-foreground'
                     }`}
                   >
                     {step.label}
                   </span>
-                  <p className="mt-0.5 text-xs text-muted">{step.description}</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">{step.description}</p>
                 </div>
               </Link>
             </li>

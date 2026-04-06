@@ -83,14 +83,14 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
         )}
 
         <div className="p-6">
-          <h2 className="mb-4 text-lg font-semibold text-ink">Description</h2>
+          <h2 className="mb-4 text-lg font-semibold text-foreground">Description</h2>
           {course.description ? (
             <div
-              className="prose prose-sm max-w-none overflow-x-auto text-ink"
+              className="prose prose-sm max-w-none overflow-x-auto text-foreground"
               dangerouslySetInnerHTML={{ __html: sanitizeHtml(course.description) }}
             />
           ) : (
-            <p className="text-sm text-muted">
+            <p className="text-sm text-muted-foreground">
               No description added yet. Click &ldquo;Edit Course&rdquo; to add one.
             </p>
           )}
@@ -100,7 +100,7 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
       {/* Cohorts section */}
       <div className="mt-8">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-ink">Cohorts</h2>
+          <h2 className="text-lg font-semibold text-foreground">Cohorts</h2>
           <Link href={ROUTES.TEACHER.cohortNew(courseId)}>
             <Button size="sm">Create Cohort</Button>
           </Link>

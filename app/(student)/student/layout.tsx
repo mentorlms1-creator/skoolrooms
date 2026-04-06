@@ -58,7 +58,7 @@ export default async function StudentLayout({
   return (
     <UIProvider>
       <StudentProvider student={studentData} enrollments={studentEnrollments}>
-        <div className="min-h-dvh bg-paper">
+        <div className="min-h-dvh bg-background">
           <StudentNav />
           <main className="mx-auto max-w-6xl p-4 sm:p-6">
             {children}

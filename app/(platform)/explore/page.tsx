@@ -44,8 +44,8 @@ export default async function ExplorePage() {
       <main className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
       {/* Page header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-ink">Find a Teacher</h1>
-        <p className="mt-2 text-lg text-muted">
+        <h1 className="text-3xl font-bold text-foreground">Find a Teacher</h1>
+        <p className="mt-2 text-lg text-muted-foreground">
           Browse our directory of teachers and tutors. Filter by subject, level, or fee range.
         </p>
       </div>

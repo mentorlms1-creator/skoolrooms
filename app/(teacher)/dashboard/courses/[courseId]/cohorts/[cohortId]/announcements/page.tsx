@@ -101,13 +101,13 @@ export default async function AnnouncementsPage({ params }: PageProps) {
       {/* Create announcement form — hidden for archived cohorts */}
       {!isArchived && (
         <Card className="mb-6 p-6">
-          <h2 className="mb-4 text-lg font-semibold text-ink">New Announcement</h2>
+          <h2 className="mb-4 text-lg font-semibold text-foreground">New Announcement</h2>
           <AnnouncementCreateForm cohortId={cohortId} />
         </Card>
       )}
 
       {isArchived && (
-        <div className="mb-6 rounded-md border border-border bg-muted/5 p-4 text-sm text-muted">
+        <div className="mb-6 rounded-md border border-border bg-muted/5 p-4 text-sm text-muted-foreground">
           This cohort is archived. No new announcements can be posted.
         </div>
       )}

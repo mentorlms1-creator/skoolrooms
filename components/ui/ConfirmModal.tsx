@@ -31,7 +31,7 @@ export function ConfirmModal({
 }: ConfirmModalProps) {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title} size="sm">
-      <p className="text-sm text-muted">{message}</p>
+      <p className="text-sm text-muted-foreground">{message}</p>
       <div className="mt-6 flex items-center justify-end gap-3">
         <Button variant="secondary" onClick={onClose} disabled={loading}>
           Cancel

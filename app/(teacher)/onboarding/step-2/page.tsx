@@ -15,16 +15,16 @@ export default async function OnboardingStep2Page() {
     <div>
       {/* Progress indicator */}
       <div className="mb-6 flex items-center justify-center gap-2">
-        <div className="h-2 w-16 rounded-full bg-brand-600" />
-        <div className="h-2 w-16 rounded-full bg-brand-600" />
+        <div className="h-2 w-16 rounded-full bg-primary" />
+        <div className="h-2 w-16 rounded-full bg-primary" />
         <div className="h-2 w-16 rounded-full bg-border" />
       </div>
 
       <Card className="p-6">
-        <h2 className="mb-1 text-xl font-semibold text-ink">
+        <h2 className="mb-1 text-xl font-semibold text-foreground">
           Pick your subdomain
         </h2>
-        <p className="mb-6 text-sm text-muted">
+        <p className="mb-6 text-sm text-muted-foreground">
           Choose a unique URL for your teaching page. Students will use this to
           find you.
         </p>

@@ -49,8 +49,8 @@ const statusColorMap: Record<string, StatusColor> = {
 const colorClasses: Record<StatusColor, string> = {
   success: 'bg-success/10 text-success',
   warning: 'bg-warning/10 text-warning',
-  danger: 'bg-danger/10 text-danger',
-  muted: 'bg-muted/10 text-muted',
+  danger: 'bg-destructive/10 text-destructive',
+  muted: 'bg-muted/10 text-muted-foreground',
 }
 
 const sizeClasses: Record<StatusBadgeSize, string> = {

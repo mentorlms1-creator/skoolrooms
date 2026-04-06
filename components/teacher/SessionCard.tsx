@@ -52,12 +52,12 @@ export function SessionCard({ session, cancelButton }: SessionCardProps) {
       <div className="flex items-start justify-between gap-4">
         <div className="flex flex-col gap-1">
           {/* Date and time */}
-          <p className="text-sm font-medium text-ink">
+          <p className="text-sm font-medium text-foreground">
             {formatPKT(session.scheduled_at, 'datetime')}
           </p>
 
           {/* Duration */}
-          <p className="text-sm text-muted">
+          <p className="text-sm text-muted-foreground">
             {session.duration_minutes} minutes
           </p>
 
@@ -67,7 +67,7 @@ export function SessionCard({ session, cancelButton }: SessionCardProps) {
               href={session.meet_link}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-1 inline-flex items-center gap-1 text-sm text-brand-600 hover:underline"
+              className="mt-1 inline-flex items-center gap-1 text-sm text-primary hover:underline"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"

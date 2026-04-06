@@ -34,17 +34,17 @@ export function TeacherBio({
           className="h-24 w-24 rounded-full border border-border object-cover"
         />
       ) : (
-        <div className="flex h-24 w-24 items-center justify-center rounded-full border border-border bg-brand-100 text-brand-600 text-3xl font-bold">
+        <div className="flex h-24 w-24 items-center justify-center rounded-full border border-border bg-primary/20 text-primary text-3xl font-bold">
           {initial}
         </div>
       )}
 
       {/* Name */}
-      <h1 className="mt-4 text-2xl font-bold text-ink">{name}</h1>
+      <h1 className="mt-4 text-2xl font-bold text-foreground">{name}</h1>
 
       {/* Bio */}
       {bio && (
-        <p className="mt-2 max-w-lg text-muted">{bio}</p>
+        <p className="mt-2 max-w-lg text-muted-foreground">{bio}</p>
       )}
 
       {/* Subject tags */}
@@ -53,7 +53,7 @@ export function TeacherBio({
           {subjectTags.map((tag) => (
             <span
               key={tag}
-              className="rounded-full bg-brand-50 px-3 py-1 text-sm font-medium text-brand-600"
+              className="rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary"
             >
               {tag}
             </span>
@@ -67,7 +67,7 @@ export function TeacherBio({
           {teachingLevels.map((level) => (
             <span
               key={level}
-              className="rounded-full border border-border bg-paper px-3 py-1 text-sm text-muted"
+              className="rounded-full border border-border bg-background px-3 py-1 text-sm text-muted-foreground"
             >
               {level}
             </span>

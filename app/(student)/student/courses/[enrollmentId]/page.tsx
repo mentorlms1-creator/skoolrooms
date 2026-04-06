@@ -170,7 +170,7 @@ export default async function EnrollmentDetailPage({ params }: PageParams) {
       {/* Enrollment status + cohort info */}
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Card className="p-4">
-          <p className="text-sm text-muted">Enrollment Status</p>
+          <p className="text-sm text-muted-foreground">Enrollment Status</p>
           <div className="mt-1">
             <StatusBadge status={enrollment.status} />
           </div>
@@ -179,27 +179,27 @@ export default async function EnrollmentDetailPage({ params }: PageParams) {
           )}
         </Card>
         <Card className="p-4">
-          <p className="text-sm text-muted">Cohort Period</p>
-          <p className="mt-1 text-sm font-medium text-ink">
+          <p className="text-sm text-muted-foreground">Cohort Period</p>
+          <p className="mt-1 text-sm font-medium text-foreground">
             {formatPKT(cohort.start_date, 'date')} &ndash;{' '}
             {formatPKT(cohort.end_date, 'date')}
           </p>
         </Card>
         {attendanceSummary && (
           <Card className="p-4">
-            <p className="text-sm text-muted">Attendance</p>
-            <p className="mt-1 text-2xl font-bold text-ink">
+            <p className="text-sm text-muted-foreground">Attendance</p>
+            <p className="mt-1 text-2xl font-bold text-foreground">
               {attendanceSummary.percentage}%
             </p>
-            <p className="text-xs text-muted">
+            <p className="text-xs text-muted-foreground">
               {attendanceSummary.attended} of {attendanceSummary.total} classes
             </p>
           </Card>
         )}
         {!attendanceSummary && (
           <Card className="p-4">
-            <p className="text-sm text-muted">Fee</p>
-            <p className="mt-1 text-sm font-medium text-ink">
+            <p className="text-sm text-muted-foreground">Fee</p>
+            <p className="mt-1 text-sm font-medium text-foreground">
               PKR {cohort.fee_pkr.toLocaleString()} (
               {cohort.fee_type === 'monthly' ? 'Monthly' : 'One-time'})
             </p>
@@ -210,7 +210,7 @@ export default async function EnrollmentDetailPage({ params }: PageParams) {
       {/* Announcements section */}
       {canSeeAnnouncements && (
         <section className="mb-8">
-          <h2 className="mb-4 text-lg font-semibold text-ink">Announcements</h2>
+          <h2 className="mb-4 text-lg font-semibold text-foreground">Announcements</h2>
           {announcementData.length === 0 ? (
             <EmptyState
               title="No announcements yet"
@@ -230,9 +230,9 @@ export default async function EnrollmentDetailPage({ params }: PageParams) {
 
       {!canSeeAnnouncements && isPending && (
         <section className="mb-8">
-          <h2 className="mb-4 text-lg font-semibold text-ink">Announcements</h2>
+          <h2 className="mb-4 text-lg font-semibold text-foreground">Announcements</h2>
           <Card className="p-6">
-            <p className="text-sm text-muted">
+            <p className="text-sm text-muted-foreground">
               Announcements will be visible once your enrollment is confirmed.
             </p>
           </Card>
@@ -242,7 +242,7 @@ export default async function EnrollmentDetailPage({ params }: PageParams) {
       {/* Assignments section */}
       {isActiveOrPending && (
         <section className="mb-8">
-          <h2 className="mb-4 text-lg font-semibold text-ink">Assignments</h2>
+          <h2 className="mb-4 text-lg font-semibold text-foreground">Assignments</h2>
           {assignmentData.length === 0 ? (
             <EmptyState
               title="No assignments yet"
@@ -261,9 +261,9 @@ export default async function EnrollmentDetailPage({ params }: PageParams) {
       {/* Withdrawal section */}
       {canWithdraw && !isArchived && (
         <section className="mb-8">
-          <h2 className="mb-4 text-lg font-semibold text-ink">Enrollment</h2>
+          <h2 className="mb-4 text-lg font-semibold text-foreground">Enrollment</h2>
           <Card className="p-6">
-            <p className="mb-4 text-sm text-muted">
+            <p className="mb-4 text-sm text-muted-foreground">
               If you need to leave this cohort, you can request a withdrawal. Your
               teacher will review the request.
             </p>
@@ -274,13 +274,13 @@ export default async function EnrollmentDetailPage({ params }: PageParams) {
 
       {withdrawalPending && (
         <section className="mb-8">
-          <h2 className="mb-4 text-lg font-semibold text-ink">Enrollment</h2>
+          <h2 className="mb-4 text-lg font-semibold text-foreground">Enrollment</h2>
           <Card className="p-6">
             <p className="text-sm text-warning">
               Your withdrawal request is being reviewed by your teacher.
             </p>
             {enrollment.withdrawal_reason && (
-              <p className="mt-2 text-sm text-muted">
+              <p className="mt-2 text-sm text-muted-foreground">
                 Reason: {enrollment.withdrawal_reason}
               </p>
             )}

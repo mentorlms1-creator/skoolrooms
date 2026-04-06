@@ -64,7 +64,7 @@ export default async function StudentCoursesPage() {
           {Array.from(enrollmentsByTeacher.entries()).map(
             ([teacherId, { teacherName, enrollments: teacherEnrollments }]) => (
               <div key={teacherId}>
-                <h2 className="mb-4 text-lg font-semibold text-ink">
+                <h2 className="mb-4 text-lg font-semibold text-foreground">
                   {teacherName}
                 </h2>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -76,17 +76,17 @@ export default async function StudentCoursesPage() {
                       <Card className="p-5" hover>
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0 flex-1">
-                            <h3 className="font-medium text-ink truncate">
+                            <h3 className="font-medium text-foreground truncate">
                               {enrollment.cohorts.courses.title}
                             </h3>
-                            <p className="mt-1 text-sm text-muted">
+                            <p className="mt-1 text-sm text-muted-foreground">
                               {enrollment.cohorts.name}
                             </p>
                           </div>
                           <StatusBadge status={enrollment.status} size="sm" />
                         </div>
 
-                        <div className="mt-4 space-y-1.5 text-sm text-muted">
+                        <div className="mt-4 space-y-1.5 text-sm text-muted-foreground">
                           <p>
                             {formatPKT(enrollment.cohorts.start_date, 'date')} &ndash;{' '}
                             {formatPKT(enrollment.cohorts.end_date, 'date')}
@@ -108,7 +108,7 @@ export default async function StudentCoursesPage() {
                         </div>
 
                         {enrollment.cohorts.courses.description && (
-                          <p className="mt-3 text-sm text-muted line-clamp-2">
+                          <p className="mt-3 text-sm text-muted-foreground line-clamp-2">
                             {enrollment.cohorts.courses.description}
                           </p>
                         )}

@@ -114,19 +114,19 @@ export function AssignmentList({ assignments, isArchived }: AssignmentListProps)
                   toggleExpanded(assignment.id)
                 }
               }}
-              className="flex w-full cursor-pointer items-start justify-between gap-4 p-4 text-left hover:bg-paper transition-colors"
+              className="flex w-full cursor-pointer items-start justify-between gap-4 p-4 text-left hover:bg-background transition-colors"
             >
               <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-ink">{assignment.title}</h3>
-                <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted">
+                <h3 className="font-semibold text-foreground">{assignment.title}</h3>
+                <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
                   <span>Due: {formatPKT(assignment.dueDate, 'datetime')}</span>
                   {pastDue && <StatusBadge status="overdue" size="sm" />}
                 </div>
-                <div className="mt-2 flex flex-wrap gap-3 text-xs text-muted">
+                <div className="mt-2 flex flex-wrap gap-3 text-xs text-muted-foreground">
                   <span>{assignment.submissionCount} submission{assignment.submissionCount !== 1 ? 's' : ''}</span>
                   <span>{assignment.reviewedCount} reviewed</span>
                   {assignment.overdueCount > 0 && (
-                    <span className="text-danger">{assignment.overdueCount} overdue</span>
+                    <span className="text-destructive">{assignment.overdueCount} overdue</span>
                   )}
                 </div>
               </div>
@@ -149,7 +149,7 @@ export function AssignmentList({ assignments, isArchived }: AssignmentListProps)
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 20 20"
                   fill="currentColor"
-                  className={`h-5 w-5 text-muted transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                  className={`h-5 w-5 text-muted-foreground transition-transform ${isExpanded ? 'rotate-180' : ''}`}
                   aria-hidden="true"
                 >
                   <path
@@ -166,9 +166,9 @@ export function AssignmentList({ assignments, isArchived }: AssignmentListProps)
               <div className="border-t border-border">
                 {/* Description */}
                 <div className="px-4 py-3 border-b border-border">
-                  <h4 className="text-sm font-medium text-muted mb-1">Description</h4>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-1">Description</h4>
                   <div
-                    className="prose prose-sm max-w-none overflow-x-auto text-ink"
+                    className="prose prose-sm max-w-none overflow-x-auto text-foreground"
                     dangerouslySetInnerHTML={{ __html: sanitizeHtml(assignment.description) }}
                   />
                   {assignment.fileUrl && (
@@ -176,7 +176,7 @@ export function AssignmentList({ assignments, isArchived }: AssignmentListProps)
                       href={assignment.fileUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="mt-2 inline-flex items-center gap-1 text-sm text-brand-600 hover:underline"
+                      className="mt-2 inline-flex items-center gap-1 text-sm text-primary hover:underline"
                     >
                       View Attachment
                     </a>
@@ -185,7 +185,7 @@ export function AssignmentList({ assignments, isArchived }: AssignmentListProps)
 
                 {/* Submissions table */}
                 <div className="px-4 py-3">
-                  <h4 className="text-sm font-medium text-muted mb-3">
+                  <h4 className="text-sm font-medium text-muted-foreground mb-3">
                     Submissions ({assignment.submissionCount})
                   </h4>
                   {assignment.submissions.length > 0 ? (
@@ -196,12 +196,12 @@ export function AssignmentList({ assignments, isArchived }: AssignmentListProps)
                           <div key={sub.id} className="rounded-md border border-border p-3 sm:p-4 text-sm">
                             <div className="flex items-center justify-between">
                               <div>
-                                <p className="font-medium text-ink">{sub.studentName}</p>
-                                <p className="text-xs text-muted">{sub.studentEmail}</p>
+                                <p className="font-medium text-foreground">{sub.studentName}</p>
+                                <p className="text-xs text-muted-foreground">{sub.studentEmail}</p>
                               </div>
                               <StatusBadge status={sub.status} size="sm" />
                             </div>
-                            <p className="mt-2 text-muted">
+                            <p className="mt-2 text-muted-foreground">
                               {formatPKT(sub.submittedAt, 'datetime')}
                             </p>
                             <div className="mt-2 flex items-center justify-between">
@@ -211,12 +211,12 @@ export function AssignmentList({ assignments, isArchived }: AssignmentListProps)
                                     href={sub.fileUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-brand-600 hover:underline"
+                                    className="text-primary hover:underline"
                                   >
                                     View File
                                   </a>
                                 ) : (
-                                  <span className="text-muted">No file</span>
+                                  <span className="text-muted-foreground">No file</span>
                                 )}
                               </span>
                               {sub.status !== 'reviewed' ? (
@@ -240,7 +240,7 @@ export function AssignmentList({ assignments, isArchived }: AssignmentListProps)
                       <div className="hidden md:block overflow-x-auto">
                         <table className="w-full text-sm">
                           <thead>
-                            <tr className="border-b border-border text-left text-muted">
+                            <tr className="border-b border-border text-left text-muted-foreground">
                               <th className="pb-2 pr-4 font-medium">Student</th>
                               <th className="pb-2 pr-4 font-medium">Submitted</th>
                               <th className="pb-2 pr-4 font-medium">Status</th>
@@ -252,10 +252,10 @@ export function AssignmentList({ assignments, isArchived }: AssignmentListProps)
                             {assignment.submissions.map((sub) => (
                               <tr key={sub.id} className="border-b border-border last:border-0">
                                 <td className="py-2 pr-4">
-                                  <div className="font-medium text-ink">{sub.studentName}</div>
-                                  <div className="text-xs text-muted">{sub.studentEmail}</div>
+                                  <div className="font-medium text-foreground">{sub.studentName}</div>
+                                  <div className="text-xs text-muted-foreground">{sub.studentEmail}</div>
                                 </td>
-                                <td className="py-2 pr-4 text-muted">
+                                <td className="py-2 pr-4 text-muted-foreground">
                                   {formatPKT(sub.submittedAt, 'datetime')}
                                 </td>
                                 <td className="py-2 pr-4">
@@ -267,12 +267,12 @@ export function AssignmentList({ assignments, isArchived }: AssignmentListProps)
                                       href={sub.fileUrl}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className="text-brand-600 hover:underline"
+                                      className="text-primary hover:underline"
                                     >
                                       View
                                     </a>
                                   ) : (
-                                    <span className="text-muted">--</span>
+                                    <span className="text-muted-foreground">--</span>
                                   )}
                                 </td>
                                 <td className="py-2">
@@ -297,7 +297,7 @@ export function AssignmentList({ assignments, isArchived }: AssignmentListProps)
                       </div>
                     </>
                   ) : (
-                    <p className="text-sm text-muted">No submissions yet.</p>
+                    <p className="text-sm text-muted-foreground">No submissions yet.</p>
                   )}
                 </div>
               </div>

@@ -98,8 +98,8 @@ export function SubscribeForm({ currentPlan, teacherName }: SubscribeFormProps) 
             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" />
           </svg>
         </div>
-        <h2 className="text-xl font-bold text-ink">Trial Started!</h2>
-        <p className="mt-2 text-muted">
+        <h2 className="text-xl font-bold text-foreground">Trial Started!</h2>
+        <p className="mt-2 text-muted-foreground">
           Welcome to the {selectedPlan.charAt(0).toUpperCase() + selectedPlan.slice(1)} plan, {teacherName}! You have 14 days to
           explore all premium features for free.
         </p>
@@ -122,8 +122,8 @@ export function SubscribeForm({ currentPlan, teacherName }: SubscribeFormProps) 
             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 000-1.5h-3.25V5z" clipRule="evenodd" />
           </svg>
         </div>
-        <h2 className="text-xl font-bold text-ink">Screenshot Submitted!</h2>
-        <p className="mt-2 text-muted">
+        <h2 className="text-xl font-bold text-foreground">Screenshot Submitted!</h2>
+        <p className="mt-2 text-muted-foreground">
           Your payment screenshot has been submitted for verification. Our team will review it
           within 24-48 hours. You will receive an email once approved.
         </p>
@@ -143,20 +143,20 @@ export function SubscribeForm({ currentPlan, teacherName }: SubscribeFormProps) 
     const plan = PLANS[selectedPlan as keyof typeof PLANS]
     return (
       <Card className="p-6">
-        <h2 className="text-lg font-semibold text-ink">
+        <h2 className="text-lg font-semibold text-foreground">
           Pay for {plan?.name ?? selectedPlan} Plan
         </h2>
-        <p className="mt-1 text-sm text-muted">
+        <p className="mt-1 text-sm text-muted-foreground">
           Transfer Rs. {plan?.price_pkr.toLocaleString()} to our account and upload a screenshot of
           the payment.
         </p>
 
         {/* Payment details */}
-        <div className="mt-4 rounded-lg border border-border bg-paper p-4">
-          <h3 className="text-sm font-medium text-ink">Payment Details</h3>
-          <div className="mt-2 space-y-1 text-sm text-muted">
+        <div className="mt-4 rounded-lg border border-border bg-background p-4">
+          <h3 className="text-sm font-medium text-foreground">Payment Details</h3>
+          <div className="mt-2 space-y-1 text-sm text-muted-foreground">
             <p>Bank: (Bank details will be configured in admin settings)</p>
-            <p>Amount: <strong className="text-ink">Rs. {plan?.price_pkr.toLocaleString()}</strong></p>
+            <p>Amount: <strong className="text-foreground">Rs. {plan?.price_pkr.toLocaleString()}</strong></p>
             <p>You can pay via bank transfer, JazzCash, or EasyPaisa.</p>
           </div>
         </div>
@@ -164,8 +164,8 @@ export function SubscribeForm({ currentPlan, teacherName }: SubscribeFormProps) 
         {/* Screenshot URL input */}
         <div className="mt-6 space-y-4">
           <div>
-            <label htmlFor="screenshotUrl" className="block text-sm font-medium text-ink">
-              Screenshot URL <span className="text-danger">*</span>
+            <label htmlFor="screenshotUrl" className="block text-sm font-medium text-foreground">
+              Screenshot URL <span className="text-destructive">*</span>
             </label>
             <Input
               id="screenshotUrl"
@@ -175,13 +175,13 @@ export function SubscribeForm({ currentPlan, teacherName }: SubscribeFormProps) 
               onChange={(e) => setScreenshotUrl(e.target.value)}
               className="mt-1"
             />
-            <p className="mt-1 text-xs text-muted">
+            <p className="mt-1 text-xs text-muted-foreground">
               Upload your screenshot and paste the URL here. Must start with https://
             </p>
           </div>
 
           <div>
-            <label htmlFor="transactionId" className="block text-sm font-medium text-ink">
+            <label htmlFor="transactionId" className="block text-sm font-medium text-foreground">
               Transaction ID (optional)
             </label>
             <Input
@@ -195,7 +195,7 @@ export function SubscribeForm({ currentPlan, teacherName }: SubscribeFormProps) 
           </div>
 
           {error && (
-            <p className="text-sm text-danger">{error}</p>
+            <p className="text-sm text-destructive">{error}</p>
           )}
 
           <div className="flex gap-3">
@@ -227,7 +227,7 @@ export function SubscribeForm({ currentPlan, teacherName }: SubscribeFormProps) 
   return (
     <div className="space-y-4">
       {error && (
-        <div className="rounded-lg border border-danger/20 bg-danger/10 px-4 py-3 text-sm text-danger">
+        <div className="rounded-lg border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {error}
         </div>
       )}
@@ -238,23 +238,23 @@ export function SubscribeForm({ currentPlan, teacherName }: SubscribeFormProps) 
           return (
             <Card
               key={plan.slug}
-              className={`relative p-6 ${plan.is_featured ? 'ring-2 ring-brand-600' : ''}`}
+              className={`relative p-6 ${plan.is_featured ? 'ring-2 ring-primary' : ''}`}
             >
               {plan.is_featured && (
-                <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-brand-600 px-3 py-1 text-xs font-semibold text-white">
+                <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-1 text-xs font-semibold text-white">
                   Most Popular
                 </span>
               )}
 
-              <h3 className="text-lg font-bold text-ink">{plan.name}</h3>
+              <h3 className="text-lg font-bold text-foreground">{plan.name}</h3>
               <div className="mt-2">
-                <span className="text-2xl font-bold text-ink">
+                <span className="text-2xl font-bold text-foreground">
                   Rs. {plan.price_pkr.toLocaleString()}
                 </span>
-                <span className="text-sm text-muted"> / month</span>
+                <span className="text-sm text-muted-foreground"> / month</span>
               </div>
 
-              <ul className="mt-4 space-y-2 text-sm text-ink">
+              <ul className="mt-4 space-y-2 text-sm text-foreground">
                 <li>Up to {plan.limits.max_courses >= 9999 ? 'unlimited' : plan.limits.max_courses} courses</li>
                 <li>Up to {plan.limits.max_students} students</li>
                 <li>{plan.limits.max_cohorts_active >= 9999 ? 'Unlimited' : `Up to ${plan.limits.max_cohorts_active}`} cohorts</li>

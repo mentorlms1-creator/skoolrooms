@@ -44,13 +44,13 @@ export function InviteLinkCopy({ inviteToken }: InviteLinkCopyProps) {
 
   return (
     <div className="flex flex-col gap-2">
-      <label className="text-sm font-medium text-ink">Invite Link</label>
+      <label className="text-sm font-medium text-foreground">Invite Link</label>
       <div className="flex items-center gap-2">
         <input
           type="text"
           readOnly
           value={inviteUrl}
-          className="w-full rounded-md border border-border bg-paper px-3 py-2 text-sm text-ink"
+          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground"
           onClick={(e) => (e.target as HTMLInputElement).select()}
         />
         <Button

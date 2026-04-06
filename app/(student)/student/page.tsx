@@ -63,27 +63,27 @@ export default async function StudentDashboardPage() {
       {/* Summary cards */}
       <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Card className="p-4">
-          <p className="text-sm text-muted">Active Courses</p>
-          <p className="mt-1 text-2xl font-bold text-ink">
+          <p className="text-sm text-muted-foreground">Active Courses</p>
+          <p className="mt-1 text-2xl font-bold text-foreground">
             {activeEnrollments.length}
           </p>
         </Card>
         <Card className="p-4">
-          <p className="text-sm text-muted">Upcoming Classes</p>
-          <p className="mt-1 text-2xl font-bold text-ink">{sessions.length}</p>
+          <p className="text-sm text-muted-foreground">Upcoming Classes</p>
+          <p className="mt-1 text-2xl font-bold text-foreground">{sessions.length}</p>
         </Card>
         <Card className="p-4">
-          <p className="text-sm text-muted">Quick Links</p>
+          <p className="text-sm text-muted-foreground">Quick Links</p>
           <div className="mt-1 flex gap-3">
             <Link
               href={ROUTES.STUDENT.courses}
-              className="text-sm font-medium text-brand-600 hover:text-brand-500"
+              className="text-sm font-medium text-primary hover:text-primary/90"
             >
               My Courses
             </Link>
             <Link
               href={ROUTES.STUDENT.schedule}
-              className="text-sm font-medium text-brand-600 hover:text-brand-500"
+              className="text-sm font-medium text-primary hover:text-primary/90"
             >
               Full Schedule
             </Link>
@@ -99,7 +99,7 @@ export default async function StudentDashboardPage() {
           action={
             <Link
               href={ROUTES.STUDENT.courses}
-              className="inline-flex items-center rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-500 transition-colors"
+              className="inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 transition-colors"
             >
               View My Courses
             </Link>
@@ -110,7 +110,7 @@ export default async function StudentDashboardPage() {
           {Array.from(sessionsByTeacher.entries()).map(
             ([teacherId, { teacherName, sessions: teacherSessions }]) => (
               <div key={teacherId}>
-                <h2 className="mb-3 text-lg font-semibold text-ink">
+                <h2 className="mb-3 text-lg font-semibold text-foreground">
                   {teacherName}
                 </h2>
                 <div className="space-y-3">
@@ -118,13 +118,13 @@ export default async function StudentDashboardPage() {
                     <Card key={session.id} className="p-4">
                       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <div>
-                          <p className="font-medium text-ink">
+                          <p className="font-medium text-foreground">
                             {session.cohorts.courses.title}
                           </p>
-                          <p className="text-sm text-muted">
+                          <p className="text-sm text-muted-foreground">
                             {session.cohorts.name}
                           </p>
-                          <p className="mt-1 text-sm text-muted">
+                          <p className="mt-1 text-sm text-muted-foreground">
                             {formatPKT(session.scheduled_at, 'datetime')} &middot;{' '}
                             {session.duration_minutes} min
                           </p>
@@ -134,7 +134,7 @@ export default async function StudentDashboardPage() {
                             href={session.meet_link}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-500 transition-colors"
+                            className="inline-flex items-center gap-1 rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 transition-colors"
                           >
                             Join Class
                           </a>

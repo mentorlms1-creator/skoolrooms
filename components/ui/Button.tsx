@@ -22,15 +22,15 @@ type ButtonProps = {
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    'bg-brand-600 hover:bg-brand-500 text-white focus-visible:ring-brand-500',
+    'bg-primary hover:bg-primary/90 active:bg-primary/5 text-white focus-visible:ring-ring',
   secondary:
-    'bg-surface border border-border text-ink hover:bg-paper focus-visible:ring-brand-500',
+    'bg-card border border-border text-foreground hover:bg-background active:bg-border focus-visible:ring-ring',
   outline:
-    'bg-transparent border border-brand-600 text-brand-600 hover:bg-brand-50 focus-visible:ring-brand-500',
+    'bg-transparent border border-primary text-primary hover:bg-primary/10 active:bg-primary/20 focus-visible:ring-ring',
   danger:
-    'bg-danger hover:bg-danger/90 text-white focus-visible:ring-danger',
+    'bg-destructive hover:bg-destructive/90 active:bg-destructive/80 text-white focus-visible:ring-destructive',
   ghost:
-    'bg-transparent text-muted hover:bg-paper hover:text-ink focus-visible:ring-brand-500',
+    'bg-transparent text-muted-foreground hover:bg-background hover:text-foreground active:bg-border focus-visible:ring-ring',
 }
 
 const sizeClasses: Record<ButtonSize, string> = {

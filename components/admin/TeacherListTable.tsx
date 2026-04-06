@@ -35,7 +35,7 @@ export function TeacherListTable({ data }: TeacherListTableProps) {
       render: (value: unknown, row: Record<string, unknown>) => (
         <Link
           href={ROUTES.ADMIN.teacherDetail(row.id as string)}
-          className="font-medium text-brand-600 hover:text-brand-500"
+          className="font-medium text-primary hover:text-primary/90"
         >
           {value as string}
         </Link>
@@ -72,7 +72,7 @@ export function TeacherListTable({ data }: TeacherListTableProps) {
       header: 'Joined',
       sortable: true,
       render: (value: unknown) => (
-        <span className="text-muted">
+        <span className="text-muted-foreground">
           {formatPKT(value as string, 'date')}
         </span>
       ),

@@ -88,19 +88,19 @@ export default async function AssignmentsPage({ params }: PageProps) {
       {/* Create assignment form — hidden for archived cohorts and pre-start cohorts */}
       {!isArchived && cohortHasStarted && (
         <Card className="mb-6 p-6">
-          <h2 className="mb-4 text-lg font-semibold text-ink">New Assignment</h2>
+          <h2 className="mb-4 text-lg font-semibold text-foreground">New Assignment</h2>
           <AssignmentCreateForm cohortId={cohortId} />
         </Card>
       )}
 
       {isArchived && (
-        <div className="mb-6 rounded-md border border-border bg-muted/5 p-4 text-sm text-muted">
+        <div className="mb-6 rounded-md border border-border bg-muted/5 p-4 text-sm text-muted-foreground">
           This cohort is archived. No new assignments can be created.
         </div>
       )}
 
       {!isArchived && !cohortHasStarted && (
-        <div className="mb-6 rounded-md border border-border bg-muted/5 p-4 text-sm text-muted">
+        <div className="mb-6 rounded-md border border-border bg-muted/5 p-4 text-sm text-muted-foreground">
           Assignments can only be created after the cohort start date ({cohort.start_date}).
         </div>
       )}

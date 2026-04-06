@@ -20,9 +20,9 @@ const AUTO_DISMISS_MS = 5000
 
 const typeClasses: Record<ToastType, string> = {
   success: 'bg-success text-white',
-  error: 'bg-danger text-white',
+  error: 'bg-destructive text-white',
   warning: 'bg-warning text-white',
-  info: 'bg-brand-600 text-white',
+  info: 'bg-primary text-white',
 }
 
 const typeIcons: Record<ToastType, React.ReactNode> = {
@@ -58,7 +58,7 @@ export function Toast({ type, message, onDismiss }: ToastProps) {
     <div
       className={`
         flex items-center gap-3
-        rounded-lg px-4 py-3 shadow-card-hover
+        rounded-lg px-4 py-3 shadow-md
         ${typeClasses[type]}
       `}
       role="alert"

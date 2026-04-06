@@ -121,7 +121,7 @@ export function EditCourseForm({
       />
 
       <div>
-        <label className="mb-1.5 block text-sm font-medium text-ink">
+        <label className="mb-1.5 block text-sm font-medium text-foreground">
           Thumbnail Image
         </label>
         <FileUpload
@@ -133,7 +133,7 @@ export function EditCourseForm({
       </div>
 
       {error && !error.includes('title') && (
-        <p className="text-sm text-danger">{error}</p>
+        <p className="text-sm text-destructive">{error}</p>
       )}
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">

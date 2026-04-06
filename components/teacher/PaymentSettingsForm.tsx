@@ -56,7 +56,7 @@ export function PaymentSettingsForm({ initialData }: PaymentSettingsFormProps) {
           className={`mb-4 rounded-md px-4 py-3 text-sm ${
             message.type === 'success'
               ? 'bg-success/10 text-success'
-              : 'bg-danger/10 text-danger'
+              : 'bg-destructive/10 text-destructive'
           }`}
         >
           {message.text}
@@ -66,7 +66,7 @@ export function PaymentSettingsForm({ initialData }: PaymentSettingsFormProps) {
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Bank Transfer Section */}
         <div>
-          <h3 className="mb-3 text-sm font-semibold text-ink">Bank Transfer</h3>
+          <h3 className="mb-3 text-sm font-semibold text-foreground">Bank Transfer</h3>
           <div className="space-y-4">
             <Input
               label="Bank Name"
@@ -91,7 +91,7 @@ export function PaymentSettingsForm({ initialData }: PaymentSettingsFormProps) {
 
         {/* Mobile Wallet Section */}
         <div>
-          <h3 className="mb-3 text-sm font-semibold text-ink">Mobile Wallets</h3>
+          <h3 className="mb-3 text-sm font-semibold text-foreground">Mobile Wallets</h3>
           <div className="space-y-4">
             <Input
               label="JazzCash Number"
@@ -110,7 +110,7 @@ export function PaymentSettingsForm({ initialData }: PaymentSettingsFormProps) {
 
         {/* QR Code */}
         <div>
-          <h3 className="mb-3 text-sm font-semibold text-ink">QR Code</h3>
+          <h3 className="mb-3 text-sm font-semibold text-foreground">QR Code</h3>
           <Input
             label="QR Code URL"
             name="qr_code_url"
@@ -140,7 +140,7 @@ export function PaymentSettingsForm({ initialData }: PaymentSettingsFormProps) {
           rows={3}
         />
 
-        <p className="text-xs text-muted">
+        <p className="text-xs text-muted-foreground">
           At least one payment method (IBAN, JazzCash, or EasyPaisa) must be provided.
         </p>
 

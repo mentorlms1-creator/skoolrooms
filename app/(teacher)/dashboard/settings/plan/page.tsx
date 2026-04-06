@@ -135,18 +135,18 @@ export default async function PlanSettingsPage() {
       <Card className="p-6">
         <div className="flex items-start justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-ink">{planInfo?.name ?? currentPlan} Plan</h2>
-            <p className="mt-1 text-sm text-muted">
+            <h2 className="text-lg font-semibold text-foreground">{planInfo?.name ?? currentPlan} Plan</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
               {planInfo && planInfo.price_pkr > 0
                 ? `Rs. ${planInfo.price_pkr.toLocaleString()} / month`
                 : 'Free forever'}
             </p>
             <div className="mt-2">
               <StatusBadge status={planStatusType} />
-              <span className="ml-2 text-sm text-muted">{planStatusText}</span>
+              <span className="ml-2 text-sm text-muted-foreground">{planStatusText}</span>
             </div>
             {planInfo && planInfo.transaction_cut_percent > 0 && (
-              <p className="mt-2 text-xs text-muted">
+              <p className="mt-2 text-xs text-muted-foreground">
                 Platform fee: {planInfo.transaction_cut_percent}% per student payment
               </p>
             )}
@@ -155,14 +155,14 @@ export default async function PlanSettingsPage() {
             {isFreePlan || (teacher.plan_expires_at && new Date(teacher.plan_expires_at as string) < new Date()) ? (
               <Link
                 href={ROUTES.PLATFORM.subscribe}
-                className="inline-flex items-center rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-500"
+                className="inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary/90"
               >
                 Upgrade Plan
               </Link>
             ) : isTrialing ? (
               <Link
                 href={ROUTES.PLATFORM.subscribe}
-                className="inline-flex items-center rounded-md border border-brand-600 px-4 py-2 text-sm font-medium text-brand-600 transition-colors hover:bg-brand-50"
+                className="inline-flex items-center rounded-md border border-primary px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/10"
               >
                 Subscribe Now
               </Link>
@@ -173,36 +173,36 @@ export default async function PlanSettingsPage() {
 
       {/* Usage */}
       <Card className="p-6">
-        <h3 className="mb-4 text-base font-semibold text-ink">Usage</h3>
+        <h3 className="mb-4 text-base font-semibold text-foreground">Usage</h3>
         <UsageBars items={usageItems} />
       </Card>
 
       {/* Features */}
       <Card className="p-6">
-        <h3 className="mb-4 text-base font-semibold text-ink">Features</h3>
+        <h3 className="mb-4 text-base font-semibold text-foreground">Features</h3>
         <div className="grid gap-4 sm:grid-cols-2">
           {/* Included features */}
           <div>
             <h4 className="mb-2 text-sm font-medium text-success">Included</h4>
             <ul className="space-y-1.5">
               {enabledFeatures.map((f) => (
-                <li key={f} className="flex items-center gap-2 text-sm text-ink">
+                <li key={f} className="flex items-center gap-2 text-sm text-foreground">
                   <CheckCircle />
                   {f}
                 </li>
               ))}
               {enabledFeatures.length === 0 && (
-                <li className="text-sm text-muted">Core features (courses, cohorts, payments, subdomain) are included with every plan.</li>
+                <li className="text-sm text-muted-foreground">Core features (courses, cohorts, payments, subdomain) are included with every plan.</li>
               )}
             </ul>
           </div>
 
           {/* Locked features */}
           <div>
-            <h4 className="mb-2 text-sm font-medium text-muted">Not Available</h4>
+            <h4 className="mb-2 text-sm font-medium text-muted-foreground">Not Available</h4>
             <ul className="space-y-1.5">
               {disabledFeatures.map((f) => (
-                <li key={f} className="flex items-center gap-2 text-sm text-muted">
+                <li key={f} className="flex items-center gap-2 text-sm text-muted-foreground">
                   <LockIcon />
                   {f}
                 </li>
@@ -218,20 +218,20 @@ export default async function PlanSettingsPage() {
       {/* Subscription History */}
       {subscriptions.length > 0 && (
         <Card className="p-6">
-          <h3 className="mb-4 text-base font-semibold text-ink">Subscription History</h3>
+          <h3 className="mb-4 text-base font-semibold text-foreground">Subscription History</h3>
           {/* Mobile card view */}
           <div className="md:hidden flex flex-col gap-3">
             {subscriptions.map((sub) => (
               <div key={sub.id} className="rounded-md border border-border p-3 sm:p-4 text-sm">
                 <div className="flex items-center justify-between">
-                  <span className="font-medium text-ink capitalize">{sub.plan}</span>
+                  <span className="font-medium text-foreground capitalize">{sub.plan}</span>
                   <StatusBadge status={sub.status} size="sm" />
                 </div>
-                <p className="mt-1 text-ink">Rs. {sub.amount_pkr.toLocaleString()}</p>
-                <p className="mt-1 text-muted">
+                <p className="mt-1 text-foreground">Rs. {sub.amount_pkr.toLocaleString()}</p>
+                <p className="mt-1 text-muted-foreground">
                   {formatPKT(sub.period_start, 'date')} &mdash; {formatPKT(sub.period_end, 'date')}
                 </p>
-                <p className="mt-1 text-muted">{formatPKT(sub.created_at, 'date')}</p>
+                <p className="mt-1 text-muted-foreground">{formatPKT(sub.created_at, 'date')}</p>
               </div>
             ))}
           </div>
@@ -239,7 +239,7 @@ export default async function PlanSettingsPage() {
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-border text-left text-muted">
+                <tr className="border-b border-border text-left text-muted-foreground">
                   <th className="pb-2 pr-4 font-medium">Plan</th>
                   <th className="pb-2 pr-4 font-medium">Amount</th>
                   <th className="pb-2 pr-4 font-medium">Period</th>
@@ -250,16 +250,16 @@ export default async function PlanSettingsPage() {
               <tbody>
                 {subscriptions.map((sub) => (
                   <tr key={sub.id} className="border-b border-border/50">
-                    <td className="py-2.5 pr-4 font-medium text-ink capitalize">{sub.plan}</td>
-                    <td className="py-2.5 pr-4 text-ink">Rs. {sub.amount_pkr.toLocaleString()}</td>
-                    <td className="py-2.5 pr-4 text-muted">
+                    <td className="py-2.5 pr-4 font-medium text-foreground capitalize">{sub.plan}</td>
+                    <td className="py-2.5 pr-4 text-foreground">Rs. {sub.amount_pkr.toLocaleString()}</td>
+                    <td className="py-2.5 pr-4 text-muted-foreground">
                       {formatPKT(sub.period_start, 'date')} &mdash;{' '}
                       {formatPKT(sub.period_end, 'date')}
                     </td>
                     <td className="py-2.5 pr-4">
                       <StatusBadge status={sub.status} size="sm" />
                     </td>
-                    <td className="py-2.5 text-muted">
+                    <td className="py-2.5 text-muted-foreground">
                       {formatPKT(sub.created_at, 'date')}
                     </td>
                   </tr>
@@ -298,7 +298,7 @@ function LockIcon() {
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 20 20"
       fill="currentColor"
-      className="h-4 w-4 shrink-0 text-muted"
+      className="h-4 w-4 shrink-0 text-muted-foreground"
     >
       <path
         fillRule="evenodd"
