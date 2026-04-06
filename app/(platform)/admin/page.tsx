@@ -6,7 +6,6 @@
  */
 
 import type { Metadata } from 'next'
-import dynamic from 'next/dynamic'
 import {
   getAdminDashboardStats,
   getOperationsStats,
@@ -24,23 +23,8 @@ import {
   CardDescription,
 } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Skeleton } from '@/components/ui/skeleton'
-
-const RevenueChart = dynamic(
-  () => import('./RevenueChart').then((m) => ({ default: m.RevenueChart })),
-  {
-    ssr: false,
-    loading: () => <Skeleton className="h-[260px] w-full" />,
-  }
-)
-
-const PlanChart = dynamic(
-  () => import('./PlanChart').then((m) => ({ default: m.PlanChart })),
-  {
-    ssr: false,
-    loading: () => <Skeleton className="h-[260px] w-full" />,
-  }
-)
+import { RevenueChart } from './RevenueChart'
+import { PlanChart } from './PlanChart'
 
 export const metadata: Metadata = {
   title: 'Admin Dashboard — Lumscribe',

@@ -8,7 +8,6 @@
 
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import dynamic from 'next/dynamic'
 import { requireTeacher } from '@/lib/auth/guards'
 import {
   getTeacherPlanDetails,
@@ -27,11 +26,7 @@ import { OnboardingChecklist } from '@/components/teacher/OnboardingChecklist'
 import { UsageBars } from '@/components/ui/UsageBars'
 import { DateRangeFilter } from '@/components/ui/DateRangeFilter'
 import { ROUTES } from '@/constants/routes'
-
-const RevenueChart = dynamic(
-  () => import('./RevenueChart').then((m) => ({ default: m.RevenueChart })),
-  { ssr: false, loading: () => <div className="h-[200px] animate-pulse rounded-md bg-accent" /> }
-)
+import { RevenueChart } from './RevenueChart'
 
 export const metadata: Metadata = {
   title: 'Dashboard — Lumscribe',
