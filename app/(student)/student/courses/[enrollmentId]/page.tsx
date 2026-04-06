@@ -8,6 +8,15 @@
  */
 
 import { notFound } from 'next/navigation'
+import {
+  Shield,
+  Calendar,
+  Activity,
+  CreditCard,
+  Megaphone,
+  FileText,
+  LogOut,
+} from 'lucide-react'
 import { requireStudent } from '@/lib/auth/guards'
 import { getEnrollmentByIdWithDetails } from '@/lib/db/enrollments'
 import {
@@ -21,7 +30,7 @@ import {
 } from '@/lib/db/assignments'
 import { getAttendanceSummary } from '@/lib/db/attendance'
 import { PageHeader } from '@/components/ui/PageHeader'
-import { Card } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { formatPKT } from '@/lib/time/pkt'
@@ -168,41 +177,88 @@ export default async function EnrollmentDetailPage({ params }: PageParams) {
       />
 
       {/* Enrollment status + cohort info */}
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <Card className="p-4">
-          <p className="text-sm text-muted-foreground">Enrollment Status</p>
-          <div className="mt-1">
-            <StatusBadge status={enrollment.status} />
-          </div>
-          {withdrawalPending && (
-            <p className="mt-2 text-xs text-warning">Withdrawal requested</p>
-          )}
+      <div className="mb-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <Card className="rounded-[2rem] border-none shadow-sm ring-1 ring-foreground/5 bg-card overflow-hidden">
+          <CardContent className="px-8 pt-8 pb-8">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                <Shield className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/50">
+                  Enrollment Status
+                </p>
+                <div className="mt-1">
+                  <StatusBadge status={enrollment.status} />
+                </div>
+              </div>
+            </div>
+            {withdrawalPending && (
+              <p className="mt-3 text-xs text-warning">Withdrawal requested</p>
+            )}
+          </CardContent>
         </Card>
-        <Card className="p-4">
-          <p className="text-sm text-muted-foreground">Cohort Period</p>
-          <p className="mt-1 text-sm font-medium text-foreground">
-            {formatPKT(cohort.start_date, 'date')} &ndash;{' '}
-            {formatPKT(cohort.end_date, 'date')}
-          </p>
+
+        <Card className="rounded-[2rem] border-none shadow-sm ring-1 ring-foreground/5 bg-card overflow-hidden">
+          <CardContent className="px-8 pt-8 pb-8">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent/10">
+                <Calendar className="h-5 w-5 text-accent" />
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/50">
+                  Cohort Period
+                </p>
+                <p className="mt-1 text-sm font-semibold text-foreground">
+                  {formatPKT(cohort.start_date, 'date')} &ndash;{' '}
+                  {formatPKT(cohort.end_date, 'date')}
+                </p>
+              </div>
+            </div>
+          </CardContent>
         </Card>
+
         {attendanceSummary && (
-          <Card className="p-4">
-            <p className="text-sm text-muted-foreground">Attendance</p>
-            <p className="mt-1 text-2xl font-bold text-foreground">
-              {attendanceSummary.percentage}%
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {attendanceSummary.attended} of {attendanceSummary.total} classes
-            </p>
+          <Card className="rounded-[2rem] border-none shadow-sm ring-1 ring-foreground/5 bg-card overflow-hidden">
+            <CardContent className="px-8 pt-8 pb-8">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-success/10">
+                  <Activity className="h-5 w-5 text-success" />
+                </div>
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/50">
+                    Attendance
+                  </p>
+                  <p className="mt-1 text-2xl font-extrabold text-foreground">
+                    {attendanceSummary.percentage}%
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {attendanceSummary.attended} of {attendanceSummary.total} classes
+                  </p>
+                </div>
+              </div>
+            </CardContent>
           </Card>
         )}
+
         {!attendanceSummary && (
-          <Card className="p-4">
-            <p className="text-sm text-muted-foreground">Fee</p>
-            <p className="mt-1 text-sm font-medium text-foreground">
-              PKR {cohort.fee_pkr.toLocaleString()} (
-              {cohort.fee_type === 'monthly' ? 'Monthly' : 'One-time'})
-            </p>
+          <Card className="rounded-[2rem] border-none shadow-sm ring-1 ring-foreground/5 bg-card overflow-hidden">
+            <CardContent className="px-8 pt-8 pb-8">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-warning/10">
+                  <CreditCard className="h-5 w-5 text-warning" />
+                </div>
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/50">
+                    Fee
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-foreground">
+                    PKR {cohort.fee_pkr.toLocaleString()} (
+                    {cohort.fee_type === 'monthly' ? 'Monthly' : 'One-time'})
+                  </p>
+                </div>
+              </div>
+            </CardContent>
           </Card>
         )}
       </div>
@@ -210,7 +266,10 @@ export default async function EnrollmentDetailPage({ params }: PageParams) {
       {/* Announcements section */}
       {canSeeAnnouncements && (
         <section className="mb-8">
-          <h2 className="mb-4 text-lg font-semibold text-foreground">Announcements</h2>
+          <div className="mb-4 flex items-center gap-2">
+            <Megaphone className="h-5 w-5 text-primary" />
+            <h2 className="text-xl font-bold text-foreground">Announcements</h2>
+          </div>
           {announcementData.length === 0 ? (
             <EmptyState
               title="No announcements yet"
@@ -230,11 +289,16 @@ export default async function EnrollmentDetailPage({ params }: PageParams) {
 
       {!canSeeAnnouncements && isPending && (
         <section className="mb-8">
-          <h2 className="mb-4 text-lg font-semibold text-foreground">Announcements</h2>
-          <Card className="p-6">
-            <p className="text-sm text-muted-foreground">
-              Announcements will be visible once your enrollment is confirmed.
-            </p>
+          <div className="mb-4 flex items-center gap-2">
+            <Megaphone className="h-5 w-5 text-primary" />
+            <h2 className="text-xl font-bold text-foreground">Announcements</h2>
+          </div>
+          <Card className="rounded-[2rem] border-none shadow-sm ring-1 ring-foreground/5 bg-card overflow-hidden">
+            <CardContent className="px-8 pt-8 pb-8">
+              <p className="text-sm text-muted-foreground">
+                Announcements will be visible once your enrollment is confirmed.
+              </p>
+            </CardContent>
           </Card>
         </section>
       )}
@@ -242,7 +306,10 @@ export default async function EnrollmentDetailPage({ params }: PageParams) {
       {/* Assignments section */}
       {isActiveOrPending && (
         <section className="mb-8">
-          <h2 className="mb-4 text-lg font-semibold text-foreground">Assignments</h2>
+          <div className="mb-4 flex items-center gap-2">
+            <FileText className="h-5 w-5 text-accent" />
+            <h2 className="text-xl font-bold text-foreground">Assignments</h2>
+          </div>
           {assignmentData.length === 0 ? (
             <EmptyState
               title="No assignments yet"
@@ -261,29 +328,39 @@ export default async function EnrollmentDetailPage({ params }: PageParams) {
       {/* Withdrawal section */}
       {canWithdraw && !isArchived && (
         <section className="mb-8">
-          <h2 className="mb-4 text-lg font-semibold text-foreground">Enrollment</h2>
-          <Card className="p-6">
-            <p className="mb-4 text-sm text-muted-foreground">
-              If you need to leave this cohort, you can request a withdrawal. Your
-              teacher will review the request.
-            </p>
-            <WithdrawalForm enrollmentId={enrollment.id} />
+          <div className="mb-4 flex items-center gap-2">
+            <LogOut className="h-5 w-5 text-destructive" />
+            <h2 className="text-xl font-bold text-foreground">Enrollment</h2>
+          </div>
+          <Card className="rounded-[2rem] border-none shadow-sm ring-1 ring-foreground/5 bg-card overflow-hidden">
+            <CardContent className="px-8 pt-8 pb-8">
+              <p className="mb-4 text-sm text-muted-foreground">
+                If you need to leave this cohort, you can request a withdrawal. Your
+                teacher will review the request.
+              </p>
+              <WithdrawalForm enrollmentId={enrollment.id} />
+            </CardContent>
           </Card>
         </section>
       )}
 
       {withdrawalPending && (
         <section className="mb-8">
-          <h2 className="mb-4 text-lg font-semibold text-foreground">Enrollment</h2>
-          <Card className="p-6">
-            <p className="text-sm text-warning">
-              Your withdrawal request is being reviewed by your teacher.
-            </p>
-            {enrollment.withdrawal_reason && (
-              <p className="mt-2 text-sm text-muted-foreground">
-                Reason: {enrollment.withdrawal_reason}
+          <div className="mb-4 flex items-center gap-2">
+            <LogOut className="h-5 w-5 text-destructive" />
+            <h2 className="text-xl font-bold text-foreground">Enrollment</h2>
+          </div>
+          <Card className="rounded-[2rem] border-none shadow-sm ring-1 ring-foreground/5 bg-card overflow-hidden">
+            <CardContent className="px-8 pt-8 pb-8">
+              <p className="text-sm text-warning">
+                Your withdrawal request is being reviewed by your teacher.
               </p>
-            )}
+              {enrollment.withdrawal_reason && (
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Reason: {enrollment.withdrawal_reason}
+                </p>
+              )}
+            </CardContent>
           </Card>
         </section>
       )}

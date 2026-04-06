@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { Mail, CalendarDays } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -43,14 +44,16 @@ export function StudentSettingsForm({ defaultName, defaultPhone, email, memberSi
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
       {error && (
-        <div className="rounded-md bg-destructive/10 px-4 py-3 text-sm text-destructive">{error}</div>
+        <div className="rounded-2xl bg-destructive/10 px-4 py-3 text-sm text-destructive">{error}</div>
       )}
       {success && (
-        <div className="rounded-md bg-success/10 px-4 py-3 text-sm text-success">Profile updated.</div>
+        <div className="rounded-2xl bg-success/10 px-4 py-3 text-sm text-success">Profile updated.</div>
       )}
 
       <div className="space-y-2">
-        <Label htmlFor="name">Full Name</Label>
+        <Label htmlFor="name" className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/50">
+          Full Name
+        </Label>
         <Input
           id="name"
           name="name"
@@ -60,7 +63,9 @@ export function StudentSettingsForm({ defaultName, defaultPhone, email, memberSi
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="phone">Phone</Label>
+        <Label htmlFor="phone" className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/50">
+          Phone
+        </Label>
         <Input
           id="phone"
           name="phone"
@@ -71,19 +76,25 @@ export function StudentSettingsForm({ defaultName, defaultPhone, email, memberSi
         />
       </div>
 
-      <div>
-        <p className="text-sm font-medium text-muted-foreground">Email</p>
-        <p className="mt-1 text-foreground">{email}</p>
+      <div className="rounded-2xl bg-container ring-1 ring-foreground/[0.03] p-4">
+        <div className="flex items-center gap-2 mb-1">
+          <Mail className="h-3.5 w-3.5 text-muted-foreground/50" />
+          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/50">Email</p>
+        </div>
+        <p className="text-foreground font-medium">{email}</p>
         <p className="mt-0.5 text-xs text-muted-foreground">Email cannot be changed here.</p>
       </div>
 
-      <div>
-        <p className="text-sm font-medium text-muted-foreground">Member Since</p>
-        <p className="mt-1 text-foreground">{memberSince}</p>
+      <div className="rounded-2xl bg-container ring-1 ring-foreground/[0.03] p-4">
+        <div className="flex items-center gap-2 mb-1">
+          <CalendarDays className="h-3.5 w-3.5 text-muted-foreground/50" />
+          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/50">Member Since</p>
+        </div>
+        <p className="text-foreground font-medium">{memberSince}</p>
       </div>
 
       <div className="flex justify-end">
-        <Button type="submit" loading={loading} className="w-full sm:w-auto">Save Changes</Button>
+        <Button type="submit" loading={loading} className="w-full rounded-xl sm:w-auto">Save Changes</Button>
       </div>
     </form>
   )

@@ -9,6 +9,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import { AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
@@ -62,6 +63,7 @@ export function WithdrawalForm({ enrollmentId }: WithdrawalFormProps) {
       <Button
         variant="danger"
         size="sm"
+        className="rounded-xl"
         onClick={() => setShowForm(true)}
       >
         Request Withdrawal
@@ -70,10 +72,18 @@ export function WithdrawalForm({ enrollmentId }: WithdrawalFormProps) {
   }
 
   return (
-    <div className="rounded-md border border-border bg-background p-4">
-      <h4 className="mb-3 text-sm font-medium text-foreground">Request Withdrawal</h4>
+    <div className="rounded-2xl bg-container ring-1 ring-foreground/[0.03] p-6">
+      <div className="mb-4 flex items-center gap-2">
+        <AlertTriangle className="h-5 w-5 text-warning" />
+        <h4 className="text-sm font-semibold text-foreground">Request Withdrawal</h4>
+      </div>
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="withdrawal-reason">Reason (optional)</Label>
+        <Label
+          htmlFor="withdrawal-reason"
+          className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/50"
+        >
+          Reason (optional)
+        </Label>
         <Textarea
           id="withdrawal-reason"
           value={reason}
@@ -85,10 +95,11 @@ export function WithdrawalForm({ enrollmentId }: WithdrawalFormProps) {
 
       {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
 
-      <div className="mt-4 flex gap-2">
+      <div className="mt-5 flex gap-2">
         <Button
           type="button"
           variant="danger"
+          className="rounded-xl"
           onClick={handleSubmit}
           loading={isPending}
         >
@@ -97,6 +108,7 @@ export function WithdrawalForm({ enrollmentId }: WithdrawalFormProps) {
         <Button
           type="button"
           variant="ghost"
+          className="rounded-xl"
           onClick={() => setShowForm(false)}
           disabled={isPending}
         >

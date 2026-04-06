@@ -12,7 +12,8 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Card } from '@/components/ui/card'
+import { FileText, Clock, CheckCircle2, Paperclip, Upload } from 'lucide-react'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { Textarea } from '@/components/ui/textarea'
@@ -53,7 +54,7 @@ export function StudentAssignmentList({
   studentId,
 }: StudentAssignmentListProps) {
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-5">
       {assignments.map((assignment) => (
         <StudentAssignmentCard
           key={assignment.id}
@@ -93,103 +94,109 @@ function StudentAssignmentCard({
   }
 
   return (
-    <Card className="p-6">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <h3 className="font-medium text-foreground">{assignment.title}</h3>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Due: {formatPKT(assignment.dueDate, 'datetime')}
-            {isPastDue && !hasSubmission && (
-              <span className="ml-2 text-destructive font-medium">Overdue</span>
-            )}
-          </p>
-        </div>
-        <StatusBadge status={submissionLabel} size="sm" />
-      </div>
-
-      {/* Description */}
-      <p className="mt-3 text-sm text-foreground whitespace-pre-wrap">
-        {assignment.description}
-      </p>
-
-      {/* Assignment file attachment */}
-      {assignment.fileUrl && (
-        <div className="mt-3">
-          <a
-            href={assignment.fileUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm text-primary hover:bg-background transition-colors"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              className="h-4 w-4"
-              aria-hidden="true"
-            >
-              <path d="M3 3.5A1.5 1.5 0 014.5 2h6.879a1.5 1.5 0 011.06.44l4.122 4.12A1.5 1.5 0 0117 7.622V16.5a1.5 1.5 0 01-1.5 1.5h-11A1.5 1.5 0 013 16.5v-13z" />
-            </svg>
-            Assignment File
-          </a>
-        </div>
-      )}
-
-      {/* Existing submission info */}
-      {hasSubmission && (
-        <div className="mt-4 rounded-md border border-border bg-background p-4">
-          <div className="flex items-center justify-between gap-2">
-            <p className="text-sm font-medium text-foreground">Your Submission</p>
-            <span className="text-xs text-muted-foreground">
-              Submitted: {formatPKT(assignment.submission!.submittedAt, 'datetime')}
-            </span>
+    <Card className="rounded-[2rem] border-none shadow-sm ring-1 ring-foreground/5 bg-card overflow-hidden">
+      <CardContent className="px-8 pt-8 pb-8">
+        {/* Header */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-start gap-3 min-w-0 flex-1">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent/10">
+              <FileText className="h-5 w-5 text-accent" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <h3 className="font-semibold text-foreground">{assignment.title}</h3>
+              <div className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
+                <Clock className="h-3.5 w-3.5" />
+                <span>Due: {formatPKT(assignment.dueDate, 'datetime')}</span>
+                {isPastDue && !hasSubmission && (
+                  <span className="ml-2 text-destructive font-medium">Overdue</span>
+                )}
+              </div>
+            </div>
           </div>
-          {assignment.submission!.textAnswer && (
-            <p className="mt-2 text-sm text-foreground whitespace-pre-wrap">
-              {assignment.submission!.textAnswer}
-            </p>
-          )}
-          {assignment.submission!.fileUrl && (
+          <StatusBadge status={submissionLabel} size="sm" />
+        </div>
+
+        {/* Description */}
+        <p className="mt-4 text-sm text-foreground whitespace-pre-wrap">
+          {assignment.description}
+        </p>
+
+        {/* Assignment file attachment */}
+        {assignment.fileUrl && (
+          <div className="mt-4">
             <a
-              href={assignment.submission!.fileUrl}
+              href={assignment.fileUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-2 inline-flex items-center gap-1.5 text-sm text-primary hover:text-primary/90"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-border px-3 py-1.5 text-sm text-primary hover:bg-background transition-colors"
             >
-              View submitted file
+              <Paperclip className="h-4 w-4" />
+              Assignment File
             </a>
-          )}
-          {isReviewed && (
-            <p className="mt-2 text-xs text-success">
-              Reviewed by teacher on{' '}
-              {formatPKT(assignment.submission!.reviewedAt!, 'datetime')}
-            </p>
-          )}
-        </div>
-      )}
+          </div>
+        )}
 
-      {/* Submit / Re-submit button */}
-      {canSubmit && !isReviewed && (
-        <div className="mt-4">
-          {!showSubmitForm ? (
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => setShowSubmitForm(true)}
-            >
-              {hasSubmission ? 'Re-submit' : 'Submit Assignment'}
-            </Button>
-          ) : (
-            <SubmissionForm
-              assignmentId={assignment.id}
-              studentId={studentId}
-              existingSubmission={assignment.submission}
-              onCancel={() => setShowSubmitForm(false)}
-            />
-          )}
-        </div>
-      )}
+        {/* Existing submission info */}
+        {hasSubmission && (
+          <div className="mt-5 rounded-2xl bg-container ring-1 ring-foreground/[0.03] p-5">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-success" />
+                <p className="text-sm font-semibold text-foreground">Your Submission</p>
+              </div>
+              <span className="text-xs text-muted-foreground">
+                Submitted: {formatPKT(assignment.submission!.submittedAt, 'datetime')}
+              </span>
+            </div>
+            {assignment.submission!.textAnswer && (
+              <p className="mt-3 text-sm text-foreground whitespace-pre-wrap">
+                {assignment.submission!.textAnswer}
+              </p>
+            )}
+            {assignment.submission!.fileUrl && (
+              <a
+                href={assignment.submission!.fileUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-3 inline-flex items-center gap-1.5 text-sm text-primary hover:text-primary/90"
+              >
+                <Paperclip className="h-3.5 w-3.5" />
+                View submitted file
+              </a>
+            )}
+            {isReviewed && (
+              <p className="mt-3 text-xs text-success">
+                Reviewed by teacher on{' '}
+                {formatPKT(assignment.submission!.reviewedAt!, 'datetime')}
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Submit / Re-submit button */}
+        {canSubmit && !isReviewed && (
+          <div className="mt-5">
+            {!showSubmitForm ? (
+              <Button
+                variant="secondary"
+                size="sm"
+                className="rounded-xl"
+                onClick={() => setShowSubmitForm(true)}
+              >
+                <Upload className="mr-1.5 h-4 w-4" />
+                {hasSubmission ? 'Re-submit' : 'Submit Assignment'}
+              </Button>
+            ) : (
+              <SubmissionForm
+                assignmentId={assignment.id}
+                studentId={studentId}
+                existingSubmission={assignment.submission}
+                onCancel={() => setShowSubmitForm(false)}
+              />
+            )}
+          </div>
+        )}
+      </CardContent>
     </Card>
   )
 }
@@ -244,13 +251,15 @@ function SubmissionForm({
   }
 
   return (
-    <div className="rounded-md border border-border bg-background p-4">
-      <h4 className="mb-3 text-sm font-medium text-foreground">
+    <div className="rounded-2xl bg-container ring-1 ring-foreground/[0.03] p-5">
+      <h4 className="mb-4 text-sm font-semibold text-foreground">
         {existingSubmission ? 'Re-submit Assignment' : 'Submit Assignment'}
       </h4>
 
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="text-answer">Text Answer</Label>
+        <Label htmlFor="text-answer" className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/50">
+          Text Answer
+        </Label>
         <Textarea
           id="text-answer"
           value={textAnswer}
@@ -260,8 +269,8 @@ function SubmissionForm({
         />
       </div>
 
-      <div className="mt-3">
-        <p className="mb-1.5 text-sm font-medium text-foreground">
+      <div className="mt-4">
+        <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/50">
           Or upload a file
         </p>
         <FileUpload
@@ -274,9 +283,10 @@ function SubmissionForm({
 
       {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
 
-      <div className="mt-4 flex gap-2">
+      <div className="mt-5 flex gap-2">
         <Button
           type="button"
+          className="rounded-xl"
           onClick={handleSubmit}
           loading={isPending}
         >
@@ -285,6 +295,7 @@ function SubmissionForm({
         <Button
           type="button"
           variant="ghost"
+          className="rounded-xl"
           onClick={onCancel}
           disabled={isPending}
         >

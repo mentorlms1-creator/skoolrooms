@@ -12,10 +12,10 @@
 
 import { useState, useTransition, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { Paperclip, Pin, MessageCircle } from 'lucide-react'
 import sanitizeHtml from 'sanitize-html'
-import { Card } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { StatusBadge } from '@/components/ui/StatusBadge'
 import { toast } from 'sonner'
 import { formatPKT } from '@/lib/time/pkt'
 import {
@@ -57,7 +57,7 @@ export function StudentAnnouncementList({
   studentId,
 }: StudentAnnouncementListProps) {
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-5">
       {announcements.map((announcement) => (
         <StudentAnnouncementCard
           key={announcement.id}
@@ -107,101 +107,109 @@ function StudentAnnouncementCard({
   const sanitizedBody = sanitizeHtml(announcement.body)
 
   return (
-    <Card className="p-6">
-      {/* Header: pinned badge + date */}
-      <div className="mb-3 flex items-start justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-foreground">{teacherName}</span>
-          <span className="text-xs text-muted-foreground">
-            {formatPKT(announcement.createdAt, 'datetime')}
-          </span>
-          {announcement.pinned && <StatusBadge status="pinned" size="sm" />}
-        </div>
-        {!markedRead && (
-          <span className="rounded-full bg-primary/90 px-2 py-0.5 text-xs font-medium text-white">
-            New
-          </span>
-        )}
-      </div>
-
-      {/* Body (sanitized HTML) */}
-      <div
-        className="prose prose-sm max-w-none overflow-x-auto text-foreground"
-        dangerouslySetInnerHTML={{ __html: sanitizedBody }}
-      />
-
-      {/* File attachment */}
-      {announcement.fileUrl && (
-        <div className="mt-3">
-          <a
-            href={announcement.fileUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm text-primary hover:bg-background transition-colors"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              className="h-4 w-4"
-              aria-hidden="true"
-            >
-              <path d="M3 3.5A1.5 1.5 0 014.5 2h6.879a1.5 1.5 0 011.06.44l4.122 4.12A1.5 1.5 0 0117 7.622V16.5a1.5 1.5 0 01-1.5 1.5h-11A1.5 1.5 0 013 16.5v-13z" />
-            </svg>
-            View Attachment
-          </a>
-        </div>
-      )}
-
-      {/* Comments section */}
-      <div className="mt-4 border-t border-border pt-3">
-        <button
-          type="button"
-          onClick={() => setShowComments(!showComments)}
-          className="min-h-[2.75rem] py-2 px-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-        >
-          {announcement.comments.length} comment
-          {announcement.comments.length === 1 ? '' : 's'}
-          <span className="ml-1">{showComments ? '(hide)' : '(show)'}</span>
-        </button>
-
-        {showComments && (
-          <div className="mt-3 flex flex-col gap-3">
-            {/* Existing comments */}
-            {announcement.comments.map((comment) => (
-              <div
-                key={comment.id}
-                className="rounded-md bg-background p-3"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-foreground">
-                    {comment.authorType === 'teacher'
-                      ? teacherName
-                      : comment.authorId === studentId
-                        ? 'You'
-                        : 'Student'}
-                  </span>
-                  <span className="rounded-full bg-card px-1.5 py-0.5 text-xs text-muted-foreground">
-                    {comment.authorType === 'teacher' ? 'Teacher' : 'Student'}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {formatPKT(comment.createdAt, 'relative')}
-                  </span>
-                </div>
-                <p className="mt-1 text-sm text-foreground">{comment.body}</p>
-              </div>
-            ))}
-
-            {/* Add comment form */}
-            {canComment && !isArchived && (
-              <StudentCommentForm
-                announcementId={announcement.id}
-                isPending={isPending}
-              />
+    <Card className="rounded-[2rem] border-none shadow-sm ring-1 ring-foreground/5 bg-card overflow-hidden">
+      <CardContent className="px-8 pt-8 pb-8">
+        {/* Header: pinned badge + date */}
+        <div className="mb-3 flex items-start justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-semibold text-foreground">{teacherName}</span>
+            <span className="text-xs text-muted-foreground">
+              {formatPKT(announcement.createdAt, 'datetime')}
+            </span>
+            {announcement.pinned && (
+              <span className="inline-flex items-center gap-1 rounded-lg bg-accent/10 px-2 py-0.5 text-xs font-medium text-accent">
+                <Pin className="h-3 w-3" />
+                Pinned
+              </span>
             )}
           </div>
+          {!markedRead && (
+            <span className="rounded-lg bg-primary text-primary-foreground px-2 py-0.5 text-xs font-bold">
+              New
+            </span>
+          )}
+        </div>
+
+        {/* Body (sanitized HTML) */}
+        <div
+          className="prose prose-sm max-w-none overflow-x-auto text-foreground"
+          dangerouslySetInnerHTML={{ __html: sanitizedBody }}
+        />
+
+        {/* File attachment */}
+        {announcement.fileUrl && (
+          <div className="mt-4">
+            <a
+              href={announcement.fileUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-border px-3 py-1.5 text-sm text-primary hover:bg-background transition-colors"
+            >
+              <Paperclip className="h-4 w-4" />
+              View Attachment
+            </a>
+          </div>
         )}
-      </div>
+
+        {/* Comments section */}
+        <div className="mt-5 border-t border-foreground/5 pt-4">
+          <button
+            type="button"
+            onClick={() => setShowComments(!showComments)}
+            className="inline-flex min-h-[2.75rem] items-center gap-1.5 py-2 px-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <MessageCircle className="h-3.5 w-3.5" />
+            {announcement.comments.length} comment
+            {announcement.comments.length === 1 ? '' : 's'}
+            <span className="ml-0.5">{showComments ? '(hide)' : '(show)'}</span>
+          </button>
+
+          {showComments && (
+            <div className="mt-3 flex flex-col gap-3">
+              {/* Existing comments */}
+              {announcement.comments.map((comment) => (
+                <div
+                  key={comment.id}
+                  className={`rounded-2xl p-4 ring-1 ring-foreground/[0.03] ${
+                    comment.authorType === 'teacher'
+                      ? 'bg-primary/5'
+                      : 'bg-container'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-foreground">
+                      {comment.authorType === 'teacher'
+                        ? teacherName
+                        : comment.authorId === studentId
+                          ? 'You'
+                          : 'Student'}
+                    </span>
+                    <span className={`rounded-lg px-1.5 py-0.5 text-xs font-medium ${
+                      comment.authorType === 'teacher'
+                        ? 'bg-primary/10 text-primary'
+                        : 'bg-muted text-muted-foreground'
+                    }`}>
+                      {comment.authorType === 'teacher' ? 'Teacher' : 'Student'}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {formatPKT(comment.createdAt, 'relative')}
+                    </span>
+                  </div>
+                  <p className="mt-1.5 text-sm text-foreground">{comment.body}</p>
+                </div>
+              ))}
+
+              {/* Add comment form */}
+              {canComment && !isArchived && (
+                <StudentCommentForm
+                  announcementId={announcement.id}
+                  isPending={isPending}
+                />
+              )}
+            </div>
+          )}
+        </div>
+      </CardContent>
     </Card>
   )
 }
@@ -262,9 +270,9 @@ function StudentCommentForm({
         onChange={(e) => setBody(e.target.value)}
         placeholder="Write a comment..."
         maxLength={2000}
-        className="flex-1 rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary"
+        className="flex-1 rounded-xl border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary"
       />
-      <Button type="submit" size="sm" loading={isPending}>
+      <Button type="submit" size="sm" className="rounded-xl" loading={isPending}>
         Comment
       </Button>
       {error && <p className="self-center text-sm text-destructive">{error}</p>}

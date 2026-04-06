@@ -6,10 +6,11 @@
  */
 
 import type { Metadata } from 'next'
+import { Calendar, Clock, Video, BookOpen } from 'lucide-react'
 import { requireStudent } from '@/lib/auth/guards'
 import { getUpcomingSessionsByStudent } from '@/lib/db/class-sessions'
 import { PageHeader } from '@/components/ui/PageHeader'
-import { Card } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { formatPKT } from '@/lib/time/pkt'
 
@@ -49,45 +50,58 @@ export default async function StudentSchedulePage() {
           description="You don't have any upcoming classes scheduled. Your teachers will add classes to your enrolled courses."
         />
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-8">
           {Array.from(sessionsByDate.entries()).map(
             ([dateLabel, dateSessions]) => (
               <div key={dateLabel}>
-                <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                  {dateLabel}
-                </h2>
-                <div className="space-y-3">
+                <div className="mb-4 flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-muted-foreground/50" />
+                  <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/50">
+                    {dateLabel}
+                  </h2>
+                </div>
+                <div className="space-y-4">
                   {dateSessions.map((session) => (
-                    <Card key={session.id} className="p-4">
-                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium text-foreground">
-                              {formatPKT(session.scheduled_at, 'time')}
-                            </span>
-                            <span className="text-sm text-muted-foreground">
-                              &middot; {session.duration_minutes} min
-                            </span>
+                    <Card key={session.id} className="rounded-[2rem] border-none shadow-sm ring-1 ring-foreground/5 bg-card overflow-hidden">
+                      <CardContent className="px-8 py-6">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <Clock className="h-4 w-4 text-primary" />
+                              <span className="font-semibold text-foreground">
+                                {formatPKT(session.scheduled_at, 'time')}
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                (PKT)
+                              </span>
+                              <span className="text-sm text-muted-foreground">
+                                &middot; {session.duration_minutes} min
+                              </span>
+                            </div>
+                            <div className="mt-2 flex items-center gap-2">
+                              <BookOpen className="h-3.5 w-3.5 text-muted-foreground" />
+                              <p className="text-sm font-medium text-foreground">
+                                {session.cohorts.courses.title}
+                              </p>
+                            </div>
+                            <p className="mt-1 ml-5.5 text-sm text-muted-foreground">
+                              {session.cohorts.name} &middot;{' '}
+                              {session.cohorts.teachers.name}
+                            </p>
                           </div>
-                          <p className="mt-1 text-sm text-foreground">
-                            {session.cohorts.courses.title}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {session.cohorts.name} &middot;{' '}
-                            {session.cohorts.teachers.name}
-                          </p>
+                          {session.meet_link && (
+                            <a
+                              href={session.meet_link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+                            >
+                              <Video className="h-4 w-4" />
+                              Join Class
+                            </a>
+                          )}
                         </div>
-                        {session.meet_link && (
-                          <a
-                            href={session.meet_link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex shrink-0 items-center gap-1 rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 transition-colors"
-                          >
-                            Join Class
-                          </a>
-                        )}
-                      </div>
+                      </CardContent>
                     </Card>
                   ))}
                 </div>
