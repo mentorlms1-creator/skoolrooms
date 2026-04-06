@@ -98,12 +98,11 @@ export function SidebarShell({
   }
 
   return (
-    /* Layer 1: White page background */
-    <div className="min-h-dvh bg-card p-2 sm:p-4 font-sans text-foreground">
-      {/* Layer 2: Subtle gray bento container */}
-      <div className="flex min-h-[calc(100dvh-16px)] sm:min-h-[calc(100dvh-32px)] rounded-[2.5rem] bg-container overflow-hidden">
+    /* White page background — individual containers are gray */
+    <div className="min-h-dvh bg-background p-2 sm:p-4 font-sans text-foreground">
+      <div className="flex min-h-[calc(100dvh-16px)] sm:min-h-[calc(100dvh-32px)] gap-3">
         <SidebarProvider>
-          <Sidebar variant="floating" className="border-none bg-card">
+          <Sidebar variant="floating" className="border-none bg-container rounded-[2rem]">
             {/* Header: Logo */}
             <SidebarHeader className="px-6 pt-8 pb-6">
               <div className="flex items-center gap-3">
@@ -186,11 +185,11 @@ export function SidebarShell({
 
           <SidebarInset className="bg-transparent">
             <div className="flex-1 flex flex-col min-h-0 gap-3 p-3">
-              {/* Desktop top bar — its own white bento */}
-              <div className="hidden md:block rounded-3xl bg-card px-8 py-5">
+              {/* Desktop top bar — gray bento on white page */}
+              <div className="hidden md:block rounded-3xl bg-container px-8 py-5">
                 <div className="flex items-center justify-between gap-8">
                   {/* Left: Search box */}
-                  <div className="relative flex-1 max-w-xl bg-card rounded-2xl shadow-sm ring-1 ring-foreground/5 flex items-center px-4 py-1.5 has-[:focus]:ring-foreground/10 transition-shadow">
+                  <div className="relative flex-1 max-w-xl bg-background rounded-2xl shadow-sm ring-1 ring-foreground/5 flex items-center px-4 py-1.5 has-[:focus]:ring-foreground/10 transition-shadow">
                     <Search className="h-5 w-5 text-muted-foreground" strokeWidth={2} />
                     <button
                       type="button"
@@ -231,7 +230,7 @@ export function SidebarShell({
               </div>
 
               {/* Mobile top bar */}
-              <header className="flex h-16 items-center gap-3 bg-card px-6 md:hidden">
+              <header className="flex h-16 items-center gap-3 rounded-3xl bg-container px-6 md:hidden">
                 <SidebarTrigger className="h-10 w-10 text-muted-foreground" />
                 <div className="flex items-center gap-2">
                   <div className="h-8 w-8 rounded-lg bg-foreground text-background flex items-center justify-center">
@@ -244,8 +243,8 @@ export function SidebarShell({
                 </div>
               </header>
 
-              {/* Main content — its own white bento, stretches to fill */}
-              <main className="flex-1 overflow-y-auto rounded-3xl bg-card px-6 py-8 xl:px-10 custom-scrollbar">
+              {/* Main content — gray bento on white page, stretches to fill */}
+              <main className="flex-1 overflow-y-auto rounded-3xl bg-container px-6 py-8 xl:px-10 custom-scrollbar">
                 {children}
               </main>
             </div>
