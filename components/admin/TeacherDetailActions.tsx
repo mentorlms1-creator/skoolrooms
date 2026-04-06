@@ -16,7 +16,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Card } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import {
   changePlanAction,
   extendExpiryAction,
@@ -113,103 +118,112 @@ export function TeacherDetailActions({
   }
 
   return (
-    <Card className="p-6">
-      <h2 className="mb-4 text-lg font-semibold text-foreground">Admin Actions</h2>
+    <Card className="border-none shadow-sm ring-1 ring-foreground/5 rounded-[2rem] overflow-hidden bg-card">
+      <CardHeader className="px-8 pt-8 pb-4">
+        <CardTitle className="text-xl font-bold">Admin Actions</CardTitle>
+      </CardHeader>
+      <CardContent className="px-8 pb-8">
+        {message && (
+          <div
+            className={`mb-5 rounded-2xl px-5 py-4 text-sm font-medium ${
+              message.type === 'success'
+                ? 'bg-success/10 text-success'
+                : 'bg-destructive/10 text-destructive'
+            }`}
+          >
+            {message.text}
+          </div>
+        )}
 
-      {message && (
-        <div
-          className={`mb-4 rounded-md px-4 py-3 text-sm ${
-            message.type === 'success'
-              ? 'bg-success/10 text-success'
-              : 'bg-destructive/10 text-destructive'
-          }`}
-        >
-          {message.text}
+        <div className="space-y-6">
+          {/* Suspend / Reactivate */}
+          <div>
+            <Button
+              variant={isSuspended ? 'primary' : 'danger'}
+              size="sm"
+              loading={loading === 'suspend'}
+              onClick={handleSuspendToggle}
+              className="w-full rounded-xl"
+            >
+              {isSuspended ? 'Reactivate Teacher' : 'Suspend Teacher'}
+            </Button>
+          </div>
+
+          {/* Change Plan */}
+          <form onSubmit={handleChangePlan} className="space-y-3">
+            <h3 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/50">
+              Change Plan
+            </h3>
+            <Select name="plan" defaultValue={currentPlan}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="free">Free</SelectItem>
+                <SelectItem value="solo">Solo</SelectItem>
+                <SelectItem value="academy">Academy</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button
+              type="submit"
+              variant="secondary"
+              size="sm"
+              loading={loading === 'plan'}
+              className="w-full rounded-xl"
+            >
+              Update Plan
+            </Button>
+          </form>
+
+          {/* Extend Plan Expiry */}
+          <form onSubmit={handleExtendExpiry} className="space-y-3">
+            <h3 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/50">
+              Extend Plan Expiry
+            </h3>
+            <Input
+              name="days"
+              type="number"
+              placeholder="Days to add"
+              min={1}
+              max={365}
+              required
+            />
+            <Button
+              type="submit"
+              variant="secondary"
+              size="sm"
+              loading={loading === 'expiry'}
+              className="w-full rounded-xl"
+            >
+              Extend Expiry
+            </Button>
+          </form>
+
+          {/* Extend Trial */}
+          <form onSubmit={handleExtendTrial} className="space-y-3">
+            <h3 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/50">
+              Extend Trial
+            </h3>
+            <Input
+              name="days"
+              type="number"
+              placeholder="Days to add"
+              min={1}
+              max={365}
+              required
+            />
+            <Button
+              type="submit"
+              variant="secondary"
+              size="sm"
+              loading={loading === 'trial'}
+              className="w-full rounded-xl"
+            >
+              Extend Trial
+            </Button>
+          </form>
         </div>
-      )}
-
-      <div className="space-y-6">
-        {/* Suspend / Reactivate */}
-        <div>
-          <Button
-            variant={isSuspended ? 'primary' : 'danger'}
-            size="sm"
-            loading={loading === 'suspend'}
-            onClick={handleSuspendToggle}
-            className="w-full"
-          >
-            {isSuspended ? 'Reactivate Teacher' : 'Suspend Teacher'}
-          </Button>
-        </div>
-
-        {/* Change Plan */}
-        <form onSubmit={handleChangePlan} className="space-y-3">
-          <h3 className="text-sm font-medium text-foreground">Change Plan</h3>
-          <Select name="plan" defaultValue={currentPlan}>
-            <SelectTrigger className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="free">Free</SelectItem>
-              <SelectItem value="solo">Solo</SelectItem>
-              <SelectItem value="academy">Academy</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button
-            type="submit"
-            variant="secondary"
-            size="sm"
-            loading={loading === 'plan'}
-            className="w-full"
-          >
-            Update Plan
-          </Button>
-        </form>
-
-        {/* Extend Plan Expiry */}
-        <form onSubmit={handleExtendExpiry} className="space-y-3">
-          <h3 className="text-sm font-medium text-foreground">Extend Plan Expiry</h3>
-          <Input
-            name="days"
-            type="number"
-            placeholder="Days to add"
-            min={1}
-            max={365}
-            required
-          />
-          <Button
-            type="submit"
-            variant="secondary"
-            size="sm"
-            loading={loading === 'expiry'}
-            className="w-full"
-          >
-            Extend Expiry
-          </Button>
-        </form>
-
-        {/* Extend Trial */}
-        <form onSubmit={handleExtendTrial} className="space-y-3">
-          <h3 className="text-sm font-medium text-foreground">Extend Trial</h3>
-          <Input
-            name="days"
-            type="number"
-            placeholder="Days to add"
-            min={1}
-            max={365}
-            required
-          />
-          <Button
-            type="submit"
-            variant="secondary"
-            size="sm"
-            loading={loading === 'trial'}
-            className="w-full"
-          >
-            Extend Trial
-          </Button>
-        </form>
-      </div>
+      </CardContent>
     </Card>
   )
 }

@@ -10,7 +10,7 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { PlatformSettingsForm } from '@/components/admin/PlatformSettingsForm'
 
 export const metadata: Metadata = {
-  title: 'Settings \u2014 Lumscribe Admin',
+  title: 'Settings — Lumscribe Admin',
 }
 
 export default async function AdminSettingsPage() {
@@ -18,10 +18,7 @@ export default async function AdminSettingsPage() {
 
   return (
     <>
-      <PageHeader
-        title="Platform Settings"
-        description="Configure platform-wide settings."
-      />
+      <PageHeader title="Settings" />
 
       <PlatformSettingsForm settings={settings} />
     </>

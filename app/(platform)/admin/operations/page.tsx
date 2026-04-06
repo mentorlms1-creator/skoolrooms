@@ -5,12 +5,21 @@
  */
 
 import type { Metadata } from 'next'
+import {
+  BookOpen,
+  GraduationCap,
+  CreditCard,
+} from 'lucide-react'
 import { getOperationsStats } from '@/lib/db/admin'
 import { PageHeader } from '@/components/ui/PageHeader'
-import { Card } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+} from '@/components/ui/card'
+import { cn } from '@/lib/utils'
 
 export const metadata: Metadata = {
-  title: 'Operations \u2014 Lumscribe Admin',
+  title: 'Operations — Lumscribe Admin',
 }
 
 export default async function AdminOperationsPage() {
@@ -18,30 +27,78 @@ export default async function AdminOperationsPage() {
 
   return (
     <>
-      <PageHeader
-        title="Operations"
-        description="Platform operations overview."
-      />
+      <PageHeader title="Operations" />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <Card className="p-6">
-          <h3 className="text-sm font-medium text-muted-foreground">Active Cohorts</h3>
-          <p className="mt-2 text-3xl font-bold text-foreground">{stats.totalActiveCohorts}</p>
-          <p className="mt-1 text-xs text-muted-foreground">Currently running cohorts across all teachers</p>
-        </Card>
-
-        <Card className="p-6">
-          <h3 className="text-sm font-medium text-muted-foreground">Total Students</h3>
-          <p className="mt-2 text-3xl font-bold text-foreground">{stats.totalStudents}</p>
-          <p className="mt-1 text-xs text-muted-foreground">All registered students on the platform</p>
-        </Card>
-
-        <Card className="p-6">
-          <h3 className="text-sm font-medium text-muted-foreground">Pending Payments</h3>
-          <p className="mt-2 text-3xl font-bold text-foreground">{stats.pendingPaymentCount}</p>
-          <p className="mt-1 text-xs text-muted-foreground">Payments awaiting verification</p>
-        </Card>
+      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <StatCard
+          label="Active Cohorts"
+          value={String(stats.totalActiveCohorts)}
+          subtitle="Currently running cohorts across all teachers"
+          icon={BookOpen}
+          iconColor="text-primary"
+          iconBg="bg-primary/10"
+        />
+        <StatCard
+          label="Total Students"
+          value={String(stats.totalStudents)}
+          subtitle="All registered students on the platform"
+          icon={GraduationCap}
+          iconColor="text-accent"
+          iconBg="bg-accent/10"
+        />
+        <StatCard
+          label="Pending Payments"
+          value={String(stats.pendingPaymentCount)}
+          subtitle="Payments awaiting verification"
+          icon={CreditCard}
+          iconColor="text-foreground"
+          iconBg="bg-muted"
+        />
       </div>
     </>
+  )
+}
+
+interface StatCardProps {
+  label: string
+  value: string
+  subtitle: string
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>
+  iconBg: string
+  iconColor: string
+}
+
+function StatCard({
+  label,
+  value,
+  subtitle,
+  icon: Icon,
+  iconBg,
+  iconColor,
+}: StatCardProps) {
+  return (
+    <Card className="border-none shadow-sm ring-1 ring-foreground/5 rounded-[2rem] overflow-hidden bg-card h-full">
+      <CardContent className="px-7 pt-7 pb-6 flex flex-col items-start gap-4 h-full">
+        <div
+          className={cn(
+            'flex h-11 w-11 items-center justify-center rounded-2xl shrink-0',
+            iconBg
+          )}
+        >
+          <Icon className={cn('h-5 w-5', iconColor)} strokeWidth={2} />
+        </div>
+
+        <div className="flex flex-col gap-1 flex-1 justify-center">
+          <span className="text-4xl font-extrabold tracking-tight text-foreground leading-none">
+            {value}
+          </span>
+          <p className="text-[11px] font-semibold text-muted-foreground/50 uppercase tracking-[0.08em]">
+            {label}
+          </p>
+        </div>
+
+        <p className="text-xs font-medium text-muted-foreground/60">{subtitle}</p>
+      </CardContent>
+    </Card>
   )
 }

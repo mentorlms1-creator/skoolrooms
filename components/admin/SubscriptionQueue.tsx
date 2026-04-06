@@ -7,7 +7,6 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { formatPKT } from '@/lib/time/pkt'
 import {
@@ -54,10 +53,10 @@ export function SubscriptionQueue({ subscriptions }: SubscriptionQueueProps) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {message && (
         <div
-          className={`rounded-md px-4 py-3 text-sm ${
+          className={`rounded-2xl px-5 py-4 text-sm font-medium ${
             message.type === 'success'
               ? 'bg-success/10 text-success'
               : 'bg-destructive/10 text-destructive'
@@ -68,45 +67,55 @@ export function SubscriptionQueue({ subscriptions }: SubscriptionQueueProps) {
       )}
 
       {subscriptions.map((sub) => (
-        <Card key={sub.id} className="p-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div className="flex-1 space-y-2">
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm font-semibold text-foreground">{sub.teacher_name}</h3>
+        <div
+          key={sub.id}
+          className="rounded-2xl bg-container ring-1 ring-foreground/[0.03] p-6"
+        >
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex-1 space-y-4">
+              {/* Teacher name + status */}
+              <div className="flex items-center gap-3">
+                <h3 className="text-[15px] font-bold text-foreground">{sub.teacher_name}</h3>
                 <StatusBadge status={sub.status} size="sm" />
               </div>
-              <p className="text-xs text-muted-foreground">{sub.teacher_email}</p>
-              <div className="grid gap-2 text-sm sm:grid-cols-3">
+              <p className="text-xs font-semibold text-muted-foreground/60 uppercase tracking-wider">
+                {sub.teacher_email}
+              </p>
+
+              {/* Info grid */}
+              <div className="grid gap-3 text-sm sm:grid-cols-3">
                 <div>
-                  <span className="text-xs text-muted-foreground">Plan:</span>{' '}
-                  <span className="font-medium text-foreground capitalize">{sub.plan}</span>
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/50">Plan</span>
+                  <p className="mt-0.5 font-bold text-foreground capitalize">{sub.plan}</p>
                 </div>
                 <div>
-                  <span className="text-xs text-muted-foreground">Amount:</span>{' '}
-                  <span className="font-medium text-foreground">PKR {sub.amount_pkr.toLocaleString()}</span>
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/50">Amount</span>
+                  <p className="mt-0.5 font-bold text-foreground">PKR {sub.amount_pkr.toLocaleString()}</p>
                 </div>
                 <div>
-                  <span className="text-xs text-muted-foreground">Method:</span>{' '}
-                  <span className="font-medium text-foreground capitalize">{sub.payment_method}</span>
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/50">Method</span>
+                  <p className="mt-0.5 font-bold text-foreground capitalize">{sub.payment_method}</p>
                 </div>
                 <div>
-                  <span className="text-xs text-muted-foreground">Period:</span>{' '}
-                  <span className="text-foreground">
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/50">Period</span>
+                  <p className="mt-0.5 text-foreground">
                     {formatPKT(sub.period_start, 'date')} - {formatPKT(sub.period_end, 'date')}
-                  </span>
+                  </p>
                 </div>
                 <div>
-                  <span className="text-xs text-muted-foreground">Submitted:</span>{' '}
-                  <span className="text-foreground">{formatPKT(sub.created_at, 'datetime')}</span>
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/50">Submitted</span>
+                  <p className="mt-0.5 text-foreground">{formatPKT(sub.created_at, 'datetime')}</p>
                 </div>
               </div>
+
+              {/* Screenshot link */}
               {sub.screenshot_url && (
-                <div className="mt-2">
+                <div className="mt-1">
                   <a
                     href={sub.screenshot_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-sm text-primary hover:text-primary/90"
+                    className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:text-primary/90 transition-colors"
                   >
                     View Screenshot
                   </a>
@@ -114,12 +123,14 @@ export function SubscriptionQueue({ subscriptions }: SubscriptionQueueProps) {
               )}
             </div>
 
-            <div className="flex gap-2 sm:flex-col">
+            {/* Action buttons */}
+            <div className="flex gap-3 sm:flex-col">
               <Button
                 variant="primary"
                 size="sm"
                 loading={loadingId === sub.id}
                 onClick={() => handleApprove(sub.id)}
+                className="rounded-xl"
               >
                 Approve
               </Button>
@@ -128,12 +139,13 @@ export function SubscriptionQueue({ subscriptions }: SubscriptionQueueProps) {
                 size="sm"
                 loading={loadingId === sub.id}
                 onClick={() => handleReject(sub.id)}
+                className="rounded-xl"
               >
                 Reject
               </Button>
             </div>
           </div>
-        </Card>
+        </div>
       ))}
     </div>
   )
