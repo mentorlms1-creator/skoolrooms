@@ -4,8 +4,9 @@
 
 /* ---- Light mode ---- */
 :root {
-  --background: oklch(0.96 0.002 260);
+  --background: oklch(1 0 0);
   --foreground: oklch(0.15 0.02 260);
+  --container: oklch(0.97 0.002 260);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.15 0.02 260);
   --popover: oklch(1 0 0);
@@ -43,8 +44,9 @@
 
 /* ---- Dark mode ---- */
 .dark {
-  --background: oklch(0.13 0.02 275);
+  --background: oklch(0.10 0.02 275);
   --foreground: oklch(0.93 0.005 260);
+  --container: oklch(0.14 0.02 275);
   --card: oklch(0.18 0.02 275);
   --card-foreground: oklch(0.93 0.005 260);
   --popover: oklch(0.18 0.02 275);
@@ -83,6 +85,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-container: var(--container);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
   --color-popover: var(--popover);

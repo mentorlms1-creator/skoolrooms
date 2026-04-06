@@ -8,6 +8,12 @@
 
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import {
+  BookOpen,
+  GraduationCap,
+  CreditCard,
+  CalendarDays,
+} from 'lucide-react'
 import { requireTeacher } from '@/lib/auth/guards'
 import {
   getTeacherPlanDetails,
@@ -26,6 +32,7 @@ import { OnboardingChecklist } from '@/components/teacher/OnboardingChecklist'
 import { UsageBars } from '@/components/ui/UsageBars'
 import { DateRangeFilter } from '@/components/ui/DateRangeFilter'
 import { ROUTES } from '@/constants/routes'
+import { cn } from '@/lib/utils'
 import { RevenueChart } from './RevenueChart'
 
 export const metadata: Metadata = {
@@ -41,6 +48,7 @@ export default async function DashboardPage({
   const teacher = await requireTeacher()
   const teacherId = teacher.id as string
   const teacherName = teacher.name as string
+  const firstName = teacherName.split(' ')[0]
 
   // Fetch all dashboard data in parallel
   const [planDetails, usage, stats, monthlyRevenue, upcomingSessions, recentEnrollments] =
@@ -92,51 +100,39 @@ export default async function DashboardPage({
   return (
     <>
       <PageHeader
-        title="Dashboard"
-        description={`Welcome back, ${teacherName}`}
+        title={`Hello, ${firstName}!`}
+        description="Here's your weekly overview"
         filter={<DateRangeFilter />}
       />
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-        {/* ═══ Row 1: Stat Cards (4 x 1x1) ═══ */}
+        {/* Row 1: Stat Cards (4 x 1x1) */}
 
         {/* Active Courses */}
-        <Card>
-          <CardContent className="p-8">
-            <p className="text-xs text-muted-foreground/70">Active Courses</p>
-            <p className="mt-1 text-4xl font-extrabold text-foreground">
-              {stats.activeCourses}
-            </p>
-          </CardContent>
-        </Card>
+        <StatCard
+          label="Active Courses"
+          value={String(stats.activeCourses)}
+          icon={BookOpen}
+          iconBg="bg-primary/10"
+        />
 
         {/* Total Students */}
-        <Card>
-          <CardContent className="p-8">
-            <p className="text-xs text-muted-foreground/70">Total Students</p>
-            <p className="mt-1 text-4xl font-extrabold text-foreground">
-              {stats.totalStudents}
-            </p>
-          </CardContent>
-        </Card>
+        <StatCard
+          label="Total Students"
+          value={String(stats.totalStudents)}
+          icon={GraduationCap}
+          iconBg="bg-success/10"
+        />
 
         {/* Pending Payments */}
-        <Card>
-          <CardContent className="p-8">
-            <p className="text-xs text-muted-foreground/70">Pending Payments</p>
-            <p className="mt-1 text-4xl font-extrabold text-foreground">
-              {stats.pendingPayments}
-            </p>
-            {stats.pendingPayments > 0 && (
-              <Link
-                href={ROUTES.TEACHER.payments}
-                className="mt-1 inline-block text-xs text-primary hover:underline"
-              >
-                Review now
-              </Link>
-            )}
-          </CardContent>
-        </Card>
+        <StatCard
+          label="Pending Payments"
+          value={String(stats.pendingPayments)}
+          icon={CreditCard}
+          iconBg="bg-warning/10"
+          href={stats.pendingPayments > 0 ? ROUTES.TEACHER.payments : undefined}
+          linkText="Review now"
+        />
 
         {/* Active Days Circle */}
         <Card>
@@ -182,7 +178,7 @@ export default async function DashboardPage({
           </CardContent>
         </Card>
 
-        {/* ═══ Row 2: Revenue Chart (2x1) + Plan Usage (2x1) ═══ */}
+        {/* Row 2: Revenue Chart (2x1) + Plan Usage (2x1) */}
 
         {/* Revenue Trends */}
         <Card className="md:col-span-2">
@@ -215,7 +211,7 @@ export default async function DashboardPage({
           </CardContent>
         </Card>
 
-        {/* ═══ Row 3: Upcoming Classes (1x1) + Recent Enrollments (1x1) + Onboarding (2x1) ═══ */}
+        {/* Row 3: Upcoming Classes (1x1) + Recent Enrollments (1x1) + Onboarding (2x1) */}
 
         {/* Upcoming Classes */}
         <Card>
@@ -307,5 +303,48 @@ export default async function DashboardPage({
         </div>
       </div>
     </>
+  )
+}
+
+function StatCard({
+  label,
+  value,
+  icon: Icon,
+  iconBg,
+  href,
+  linkText,
+}: {
+  label: string
+  value: string
+  icon?: React.ComponentType<{ className?: string }>
+  iconBg?: string
+  href?: string
+  linkText?: string
+}) {
+  return (
+    <Card>
+      <CardContent className="p-7">
+        {Icon && (
+          <div
+            className={cn(
+              'mb-3 flex h-10 w-10 items-center justify-center rounded-xl',
+              iconBg || 'bg-primary/10'
+            )}
+          >
+            <Icon className="h-5 w-5 text-primary" />
+          </div>
+        )}
+        <p className="text-4xl font-extrabold text-foreground">{value}</p>
+        <p className="mt-1 text-xs text-muted-foreground/70">{label}</p>
+        {href && linkText && (
+          <Link
+            href={href}
+            className="mt-1 inline-block text-xs text-primary hover:underline"
+          >
+            {linkText}
+          </Link>
+        )}
+      </CardContent>
+    </Card>
   )
 }

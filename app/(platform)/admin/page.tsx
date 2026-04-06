@@ -7,6 +7,14 @@
 
 import type { Metadata } from 'next'
 import {
+  TrendingUp,
+  UserPlus,
+  CreditCard,
+  Users,
+  GraduationCap,
+  CalendarCheck,
+} from 'lucide-react'
+import {
   getAdminDashboardStats,
   getOperationsStats,
   getRecentTeachers,
@@ -23,6 +31,7 @@ import {
   CardDescription,
 } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
 import { RevenueChart } from './RevenueChart'
 import { PlanChart } from './PlanChart'
 
@@ -41,8 +50,8 @@ export default async function AdminDashboardPage() {
   return (
     <>
       <PageHeader
-        title="Admin Dashboard"
-        description="Platform overview and key metrics."
+        title="Hello, Admin!"
+        description="Here's your platform overview"
         filter={<DateRangeFilter />}
       />
 
@@ -51,18 +60,26 @@ export default async function AdminDashboardPage() {
         <StatCard
           label="Monthly Recurring Revenue"
           value={`PKR ${stats.mrr.toLocaleString()}`}
+          icon={TrendingUp}
+          iconBg="bg-primary/10"
         />
         <StatCard
           label="Signups This Week"
           value={String(stats.signupsThisWeek)}
+          icon={UserPlus}
+          iconBg="bg-success/10"
         />
         <StatCard
           label="Pending Payments"
           value={String(ops.pendingPaymentCount)}
+          icon={CreditCard}
+          iconBg="bg-warning/10"
         />
         <StatCard
           label="Active Cohorts"
           value={String(ops.totalActiveCohorts)}
+          icon={Users}
+          iconBg="bg-accent/10"
         />
 
         {/* Row 2: Revenue chart (2x1) + Plan distribution donut (2x1) */}
@@ -130,23 +147,47 @@ export default async function AdminDashboardPage() {
         <StatCard
           label="Total Students"
           value={String(ops.totalStudents)}
+          icon={GraduationCap}
+          iconBg="bg-primary/10"
         />
         <StatCard
           label="Signups This Month"
           value={String(stats.signupsThisMonth)}
+          icon={CalendarCheck}
+          iconBg="bg-success/10"
         />
       </div>
     </>
   )
 }
 
-function StatCard({ label, value }: { label: string; value: string }) {
+function StatCard({
+  label,
+  value,
+  icon: Icon,
+  iconBg,
+}: {
+  label: string
+  value: string
+  icon?: React.ComponentType<{ className?: string }>
+  iconBg?: string
+}) {
   return (
     <Card>
-      <CardHeader>
-        <CardDescription className="text-xs text-muted-foreground/70">{label}</CardDescription>
-        <CardTitle className="text-4xl font-extrabold">{value}</CardTitle>
-      </CardHeader>
+      <CardContent className="p-7">
+        {Icon && (
+          <div
+            className={cn(
+              'mb-3 flex h-10 w-10 items-center justify-center rounded-xl',
+              iconBg || 'bg-primary/10'
+            )}
+          >
+            <Icon className="h-5 w-5 text-primary" />
+          </div>
+        )}
+        <p className="text-4xl font-extrabold text-foreground">{value}</p>
+        <p className="mt-1 text-xs text-muted-foreground/70">{label}</p>
+      </CardContent>
     </Card>
   )
 }

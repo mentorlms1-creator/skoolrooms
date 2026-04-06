@@ -9,6 +9,11 @@
 
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import {
+  BookOpen,
+  CalendarDays,
+  CreditCard,
+} from 'lucide-react'
 import { requireStudent } from '@/lib/auth/guards'
 import { getUpcomingSessionsByStudent } from '@/lib/db/class-sessions'
 import { getEnrollmentsByStudentWithTeacher } from '@/lib/db/enrollments'
@@ -25,6 +30,7 @@ import {
 } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { formatPKT } from '@/lib/time/pkt'
+import { cn } from '@/lib/utils'
 import { ROUTES } from '@/constants/routes'
 
 export const metadata: Metadata = {
@@ -49,6 +55,7 @@ function isTodayPKT(utcTimestamp: string): boolean {
 
 export default async function StudentDashboardPage() {
   const student = await requireStudent()
+  const firstName = student.name.split(' ')[0]
 
   // Fetch all dashboard data in parallel
   const [
@@ -80,33 +87,33 @@ export default async function StudentDashboardPage() {
   return (
     <>
       <PageHeader
-        title="Dashboard"
-        description={`Welcome back, ${student.name.split(' ')[0]}`}
+        title={`Hello, ${firstName}!`}
+        description="Here's what's coming up"
       />
 
       {/* Bento grid */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-        {/* ── Row 1: Stat Cards ── */}
-        <Card className="p-7">
-          <p className="text-xs text-muted-foreground/70">Enrolled Courses</p>
-          <p className="mt-1 text-4xl font-extrabold text-foreground">
-            {activeEnrollments.length}
-          </p>
-        </Card>
+        {/* -- Row 1: Stat Cards -- */}
+        <StatCard
+          label="Enrolled Courses"
+          value={String(activeEnrollments.length)}
+          icon={BookOpen}
+          iconBg="bg-primary/10"
+        />
 
-        <Card className="p-7">
-          <p className="text-xs text-muted-foreground/70">Upcoming Classes</p>
-          <p className="mt-1 text-4xl font-extrabold text-foreground">
-            {sessions.length}
-          </p>
-        </Card>
+        <StatCard
+          label="Upcoming Classes"
+          value={String(sessions.length)}
+          icon={CalendarDays}
+          iconBg="bg-success/10"
+        />
 
-        <Card className="p-7">
-          <p className="text-xs text-muted-foreground/70">Pending Fees</p>
-          <p className="mt-1 text-4xl font-extrabold text-foreground">
-            {pendingFees}
-          </p>
-        </Card>
+        <StatCard
+          label="Pending Fees"
+          value={String(pendingFees)}
+          icon={CreditCard}
+          iconBg="bg-warning/10"
+        />
 
         {/* Attendance Rate — SVG ring */}
         <Card className="flex items-center justify-center p-7">
@@ -164,7 +171,7 @@ export default async function StudentDashboardPage() {
           </div>
         </Card>
 
-        {/* ── Row 2: Today's Schedule (full-width) ── */}
+        {/* -- Row 2: Today's Schedule (full-width) -- */}
         <Card className="lg:col-span-4 md:col-span-2">
           <CardHeader>
             <CardTitle>Today&apos;s Schedule</CardTitle>
@@ -213,7 +220,7 @@ export default async function StudentDashboardPage() {
           </CardContent>
         </Card>
 
-        {/* ── Row 3: Announcements + Assignments ── */}
+        {/* -- Row 3: Announcements + Assignments -- */}
 
         {/* Recent Announcements (2x1) */}
         <Card className="lg:col-span-2 md:col-span-1">
@@ -289,5 +296,36 @@ export default async function StudentDashboardPage() {
         </Card>
       </div>
     </>
+  )
+}
+
+function StatCard({
+  label,
+  value,
+  icon: Icon,
+  iconBg,
+}: {
+  label: string
+  value: string
+  icon?: React.ComponentType<{ className?: string }>
+  iconBg?: string
+}) {
+  return (
+    <Card>
+      <CardContent className="p-7">
+        {Icon && (
+          <div
+            className={cn(
+              'mb-3 flex h-10 w-10 items-center justify-center rounded-xl',
+              iconBg || 'bg-primary/10'
+            )}
+          >
+            <Icon className="h-5 w-5 text-primary" />
+          </div>
+        )}
+        <p className="text-4xl font-extrabold text-foreground">{value}</p>
+        <p className="mt-1 text-xs text-muted-foreground/70">{label}</p>
+      </CardContent>
+    </Card>
   )
 }

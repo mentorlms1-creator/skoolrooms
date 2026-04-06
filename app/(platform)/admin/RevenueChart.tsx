@@ -69,7 +69,7 @@ export function RevenueChart({ data }: RevenueChartProps) {
         <Bar
           dataKey="revenue"
           fill="var(--color-revenue)"
-          radius={[8, 8, 0, 0]}
+          radius={[12, 12, 12, 12]}
         />
       </BarChart>
     </ChartContainer>

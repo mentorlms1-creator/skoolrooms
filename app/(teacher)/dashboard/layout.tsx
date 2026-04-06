@@ -85,6 +85,8 @@ export default async function DashboardLayout({
         user={{ name: teacherData.name }}
         notificationCount={0}
         notificationHref={ROUTES.TEACHER.messages}
+        ctaLabel="New Course"
+        ctaHref={ROUTES.TEACHER.courseNew}
         signOutAction={signOut}
       >
         <ExpiryBanner />
