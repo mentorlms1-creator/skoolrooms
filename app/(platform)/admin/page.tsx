@@ -46,7 +46,7 @@ export default async function AdminDashboardPage() {
         filter={<DateRangeFilter />}
       />
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
         {/* Row 1: Four stat cards */}
         <StatCard
           label="Monthly Recurring Revenue"
@@ -144,8 +144,8 @@ function StatCard({ label, value }: { label: string; value: string }) {
   return (
     <Card>
       <CardHeader>
-        <CardDescription>{label}</CardDescription>
-        <CardTitle className="text-3xl font-bold">{value}</CardTitle>
+        <CardDescription className="text-xs text-muted-foreground/70">{label}</CardDescription>
+        <CardTitle className="text-4xl font-bold">{value}</CardTitle>
       </CardHeader>
     </Card>
   )

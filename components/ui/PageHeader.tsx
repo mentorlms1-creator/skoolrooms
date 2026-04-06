@@ -31,7 +31,7 @@ export function PageHeader({ title, description, action, filter, backHref, class
             </Link>
           )}
           <div className="min-w-0">
-            <h1 className="text-2xl font-bold text-foreground">{title}</h1>
+            <h1 className="text-2xl font-semibold text-foreground">{title}</h1>
             {description && (
               <p className="mt-1 text-sm text-muted-foreground">{description}</p>
             )}

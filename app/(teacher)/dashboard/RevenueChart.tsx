@@ -78,7 +78,7 @@ export function RevenueChart({ data }: RevenueChartProps) {
         <Bar
           dataKey="revenue"
           fill="hsl(var(--primary))"
-          radius={[4, 4, 0, 0]}
+          radius={[8, 8, 0, 0]}
           maxBarSize={40}
         />
       </BarChart>

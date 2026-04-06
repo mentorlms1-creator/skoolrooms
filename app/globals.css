@@ -4,7 +4,7 @@
 
 /* ---- Light mode ---- */
 :root {
-  --background: oklch(0.97 0.005 90);
+  --background: oklch(0.95 0.01 80);
   --foreground: oklch(0.15 0.02 260);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.15 0.02 260);
@@ -25,7 +25,7 @@
   --border: oklch(0.90 0.005 260);
   --input: oklch(0.90 0.005 260);
   --ring: oklch(0.55 0.25 285);
-  --sidebar: oklch(0.98 0.005 90);
+  --sidebar: oklch(1 0 0);
   --sidebar-foreground: oklch(0.55 0.02 260);
   --sidebar-accent: oklch(0.93 0.005 90);
   --sidebar-accent-foreground: oklch(0.2 0.02 260);

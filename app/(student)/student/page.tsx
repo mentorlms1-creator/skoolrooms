@@ -85,31 +85,31 @@ export default async function StudentDashboardPage() {
       />
 
       {/* Bento grid */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
         {/* ── Row 1: Stat Cards ── */}
-        <Card className="p-5">
-          <p className="text-sm text-muted-foreground">Enrolled Courses</p>
-          <p className="mt-1 text-3xl font-bold text-foreground">
+        <Card className="p-7">
+          <p className="text-xs text-muted-foreground/70">Enrolled Courses</p>
+          <p className="mt-1 text-4xl font-bold text-foreground">
             {activeEnrollments.length}
           </p>
         </Card>
 
-        <Card className="p-5">
-          <p className="text-sm text-muted-foreground">Upcoming Classes</p>
-          <p className="mt-1 text-3xl font-bold text-foreground">
+        <Card className="p-7">
+          <p className="text-xs text-muted-foreground/70">Upcoming Classes</p>
+          <p className="mt-1 text-4xl font-bold text-foreground">
             {sessions.length}
           </p>
         </Card>
 
-        <Card className="p-5">
-          <p className="text-sm text-muted-foreground">Pending Fees</p>
-          <p className="mt-1 text-3xl font-bold text-foreground">
+        <Card className="p-7">
+          <p className="text-xs text-muted-foreground/70">Pending Fees</p>
+          <p className="mt-1 text-4xl font-bold text-foreground">
             {pendingFees}
           </p>
         </Card>
 
         {/* Attendance Rate — SVG ring */}
-        <Card className="flex items-center justify-center p-5">
+        <Card className="flex items-center justify-center p-7">
           <div className="flex items-center gap-4">
             <svg
               width="96"
@@ -156,7 +156,7 @@ export default async function StudentDashboardPage() {
               </text>
             </svg>
             <div className="min-w-0">
-              <p className="text-sm text-muted-foreground">Attendance</p>
+              <p className="text-xs text-muted-foreground/70">Attendance</p>
               <p className="text-sm text-muted-foreground">
                 {attendanceSummary.attended}/{attendanceSummary.total} classes
               </p>

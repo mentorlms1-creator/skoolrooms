@@ -97,14 +97,14 @@ export default async function DashboardPage({
         filter={<DateRangeFilter />}
       />
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
         {/* ═══ Row 1: Stat Cards (4 x 1x1) ═══ */}
 
         {/* Active Courses */}
         <Card>
-          <CardContent className="p-6">
-            <p className="text-sm text-muted-foreground">Active Courses</p>
-            <p className="mt-1 text-3xl font-bold text-foreground">
+          <CardContent className="p-8">
+            <p className="text-xs text-muted-foreground/70">Active Courses</p>
+            <p className="mt-1 text-4xl font-bold text-foreground">
               {stats.activeCourses}
             </p>
           </CardContent>
@@ -112,9 +112,9 @@ export default async function DashboardPage({
 
         {/* Total Students */}
         <Card>
-          <CardContent className="p-6">
-            <p className="text-sm text-muted-foreground">Total Students</p>
-            <p className="mt-1 text-3xl font-bold text-foreground">
+          <CardContent className="p-8">
+            <p className="text-xs text-muted-foreground/70">Total Students</p>
+            <p className="mt-1 text-4xl font-bold text-foreground">
               {stats.totalStudents}
             </p>
           </CardContent>
@@ -122,9 +122,9 @@ export default async function DashboardPage({
 
         {/* Pending Payments */}
         <Card>
-          <CardContent className="p-6">
-            <p className="text-sm text-muted-foreground">Pending Payments</p>
-            <p className="mt-1 text-3xl font-bold text-foreground">
+          <CardContent className="p-8">
+            <p className="text-xs text-muted-foreground/70">Pending Payments</p>
+            <p className="mt-1 text-4xl font-bold text-foreground">
               {stats.pendingPayments}
             </p>
             {stats.pendingPayments > 0 && (
@@ -140,7 +140,7 @@ export default async function DashboardPage({
 
         {/* Active Days Circle */}
         <Card>
-          <CardContent className="flex items-center gap-4 p-6">
+          <CardContent className="flex items-center gap-4 p-8">
             <div className="relative h-16 w-16 shrink-0">
               <svg
                 viewBox="0 0 64 64"
@@ -174,7 +174,7 @@ export default async function DashboardPage({
               </span>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Active Days</p>
+              <p className="text-xs text-muted-foreground/70">Active Days</p>
               <p className="text-xs text-muted-foreground">
                 of {activeDaysPeriod}-day period
               </p>
@@ -186,7 +186,7 @@ export default async function DashboardPage({
 
         {/* Revenue Trends */}
         <Card className="md:col-span-2">
-          <CardContent className="p-6">
+          <CardContent className="p-8">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-sm font-semibold text-foreground">Revenue Trends</h2>
               <span className="text-xs text-muted-foreground">
@@ -199,7 +199,7 @@ export default async function DashboardPage({
 
         {/* Plan Usage */}
         <Card className="md:col-span-2">
-          <CardContent className="p-6">
+          <CardContent className="p-8">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-sm font-semibold text-foreground">Plan Usage</h2>
               {planDetails && (
@@ -219,7 +219,7 @@ export default async function DashboardPage({
 
         {/* Upcoming Classes */}
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-8">
             <h2 className="mb-3 text-sm font-semibold text-foreground">
               Upcoming Classes
             </h2>
@@ -258,7 +258,7 @@ export default async function DashboardPage({
 
         {/* Recent Enrollments */}
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-8">
             <h2 className="mb-3 text-sm font-semibold text-foreground">
               Recent Enrollments
             </h2>
