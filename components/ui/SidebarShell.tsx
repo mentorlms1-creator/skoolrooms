@@ -244,11 +244,9 @@ export function SidebarShell({
                 </div>
               </header>
 
-              {/* Main content — its own white bento */}
-              <main className="flex-1 overflow-y-auto rounded-3xl bg-card px-8 py-8 custom-scrollbar">
-                <div className="mx-auto w-full max-w-7xl">
-                  {children}
-                </div>
+              {/* Main content — its own white bento, stretches to fill */}
+              <main className="flex-1 overflow-y-auto rounded-3xl bg-card px-6 py-8 xl:px-10 custom-scrollbar">
+                {children}
               </main>
             </div>
           </SidebarInset>
