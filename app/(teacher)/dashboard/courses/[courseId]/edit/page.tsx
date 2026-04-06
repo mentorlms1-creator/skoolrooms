@@ -9,7 +9,7 @@ import { notFound } from 'next/navigation'
 import { requireTeacher } from '@/lib/auth/guards'
 import { getCourseById } from '@/lib/db/courses'
 import { PageHeader } from '@/components/ui/PageHeader'
-import { Card } from '@/components/ui/Card'
+import { Card } from '@/components/ui/card'
 import { ROUTES } from '@/constants/routes'
 import { EditCourseForm } from './form'
 

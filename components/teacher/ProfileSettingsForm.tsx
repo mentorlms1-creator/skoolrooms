@@ -9,7 +9,7 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
-import { Card } from '@/components/ui/Card'
+import { Card } from '@/components/ui/card'
 import { updateProfileAction } from '@/lib/actions/teacher-settings'
 
 type ProfileSettingsFormProps = {

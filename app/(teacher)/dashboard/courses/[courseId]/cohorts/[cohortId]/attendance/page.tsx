@@ -16,7 +16,7 @@ import {
   isAttendanceEditable,
 } from '@/lib/db/attendance'
 import { PageHeader } from '@/components/ui/PageHeader'
-import { Card } from '@/components/ui/Card'
+import { Card } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { ROUTES } from '@/constants/routes'
 import { formatPKT } from '@/lib/time/pkt'

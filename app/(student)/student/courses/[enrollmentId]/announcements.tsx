@@ -13,7 +13,7 @@
 import { useState, useTransition, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import sanitizeHtml from 'sanitize-html'
-import { Card } from '@/components/ui/Card'
+import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { useUIContext } from '@/providers/UIProvider'

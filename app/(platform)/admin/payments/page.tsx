@@ -7,7 +7,7 @@
 import type { Metadata } from 'next'
 import { getPendingSubscriptions } from '@/lib/db/admin'
 import { PageHeader } from '@/components/ui/PageHeader'
-import { Card } from '@/components/ui/Card'
+import { Card } from '@/components/ui/card'
 import { SubscriptionQueue } from '@/components/admin/SubscriptionQueue'
 
 export const metadata: Metadata = {

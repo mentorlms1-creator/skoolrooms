@@ -4,7 +4,7 @@
 // =============================================================================
 
 import { requireTeacher } from '@/lib/auth/guards'
-import { Card } from '@/components/ui/Card'
+import { Card } from '@/components/ui/card'
 import { Step3Form } from './form'
 
 export default async function OnboardingStep3Page() {

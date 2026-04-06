@@ -6,7 +6,7 @@
  */
 
 import Link from 'next/link'
-import { Card } from '@/components/ui/Card'
+import { Card } from '@/components/ui/card'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { ROUTES } from '@/constants/routes'
 import { formatPKT } from '@/lib/time/pkt'
@@ -45,7 +45,7 @@ export function CohortCard({
 
   return (
     <Link href={ROUTES.TEACHER.cohortDetail(courseId, cohort.id)}>
-      <Card hover className="p-4">
+      <Card className="p-4 hover:shadow-md transition-shadow">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             <h3 className="truncate text-base font-semibold text-foreground">

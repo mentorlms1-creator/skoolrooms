@@ -6,7 +6,7 @@
  */
 
 import Image from 'next/image'
-import { Card } from '@/components/ui/Card'
+import { Card } from '@/components/ui/card'
 import type { ExplorableTeacher } from '@/lib/db/explore'
 
 type TeacherCardProps = {
@@ -22,7 +22,7 @@ export function TeacherCard({ teacher, platformDomain }: TeacherCardProps) {
   const profileUrl = `https://${teacher.subdomain}.${platformDomain}`
 
   return (
-    <Card hover className="flex flex-col overflow-hidden">
+    <Card className="flex flex-col overflow-hidden hover:shadow-md transition-shadow">
       <a href={profileUrl} className="block">
         {/* Teacher photo */}
         <div className="flex items-center justify-center bg-background p-6 pb-4">

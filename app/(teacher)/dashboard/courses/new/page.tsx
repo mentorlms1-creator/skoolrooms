@@ -7,7 +7,7 @@
 import type { Metadata } from 'next'
 import { requireTeacher } from '@/lib/auth/guards'
 import { PageHeader } from '@/components/ui/PageHeader'
-import { Card } from '@/components/ui/Card'
+import { Card } from '@/components/ui/card'
 import { ROUTES } from '@/constants/routes'
 import { CreateCourseForm } from './form'
 

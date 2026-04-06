@@ -4,7 +4,7 @@
 // =============================================================================
 
 import { requireTeacher } from '@/lib/auth/guards'
-import { Card } from '@/components/ui/Card'
+import { Card } from '@/components/ui/card'
 import { platformDomain } from '@/lib/platform/domain'
 import { Step2Form } from './form'
 

@@ -9,7 +9,7 @@ import type { Metadata } from 'next'
 import { requireStudent } from '@/lib/auth/guards'
 import { getUpcomingSessionsByStudent } from '@/lib/db/class-sessions'
 import { PageHeader } from '@/components/ui/PageHeader'
-import { Card } from '@/components/ui/Card'
+import { Card } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { formatPKT } from '@/lib/time/pkt'
 

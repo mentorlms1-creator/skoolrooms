@@ -11,7 +11,7 @@ import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
-import { Card } from '@/components/ui/Card'
+import { Card } from '@/components/ui/card'
 import { updatePaymentSettingsAction } from '@/lib/actions/teacher-settings'
 
 type PaymentSettingsFormProps = {

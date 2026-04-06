@@ -10,7 +10,7 @@ import { requireTeacher } from '@/lib/auth/guards'
 import { getCohortById } from '@/lib/db/cohorts'
 import { getCourseById } from '@/lib/db/courses'
 import { PageHeader } from '@/components/ui/PageHeader'
-import { Card } from '@/components/ui/Card'
+import { Card } from '@/components/ui/card'
 import { ROUTES } from '@/constants/routes'
 import { EditCohortForm } from './form'
 

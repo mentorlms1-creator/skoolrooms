@@ -9,7 +9,7 @@
 
 import Link from 'next/link'
 import { useTeacherContext } from '@/providers/TeacherProvider'
-import { Card } from '@/components/ui/Card'
+import { Card } from '@/components/ui/card'
 import { ROUTES } from '@/constants/routes'
 
 // -----------------------------------------------------------------------------

@@ -11,7 +11,7 @@ import Image from 'next/image'
 import { requireTeacher } from '@/lib/auth/guards'
 import { getTeacherCourses } from '@/lib/db/courses'
 import { PageHeader } from '@/components/ui/PageHeader'
-import { Card } from '@/components/ui/Card'
+import { Card } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { Button } from '@/components/ui/button'
@@ -60,7 +60,7 @@ export default async function CoursesPage() {
               href={ROUTES.TEACHER.courseDetail(course.id)}
               className="block"
             >
-              <Card hover className="flex flex-col overflow-hidden">
+              <Card className="flex flex-col overflow-hidden hover:shadow-md transition-shadow">
                 {course.thumbnail_url ? (
                   <div className="relative h-40 w-full">
                     <Image

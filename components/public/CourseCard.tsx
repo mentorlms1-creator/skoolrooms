@@ -4,7 +4,7 @@
  */
 
 import Image from 'next/image'
-import { Card } from '@/components/ui/Card'
+import { Card } from '@/components/ui/card'
 
 type CourseCardProps = {
   title: string
@@ -29,7 +29,7 @@ export function CourseCard({
   thumbnailUrl,
 }: CourseCardProps) {
   return (
-    <Card hover className="overflow-hidden">
+    <Card className="overflow-hidden hover:shadow-md transition-shadow">
       {/* Thumbnail */}
       {thumbnailUrl && (
         <div className="relative h-40 w-full">

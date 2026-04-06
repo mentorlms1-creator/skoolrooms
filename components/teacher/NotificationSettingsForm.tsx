@@ -9,7 +9,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/Card'
+import { Card } from '@/components/ui/card'
 import { updateNotificationPreferencesAction } from '@/lib/actions/teacher-settings'
 
 type NotificationSettingsFormProps = {

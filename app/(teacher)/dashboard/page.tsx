@@ -9,7 +9,7 @@ import type { Metadata } from 'next'
 import { requireTeacher } from '@/lib/auth/guards'
 import { getTeacherPlanDetails, getTeacherUsage } from '@/lib/db/teachers'
 import { PageHeader } from '@/components/ui/PageHeader'
-import { Card } from '@/components/ui/Card'
+import { Card } from '@/components/ui/card'
 import { OnboardingChecklist } from '@/components/teacher/OnboardingChecklist'
 import { UsageBars } from '@/components/ui/UsageBars'
 

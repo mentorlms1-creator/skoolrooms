@@ -21,7 +21,7 @@ import {
 } from '@/lib/db/assignments'
 import { getAttendanceSummary } from '@/lib/db/attendance'
 import { PageHeader } from '@/components/ui/PageHeader'
-import { Card } from '@/components/ui/Card'
+import { Card } from '@/components/ui/card'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { formatPKT } from '@/lib/time/pkt'

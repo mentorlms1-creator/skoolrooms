@@ -6,7 +6,7 @@
  * Supports an optional onCancel callback for future non-cancelled sessions.
  */
 
-import { Card } from '@/components/ui/Card'
+import { Card } from '@/components/ui/card'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { formatPKT } from '@/lib/time/pkt'
 

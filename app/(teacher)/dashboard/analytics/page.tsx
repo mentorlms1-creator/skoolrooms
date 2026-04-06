@@ -9,7 +9,7 @@ import type { Metadata } from 'next'
 import { requireTeacher } from '@/lib/auth/guards'
 import { getTeacherAnalytics } from '@/lib/db/admin'
 import { PageHeader } from '@/components/ui/PageHeader'
-import { Card } from '@/components/ui/Card'
+import { Card } from '@/components/ui/card'
 import { formatPKT } from '@/lib/time/pkt'
 
 export const metadata: Metadata = {

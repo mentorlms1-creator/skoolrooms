@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
-import { Card } from '@/components/ui/Card'
+import { Card } from '@/components/ui/card'
 import {
   changePlanAction,
   extendExpiryAction,

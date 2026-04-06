@@ -16,7 +16,7 @@ import {
   getActiveEnrollmentCount,
   computeCohortDisplayStatus,
 } from '@/lib/db/cohorts'
-import { Card } from '@/components/ui/Card'
+import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { WaitlistForm } from '@/components/public/WaitlistForm'

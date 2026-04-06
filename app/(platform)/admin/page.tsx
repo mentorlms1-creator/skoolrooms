@@ -7,7 +7,7 @@
 import type { Metadata } from 'next'
 import { getAdminDashboardStats, getOperationsStats } from '@/lib/db/admin'
 import { PageHeader } from '@/components/ui/PageHeader'
-import { Card } from '@/components/ui/Card'
+import { Card } from '@/components/ui/card'
 
 export const metadata: Metadata = {
   title: 'Admin Dashboard \u2014 Lumscribe',

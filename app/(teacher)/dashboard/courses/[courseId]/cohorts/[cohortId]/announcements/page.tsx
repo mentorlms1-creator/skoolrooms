@@ -14,7 +14,7 @@ import { getAnnouncementsByCohort, getAnnouncementReads } from '@/lib/db/announc
 import { getEnrollmentsByCohort } from '@/lib/db/enrollments'
 import { getCommentsByAnnouncement } from '@/lib/db/announcements'
 import { PageHeader } from '@/components/ui/PageHeader'
-import { Card } from '@/components/ui/Card'
+import { Card } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { ROUTES } from '@/constants/routes'
 import { AnnouncementCreateForm } from './announcement-form'

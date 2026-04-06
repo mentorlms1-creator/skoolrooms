@@ -11,7 +11,7 @@ import { requireStudent } from '@/lib/auth/guards'
 import { getEnrollmentsByStudentWithTeacher } from '@/lib/db/enrollments'
 import type { EnrollmentWithCohortCourseTeacher } from '@/lib/db/enrollments'
 import { PageHeader } from '@/components/ui/PageHeader'
-import { Card } from '@/components/ui/Card'
+import { Card } from '@/components/ui/card'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { formatPKT } from '@/lib/time/pkt'
@@ -73,7 +73,7 @@ export default async function StudentCoursesPage() {
                       key={enrollment.id}
                       href={ROUTES.STUDENT.enrollmentDetail(enrollment.id)}
                     >
-                      <Card className="p-5" hover>
+                      <Card className="p-5 hover:shadow-md transition-shadow">
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0 flex-1">
                             <h3 className="font-medium text-foreground truncate">

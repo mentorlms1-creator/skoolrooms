@@ -15,7 +15,7 @@ import {
   getSubmissionCountsByAssignment,
 } from '@/lib/db/assignments'
 import { PageHeader } from '@/components/ui/PageHeader'
-import { Card } from '@/components/ui/Card'
+import { Card } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { ROUTES } from '@/constants/routes'
 import { AssignmentCreateForm } from './assignment-form'
