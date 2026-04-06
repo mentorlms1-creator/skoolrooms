@@ -108,6 +108,7 @@ export function DataTable<TData>({
                   setGlobalFilter(e.target.value)
                   table.setPageIndex(0)
                 }}
+                className="rounded-2xl border-none ring-1 ring-foreground/5 bg-background h-10 px-4"
               />
             </div>
           )}
@@ -120,7 +121,7 @@ export function DataTable<TData>({
                 table.setPageIndex(0)
               }}
             >
-              <SelectTrigger className="h-9 w-[70px]">
+              <SelectTrigger className="h-9 w-[70px] rounded-xl border-none ring-1 ring-foreground/5">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -137,19 +138,19 @@ export function DataTable<TData>({
       )}
 
       {/* Table */}
-      <div className="rounded-lg border border-border">
+      <div className="rounded-[2rem] border-none shadow-sm ring-1 ring-foreground/5 bg-card overflow-hidden">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id} className="bg-background">
+              <TableRow key={headerGroup.id} className="bg-container border-b border-foreground/5 hover:bg-container">
                 {headerGroup.headers.map((header) => {
                   const canSort = header.column.getCanSort()
                   return (
                     <TableHead
                       key={header.id}
                       className={cn(
-                        'px-4 py-3',
-                        canSort && 'cursor-pointer select-none hover:text-foreground',
+                        'px-6 py-4 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/50',
+                        canSort && 'cursor-pointer select-none hover:text-muted-foreground',
                       )}
                       onClick={canSort ? header.column.getToggleSortingHandler() : undefined}
                     >
@@ -159,10 +160,10 @@ export function DataTable<TData>({
                           {canSort && (
                             <ArrowUpDown
                               className={cn(
-                                'h-4 w-4',
+                                'h-3.5 w-3.5',
                                 header.column.getIsSorted()
                                   ? 'text-primary'
-                                  : 'text-muted-foreground/50',
+                                  : 'text-muted-foreground/30',
                               )}
                             />
                           )}
@@ -176,7 +177,7 @@ export function DataTable<TData>({
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows.length === 0 ? (
-              <TableRow>
+              <TableRow className="hover:bg-transparent">
                 <TableCell
                   colSpan={columns.length}
                   className="h-24 text-center"
@@ -186,9 +187,9 @@ export function DataTable<TData>({
               </TableRow>
             ) : (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
+                <TableRow key={row.id} className="border-b border-foreground/5 hover:bg-foreground/[0.02]">
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="px-4 py-3">
+                    <TableCell key={cell.id} className="px-6 py-4">
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
@@ -201,15 +202,16 @@ export function DataTable<TData>({
 
       {/* Pagination */}
       {pageCount > 1 && (
-        <div className="flex flex-wrap items-center justify-between text-sm gap-2">
+        <div className="flex flex-wrap items-center justify-between text-sm gap-2 px-2">
           <p className="text-muted-foreground">
             Showing {pageIndex * pageSize + 1} to{' '}
             {Math.min((pageIndex + 1) * pageSize, totalRows)} of {totalRows} entries
           </p>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5">
             <Button
               variant="outline"
               size="sm"
+              className="rounded-xl border-none ring-1 ring-foreground/5 hover:bg-foreground/[0.03]"
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
             >
@@ -219,6 +221,7 @@ export function DataTable<TData>({
             <Button
               variant="outline"
               size="sm"
+              className="rounded-xl border-none ring-1 ring-foreground/5 hover:bg-foreground/[0.03]"
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
             >

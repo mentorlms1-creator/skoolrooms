@@ -16,6 +16,14 @@ export const metadata: Metadata = {
 export default async function AdminTeachersPage() {
   const teachers = await getAllTeachers()
 
+  const total = teachers.length
+  const active = teachers.filter((t) => !t.is_suspended).length
+  const now = new Date()
+  const thisMonthSignups = teachers.filter((t) => {
+    const d = new Date(t.created_at)
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
+  }).length
+
   // Map to the shape DataTable expects
   const tableData = teachers.map((t) => ({
     id: t.id,
@@ -30,10 +38,24 @@ export default async function AdminTeachersPage() {
 
   return (
     <>
-      <PageHeader
-        title="Teachers"
-        description={`${teachers.length} teachers on the platform.`}
-      />
+      <PageHeader title="Teachers" />
+
+      <div className="flex items-center gap-6 mb-6 text-sm">
+        <div className="flex items-center gap-2">
+          <span className="text-2xl font-extrabold">{total}</span>
+          <span className="text-muted-foreground">total</span>
+        </div>
+        <div className="h-4 w-px bg-border" />
+        <div className="flex items-center gap-2">
+          <span className="text-2xl font-extrabold text-primary">{active}</span>
+          <span className="text-muted-foreground">active</span>
+        </div>
+        <div className="h-4 w-px bg-border" />
+        <div className="flex items-center gap-2">
+          <span className="text-2xl font-extrabold">{thisMonthSignups}</span>
+          <span className="text-muted-foreground">this month</span>
+        </div>
+      </div>
 
       <TeacherListTable data={tableData} />
     </>

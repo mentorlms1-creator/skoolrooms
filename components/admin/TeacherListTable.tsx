@@ -28,23 +28,24 @@ const columns: ColumnDef<TeacherTableRow, unknown>[] = [
     accessorKey: 'name',
     header: 'Name',
     cell: ({ row }) => (
-      <Link
-        href={ROUTES.ADMIN.teacherDetail(row.original.id)}
-        className="font-medium text-primary hover:text-primary/90"
-      >
-        {row.original.name}
-      </Link>
+      <div className="flex flex-col gap-0.5">
+        <Link
+          href={ROUTES.ADMIN.teacherDetail(row.original.id)}
+          className="text-[15px] font-bold text-foreground hover:text-primary transition-colors"
+        >
+          {row.original.name}
+        </Link>
+        <span className="text-sm text-muted-foreground">{row.original.email}</span>
+      </div>
     ),
-  },
-  {
-    accessorKey: 'email',
-    header: 'Email',
   },
   {
     accessorKey: 'plan',
     header: 'Plan',
     cell: ({ getValue }) => (
-      <span className="capitalize">{getValue() as string}</span>
+      <span className="inline-block rounded-lg bg-primary/10 text-primary px-2 py-0.5 text-xs font-semibold capitalize">
+        {getValue() as string}
+      </span>
     ),
   },
   {
@@ -57,12 +58,15 @@ const columns: ColumnDef<TeacherTableRow, unknown>[] = [
   {
     accessorKey: 'student_count',
     header: 'Students',
+    cell: ({ getValue }) => (
+      <span className="font-semibold">{getValue() as number}</span>
+    ),
   },
   {
     accessorKey: 'created_at',
     header: 'Joined',
     cell: ({ getValue }) => (
-      <span className="text-muted-foreground">
+      <span className="text-sm text-muted-foreground">
         {formatPKT(getValue() as string, 'date')}
       </span>
     ),
