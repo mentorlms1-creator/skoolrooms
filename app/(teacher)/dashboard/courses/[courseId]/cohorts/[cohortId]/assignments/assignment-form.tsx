@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label'
 import { RichTextEditor } from '@/components/ui/RichTextEditor'
 import { FileUpload } from '@/components/ui/FileUpload'
 import { Button } from '@/components/ui/button'
-import { useUIContext } from '@/providers/UIProvider'
+import { toast } from 'sonner'
 import { createAssignmentAction } from '@/lib/actions/assignments'
 
 type AssignmentCreateFormProps = {
@@ -22,7 +22,6 @@ type AssignmentCreateFormProps = {
 
 export function AssignmentCreateForm({ cohortId }: AssignmentCreateFormProps) {
   const router = useRouter()
-  const { addToast } = useUIContext()
   const [isPending, startTransition] = useTransition()
 
   const [title, setTitle] = useState('')
@@ -67,7 +66,7 @@ export function AssignmentCreateForm({ cohortId }: AssignmentCreateFormProps) {
         return
       }
 
-      addToast({ type: 'success', message: 'Assignment created successfully!' })
+      toast.success('Assignment created successfully!')
 
       // Reset form
       setTitle('')

@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
 import { useUIContext } from '@/providers/UIProvider'
 import { updateCohortAction, archiveCohortAction } from '@/lib/actions/cohorts'
 import { ROUTES } from '@/constants/routes'
@@ -60,7 +61,7 @@ export function EditCohortForm({
   defaultPendingCanSeeAnnouncements,
 }: EditCohortFormProps) {
   const router = useRouter()
-  const { addToast, confirm } = useUIContext()
+  const { confirm } = useUIContext()
   const [isPending, startTransition] = useTransition()
 
   const [name, setName] = useState(defaultName)
@@ -108,7 +109,7 @@ export function EditCohortForm({
         return
       }
 
-      addToast({ type: 'success', message: 'Cohort updated successfully!' })
+      toast.success('Cohort updated successfully!')
       router.push(ROUTES.TEACHER.cohortDetail(courseId, cohortId))
     })
   }
@@ -124,11 +125,11 @@ export function EditCohortForm({
         const result = await archiveCohortAction(cohortId)
 
         if (!result.success) {
-          addToast({ type: 'error', message: result.error })
+          toast.error(result.error)
           return
         }
 
-        addToast({ type: 'success', message: 'Cohort archived.' })
+        toast.success('Cohort archived.')
         router.push(ROUTES.TEACHER.courseDetail(courseId))
       },
     })

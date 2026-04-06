@@ -12,6 +12,7 @@ import { useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { SessionCard } from '@/components/teacher/SessionCard'
 import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
 import { useUIContext } from '@/providers/UIProvider'
 import { cancelSessionAction } from '@/lib/actions/class-sessions'
 
@@ -30,7 +31,7 @@ type ScheduleSessionListProps = {
 
 export function ScheduleSessionList({ sessions, isArchived }: ScheduleSessionListProps) {
   const router = useRouter()
-  const { addToast, confirm } = useUIContext()
+  const { confirm } = useUIContext()
   const [isPending, startTransition] = useTransition()
 
   function handleCancel(sessionId: string) {
@@ -44,11 +45,11 @@ export function ScheduleSessionList({ sessions, isArchived }: ScheduleSessionLis
           const result = await cancelSessionAction(sessionId)
 
           if (!result.success) {
-            addToast({ type: 'error', message: result.error })
+            toast.error(result.error)
             return
           }
 
-          addToast({ type: 'success', message: 'Session cancelled successfully.' })
+          toast.success('Session cancelled successfully.')
           router.refresh()
         })
       },

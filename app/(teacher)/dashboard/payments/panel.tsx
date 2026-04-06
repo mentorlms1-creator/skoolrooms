@@ -7,6 +7,7 @@
 
 import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import { useUIContext } from '@/providers/UIProvider'
 import { PaymentCard } from '@/components/teacher/PaymentCard'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -25,7 +26,7 @@ export function PaymentVerificationPanel({
   enrollments,
 }: PaymentVerificationPanelProps) {
   const router = useRouter()
-  const { addToast, confirm } = useUIContext()
+  const { confirm } = useUIContext()
   const [processingId, setProcessingId] = useState<string | null>(null)
   const [rejectModalOpen, setRejectModalOpen] = useState(false)
   const [rejectEnrollmentId, setRejectEnrollmentId] = useState<string | null>(
@@ -47,26 +48,20 @@ export function PaymentVerificationPanel({
           try {
             const result = await approveEnrollmentAction(enrollmentId)
             if (result.success) {
-              addToast({
-                type: 'success',
-                message: 'Payment approved. Student has been enrolled.',
-              })
+              toast.success('Payment approved. Student has been enrolled.')
               router.refresh()
             } else {
-              addToast({ type: 'error', message: result.error })
+              toast.error(result.error)
             }
           } catch {
-            addToast({
-              type: 'error',
-              message: 'Something went wrong. Please try again.',
-            })
+            toast.error('Something went wrong. Please try again.')
           } finally {
             setProcessingId(null)
           }
         },
       })
     },
-    [confirm, addToast, router]
+    [confirm, router]
   )
 
   const handleRejectClick = useCallback((enrollmentId: string) => {
@@ -87,25 +82,19 @@ export function PaymentVerificationPanel({
 
       const result = await rejectEnrollmentAction(rejectEnrollmentId, formData)
       if (result.success) {
-        addToast({
-          type: 'success',
-          message: 'Payment rejected. Student has been notified.',
-        })
+        toast.success('Payment rejected. Student has been notified.')
         setRejectModalOpen(false)
         router.refresh()
       } else {
-        addToast({ type: 'error', message: result.error })
+        toast.error(result.error)
       }
     } catch {
-      addToast({
-        type: 'error',
-        message: 'Something went wrong. Please try again.',
-      })
+      toast.error('Something went wrong. Please try again.')
     } finally {
       setRejectLoading(false)
       setProcessingId(null)
     }
-  }, [rejectEnrollmentId, rejectReason, addToast, router])
+  }, [rejectEnrollmentId, rejectReason, router])
 
   return (
     <>

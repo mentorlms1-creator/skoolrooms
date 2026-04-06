@@ -11,7 +11,7 @@ import { useRouter } from 'next/navigation'
 import { RichTextEditor } from '@/components/ui/RichTextEditor'
 import { FileUpload } from '@/components/ui/FileUpload'
 import { Button } from '@/components/ui/button'
-import { useUIContext } from '@/providers/UIProvider'
+import { toast } from 'sonner'
 import { createAnnouncementAction } from '@/lib/actions/announcements'
 
 type AnnouncementCreateFormProps = {
@@ -20,7 +20,6 @@ type AnnouncementCreateFormProps = {
 
 export function AnnouncementCreateForm({ cohortId }: AnnouncementCreateFormProps) {
   const router = useRouter()
-  const { addToast } = useUIContext()
   const [isPending, startTransition] = useTransition()
 
   const [body, setBody] = useState('')
@@ -52,7 +51,7 @@ export function AnnouncementCreateForm({ cohortId }: AnnouncementCreateFormProps
         return
       }
 
-      addToast({ type: 'success', message: 'Announcement posted successfully!' })
+      toast.success('Announcement posted successfully!')
 
       // Reset form
       setBody('')

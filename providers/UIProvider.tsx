@@ -2,12 +2,13 @@
 
 /**
  * providers/UIProvider.tsx — Client-side UI state manager
- * Manages toasts and confirm modal state.
- * Renders Toast components and ConfirmModal at provider level.
+ * Manages confirm modal state.
+ * Renders ConfirmModal (AlertDialog) at provider level.
+ *
+ * Toast notifications are handled by Sonner (import { toast } from 'sonner').
  */
 
 import { createContext, useCallback, useContext, useState } from 'react'
-import { Toast } from '@/components/ui/Toast'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,19 +23,6 @@ import {
 // -----------------------------------------------------------------------------
 // Types
 // -----------------------------------------------------------------------------
-
-type ToastType = 'success' | 'error' | 'warning' | 'info'
-
-type ToastItem = {
-  id: string
-  type: ToastType
-  message: string
-}
-
-type AddToastInput = {
-  type: ToastType
-  message: string
-}
 
 type ConfirmOptions = {
   title: string
@@ -55,9 +43,6 @@ type ConfirmState = {
 }
 
 type UIContextType = {
-  addToast: (toast: AddToastInput) => void
-  removeToast: (id: string) => void
-  toasts: ReadonlyArray<ToastItem>
   confirm: (options: ConfirmOptions) => void
   confirmState: ConfirmState
 }
@@ -77,17 +62,6 @@ export function useUIContext() {
 }
 
 // -----------------------------------------------------------------------------
-// ID generation
-// -----------------------------------------------------------------------------
-
-let toastCounter = 0
-
-function generateToastId(): string {
-  toastCounter += 1
-  return `toast-${Date.now()}-${toastCounter}`
-}
-
-// -----------------------------------------------------------------------------
 // Provider
 // -----------------------------------------------------------------------------
 
@@ -102,21 +76,7 @@ const INITIAL_CONFIRM_STATE: ConfirmState = {
 }
 
 export function UIProvider({ children }: { children: React.ReactNode }) {
-  const [toasts, setToasts] = useState<ToastItem[]>([])
   const [confirmState, setConfirmState] = useState<ConfirmState>(INITIAL_CONFIRM_STATE)
-
-  const addToast = useCallback((input: AddToastInput) => {
-    const newToast: ToastItem = {
-      id: generateToastId(),
-      type: input.type,
-      message: input.message,
-    }
-    setToasts((prev) => [...prev, newToast])
-  }, [])
-
-  const removeToast = useCallback((id: string) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id))
-  }, [])
 
   const confirm = useCallback((options: ConfirmOptions) => {
     setConfirmState({
@@ -145,21 +105,9 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <UIContext.Provider
-      value={{ addToast, removeToast, toasts, confirm, confirmState }}
+      value={{ confirm, confirmState }}
     >
       {children}
-
-      {/* Toast container — stacks toasts top-right */}
-      <div className="fixed top-4 right-4 z-[100] flex flex-col gap-2 max-w-[calc(100vw-2rem)]">
-        {toasts.map((toast) => (
-          <Toast
-            key={toast.id}
-            type={toast.type}
-            message={toast.message}
-            onDismiss={() => removeToast(toast.id)}
-          />
-        ))}
-      </div>
 
       {/* Confirm dialog — single instance reused */}
       <AlertDialog open={confirmState.isOpen} onOpenChange={(open) => { if (!open) handleConfirmClose() }}>

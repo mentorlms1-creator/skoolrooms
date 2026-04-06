@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
-import { useUIContext } from '@/providers/UIProvider'
+import { toast } from 'sonner'
 import { createSessionAction } from '@/lib/actions/class-sessions'
 
 type SessionCreateFormProps = {
@@ -49,7 +49,6 @@ const DAYS_OF_WEEK = [
 
 export function SessionCreateForm({ cohortId }: SessionCreateFormProps) {
   const router = useRouter()
-  const { addToast } = useUIContext()
   const [isPending, startTransition] = useTransition()
 
   const [meetLink, setMeetLink] = useState('')
@@ -120,7 +119,7 @@ export function SessionCreateForm({ cohortId }: SessionCreateFormProps) {
           ? `Created ${count} sessions successfully!`
           : 'Session created successfully!'
 
-      addToast({ type: 'success', message })
+      toast.success(message)
 
       // Reset form
       setMeetLink('')

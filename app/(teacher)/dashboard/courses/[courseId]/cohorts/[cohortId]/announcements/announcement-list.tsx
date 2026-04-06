@@ -17,6 +17,7 @@ import sanitizeHtml from 'sanitize-html'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/ui/StatusBadge'
+import { toast } from 'sonner'
 import { useUIContext } from '@/providers/UIProvider'
 import { formatPKT } from '@/lib/time/pkt'
 import {
@@ -86,7 +87,7 @@ function AnnouncementCard({
   isArchived: boolean
 }) {
   const router = useRouter()
-  const { addToast, confirm } = useUIContext()
+  const { confirm } = useUIContext()
   const [isPending, startTransition] = useTransition()
   const [showSeenList, setShowSeenList] = useState(false)
   const [showComments, setShowComments] = useState(false)
@@ -95,13 +96,10 @@ function AnnouncementCard({
     startTransition(async () => {
       const result = await pinAnnouncementAction(announcement.id, !announcement.pinned)
       if (!result.success) {
-        addToast({ type: 'error', message: result.error })
+        toast.error(result.error)
         return
       }
-      addToast({
-        type: 'success',
-        message: announcement.pinned ? 'Announcement unpinned.' : 'Announcement pinned.',
-      })
+      toast.success(announcement.pinned ? 'Announcement unpinned.' : 'Announcement pinned.')
       router.refresh()
     })
   }
@@ -117,10 +115,10 @@ function AnnouncementCard({
         startTransition(async () => {
           const result = await deleteAnnouncementAction(announcement.id)
           if (!result.success) {
-            addToast({ type: 'error', message: result.error })
+            toast.error(result.error)
             return
           }
-          addToast({ type: 'success', message: 'Announcement deleted.' })
+          toast.success('Announcement deleted.')
           router.refresh()
         })
       },
@@ -265,7 +263,7 @@ function CommentItem({
   isArchived: boolean
 }) {
   const router = useRouter()
-  const { addToast, confirm } = useUIContext()
+  const { confirm } = useUIContext()
   const [isPending, startTransition] = useTransition()
 
   function handleDelete() {
@@ -278,10 +276,10 @@ function CommentItem({
         startTransition(async () => {
           const result = await deleteCommentAction(comment.id)
           if (!result.success) {
-            addToast({ type: 'error', message: result.error })
+            toast.error(result.error)
             return
           }
-          addToast({ type: 'success', message: 'Comment deleted.' })
+          toast.success('Comment deleted.')
           router.refresh()
         })
       },
@@ -324,7 +322,6 @@ function CommentItem({
 
 function CommentForm({ announcementId }: { announcementId: string }) {
   const router = useRouter()
-  const { addToast } = useUIContext()
   const [isPending, startTransition] = useTransition()
   const [body, setBody] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -349,7 +346,7 @@ function CommentForm({ announcementId }: { announcementId: string }) {
         return
       }
 
-      addToast({ type: 'success', message: 'Comment added.' })
+      toast.success('Comment added.')
       setBody('')
       router.refresh()
     })

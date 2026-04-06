@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { RichTextEditor } from '@/components/ui/RichTextEditor'
 import { FileUpload } from '@/components/ui/FileUpload'
+import { toast } from 'sonner'
 import { useUIContext } from '@/providers/UIProvider'
 import { updateCourseAction, deleteCourseAction } from '@/lib/actions/courses'
 import { ROUTES } from '@/constants/routes'
@@ -36,7 +37,7 @@ export function EditCourseForm({
   defaultStatus,
 }: EditCourseFormProps) {
   const router = useRouter()
-  const { addToast, confirm } = useUIContext()
+  const { confirm } = useUIContext()
   const [isPending, startTransition] = useTransition()
 
   const [title, setTitle] = useState(defaultTitle)
@@ -72,12 +73,9 @@ export function EditCourseForm({
         return
       }
 
-      addToast({
-        type: 'success',
-        message: publishStatus
+      toast.success(publishStatus
           ? 'Course published successfully!'
-          : 'Course saved successfully!',
-      })
+          : 'Course saved successfully!')
       router.push(ROUTES.TEACHER.courseDetail(courseId))
     })
   }
@@ -93,11 +91,11 @@ export function EditCourseForm({
         const result = await deleteCourseAction(courseId)
 
         if (!result.success) {
-          addToast({ type: 'error', message: result.error })
+          toast.error(result.error)
           return
         }
 
-        addToast({ type: 'success', message: 'Course deleted.' })
+        toast.success('Course deleted.')
         router.push(ROUTES.TEACHER.courses)
       },
     })

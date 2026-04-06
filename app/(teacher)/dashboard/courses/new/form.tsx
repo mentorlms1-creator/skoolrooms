@@ -13,13 +13,12 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { RichTextEditor } from '@/components/ui/RichTextEditor'
-import { useUIContext } from '@/providers/UIProvider'
+import { toast } from 'sonner'
 import { createCourseAction } from '@/lib/actions/courses'
 import { ROUTES } from '@/constants/routes'
 
 export function CreateCourseForm() {
   const router = useRouter()
-  const { addToast } = useUIContext()
   const [isPending, startTransition] = useTransition()
 
   const [title, setTitle] = useState('')
@@ -46,7 +45,7 @@ export function CreateCourseForm() {
         return
       }
 
-      addToast({ type: 'success', message: 'Course created successfully!' })
+      toast.success('Course created successfully!')
       router.push(ROUTES.TEACHER.courseDetail(result.data.courseId))
     })
   }

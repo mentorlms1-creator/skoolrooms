@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
-import { useUIContext } from '@/providers/UIProvider'
+import { toast } from 'sonner'
 import { createCohortAction } from '@/lib/actions/cohorts'
 import { ROUTES } from '@/constants/routes'
 
@@ -34,7 +34,6 @@ const FEE_TYPE_OPTIONS = [
 
 export function CreateCohortForm({ courseId }: CreateCohortFormProps) {
   const router = useRouter()
-  const { addToast } = useUIContext()
   const [isPending, startTransition] = useTransition()
 
   const [name, setName] = useState('')
@@ -79,7 +78,7 @@ export function CreateCohortForm({ courseId }: CreateCohortFormProps) {
         return
       }
 
-      addToast({ type: 'success', message: 'Cohort created successfully!' })
+      toast.success('Cohort created successfully!')
       router.push(ROUTES.TEACHER.cohortDetail(courseId, result.data.cohortId))
     })
   }

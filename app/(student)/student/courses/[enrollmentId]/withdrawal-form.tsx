@@ -12,6 +12,7 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
+import { toast } from 'sonner'
 import { useUIContext } from '@/providers/UIProvider'
 import { requestWithdrawalAction } from '@/lib/actions/enrollment-management'
 
@@ -21,7 +22,7 @@ type WithdrawalFormProps = {
 
 export function WithdrawalForm({ enrollmentId }: WithdrawalFormProps) {
   const router = useRouter()
-  const { addToast, confirm } = useUIContext()
+  const { confirm } = useUIContext()
   const [isPending, startTransition] = useTransition()
   const [showForm, setShowForm] = useState(false)
   const [reason, setReason] = useState('')
@@ -48,10 +49,7 @@ export function WithdrawalForm({ enrollmentId }: WithdrawalFormProps) {
             return
           }
 
-          addToast({
-            type: 'success',
-            message: 'Withdrawal request sent. Your teacher will review it.',
-          })
+          toast.success('Withdrawal request sent. Your teacher will review it.')
           setShowForm(false)
           router.refresh()
         })

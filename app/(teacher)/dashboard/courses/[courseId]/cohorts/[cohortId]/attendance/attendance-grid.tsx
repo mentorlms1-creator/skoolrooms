@@ -9,7 +9,7 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { useUIContext } from '@/providers/UIProvider'
+import { toast } from 'sonner'
 import {
   markAttendanceAction,
   updateAttendanceAction,
@@ -36,7 +36,6 @@ export function AttendanceGrid({
   hasExistingData,
 }: AttendanceGridProps) {
   const router = useRouter()
-  const { addToast } = useUIContext()
   const [isPending, startTransition] = useTransition()
 
   // Local state for checkboxes
@@ -70,7 +69,7 @@ export function AttendanceGrid({
     startTransition(async () => {
       const result = await updateAttendanceAction(sessionId, studentId, present)
       if (!result.success) {
-        addToast({ type: 'error', message: result.error })
+        toast.error(result.error)
         // Revert local state
         setAttendance((prev) => ({
           ...prev,
@@ -97,14 +96,11 @@ export function AttendanceGrid({
       const result = await markAttendanceAction(formData)
 
       if (!result.success) {
-        addToast({ type: 'error', message: result.error })
+        toast.error(result.error)
         return
       }
 
-      addToast({
-        type: 'success',
-        message: `Attendance saved for ${result.data.count} student${result.data.count === 1 ? '' : 's'}.`,
-      })
+      toast.success(`Attendance saved for ${result.data.count} student${result.data.count === 1 ? '' : 's'}.`)
       router.refresh()
     })
   }

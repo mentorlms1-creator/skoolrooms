@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { ThemeProvider } from "next-themes";
+import { Toaster } from "sonner";
 import "./globals.css";
 
 const inter = Inter({
@@ -29,6 +30,7 @@ export default function RootLayout({
       <body className={`${inter.variable} font-sans bg-background text-foreground antialiased`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           {children}
+          <Toaster richColors position="top-right" />
         </ThemeProvider>
       </body>
     </html>

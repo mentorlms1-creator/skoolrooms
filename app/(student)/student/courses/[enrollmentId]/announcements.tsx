@@ -16,7 +16,7 @@ import sanitizeHtml from 'sanitize-html'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/ui/StatusBadge'
-import { useUIContext } from '@/providers/UIProvider'
+import { toast } from 'sonner'
 import { formatPKT } from '@/lib/time/pkt'
 import {
   createCommentAction,
@@ -218,7 +218,6 @@ function StudentCommentForm({
   isPending: boolean
 }) {
   const router = useRouter()
-  const { addToast } = useUIContext()
   const [isPending, startTransition] = useTransition()
   const [body, setBody] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -243,7 +242,7 @@ function StudentCommentForm({
         return
       }
 
-      addToast({ type: 'success', message: 'Comment added.' })
+      toast.success('Comment added.')
       setBody('')
       router.refresh()
     })

@@ -11,7 +11,7 @@ import { useRouter } from 'next/navigation'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/ui/StatusBadge'
-import { useUIContext } from '@/providers/UIProvider'
+import { toast } from 'sonner'
 import sanitizeHtml from 'sanitize-html'
 import { deleteAssignmentAction, reviewSubmissionAction } from '@/lib/actions/assignments'
 import { formatPKT } from '@/lib/time/pkt'
@@ -49,7 +49,6 @@ type AssignmentListProps = {
 
 export function AssignmentList({ assignments, isArchived }: AssignmentListProps) {
   const router = useRouter()
-  const { addToast } = useUIContext()
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [reviewingId, setReviewingId] = useState<string | null>(null)
@@ -68,11 +67,11 @@ export function AssignmentList({ assignments, isArchived }: AssignmentListProps)
       setDeletingId(null)
 
       if (!result.success) {
-        addToast({ type: 'error', message: result.error })
+        toast.error(result.error)
         return
       }
 
-      addToast({ type: 'success', message: 'Assignment deleted.' })
+      toast.success('Assignment deleted.')
       router.refresh()
     })
   }
@@ -84,11 +83,11 @@ export function AssignmentList({ assignments, isArchived }: AssignmentListProps)
       setReviewingId(null)
 
       if (!result.success) {
-        addToast({ type: 'error', message: result.error })
+        toast.error(result.error)
         return
       }
 
-      addToast({ type: 'success', message: 'Submission marked as reviewed.' })
+      toast.success('Submission marked as reviewed.')
       router.refresh()
     })
   }

@@ -18,7 +18,7 @@ import { StatusBadge } from '@/components/ui/StatusBadge'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { FileUpload } from '@/components/ui/FileUpload'
-import { useUIContext } from '@/providers/UIProvider'
+import { toast } from 'sonner'
 import { formatPKT } from '@/lib/time/pkt'
 import { submitAssignmentAction } from '@/lib/actions/assignments'
 
@@ -210,7 +210,6 @@ function SubmissionForm({
   onCancel: () => void
 }) {
   const router = useRouter()
-  const { addToast } = useUIContext()
   const [isPending, startTransition] = useTransition()
   const [textAnswer, setTextAnswer] = useState(existingSubmission?.textAnswer ?? '')
   const [fileUrl, setFileUrl] = useState(existingSubmission?.fileUrl ?? '')
@@ -238,7 +237,7 @@ function SubmissionForm({
         return
       }
 
-      addToast({ type: 'success', message: 'Assignment submitted successfully.' })
+      toast.success('Assignment submitted successfully.')
       onCancel()
       router.refresh()
     })
