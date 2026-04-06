@@ -106,7 +106,7 @@ export function SidebarShell({
         <SidebarProvider>
           <Sidebar variant="floating">
             {/* Header: Logo + role badge */}
-            <SidebarHeader className="border-b border-sidebar-border px-4 py-3">
+            <SidebarHeader className="px-5 pt-6 pb-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="text-xl font-bold text-primary">Lumscribe</span>
@@ -177,65 +177,69 @@ export function SidebarShell({
           </Sidebar>
 
           <SidebarInset>
-            {/* Desktop top bar: search + actions */}
-            <div className="hidden md:flex items-center justify-between px-6 py-4">
-              {/* Left: Search trigger */}
-              <button
-                type="button"
-                onClick={openCommandPalette}
-                className={cn(
-                  "flex items-center gap-2 rounded-xl border border-border/30 bg-card px-4 py-2.5",
-                  "text-sm text-muted-foreground hover:bg-accent/30 transition-colors min-w-[300px]"
-                )}
-              >
-                <Search className="h-4 w-4" strokeWidth={1.5} />
-                <span className="flex-1 text-left">Search or type a command</span>
-                <kbd className="rounded border border-border/30 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground/50">
-                  Ctrl+K
-                </kbd>
-              </button>
+            <div className="flex-1 px-3 pt-3 pb-3">
+              {/* Desktop top bar — its own card */}
+              <div className="mb-3 hidden rounded-3xl bg-card px-6 py-3 md:block">
+                <div className="flex items-center justify-between">
+                  {/* Left: Search trigger */}
+                  <button
+                    type="button"
+                    onClick={openCommandPalette}
+                    className={cn(
+                      "flex items-center gap-2 rounded-xl px-4 py-2.5",
+                      "text-sm text-muted-foreground hover:bg-accent/30 transition-colors min-w-[300px]"
+                    )}
+                  >
+                    <Search className="h-4 w-4" strokeWidth={1.5} />
+                    <span className="flex-1 text-left">Search or type a command</span>
+                    <kbd className="rounded border border-border/30 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground/50">
+                      Ctrl+K
+                    </kbd>
+                  </button>
 
-              {/* Right: CTA + notification + avatar */}
-              <div className="flex items-center gap-3">
-                {ctaLabel && ctaHref && (
-                  <Button asChild variant="default" size="sm" className="rounded-full bg-foreground text-background hover:bg-foreground/90 gap-1.5">
-                    <Link href={ctaHref}>
-                      <Plus className="h-4 w-4" />
-                      {ctaLabel}
-                    </Link>
-                  </Button>
-                )}
-                {notificationHref && (
-                  <NotificationBell count={notificationCount} href={notificationHref} />
-                )}
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/20 text-sm font-medium text-primary">
-                  {user.name.charAt(0).toUpperCase()}
+                  {/* Right: CTA + notification + avatar */}
+                  <div className="flex items-center gap-3">
+                    {ctaLabel && ctaHref && (
+                      <Button asChild variant="default" size="sm" className="rounded-full bg-foreground text-background hover:bg-foreground/90 gap-1.5">
+                        <Link href={ctaHref}>
+                          <Plus className="h-4 w-4" />
+                          {ctaLabel}
+                        </Link>
+                      </Button>
+                    )}
+                    {notificationHref && (
+                      <NotificationBell count={notificationCount} href={notificationHref} />
+                    )}
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/20 text-sm font-medium text-primary">
+                      {user.name.charAt(0).toUpperCase()}
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Mobile top bar with hamburger trigger */}
-            <header className="flex h-14 items-center gap-2 border-b border-border px-4 md:hidden">
-              <SidebarTrigger />
-              <div className="flex items-center gap-2">
-                <span className="text-lg font-bold text-primary">Lumscribe</span>
-                {roleBadge && (
-                  <span className="rounded bg-primary/20 px-1.5 py-0.5 text-xs font-medium text-primary">
-                    {roleBadge}
-                  </span>
-                )}
-              </div>
-              <div className="ml-auto flex items-center gap-2">
-                {notificationHref && (
-                  <NotificationBell count={notificationCount} href={notificationHref} />
-                )}
-                <ThemeToggle />
-              </div>
-            </header>
+              {/* Mobile top bar with hamburger trigger */}
+              <header className="flex h-14 items-center gap-2 border-b border-border px-4 md:hidden">
+                <SidebarTrigger />
+                <div className="flex items-center gap-2">
+                  <span className="text-lg font-bold text-primary">Lumscribe</span>
+                  {roleBadge && (
+                    <span className="rounded bg-primary/20 px-1.5 py-0.5 text-xs font-medium text-primary">
+                      {roleBadge}
+                    </span>
+                  )}
+                </div>
+                <div className="ml-auto flex items-center gap-2">
+                  {notificationHref && (
+                    <NotificationBell count={notificationCount} href={notificationHref} />
+                  )}
+                  <ThemeToggle />
+                </div>
+              </header>
 
-            {/* Main content */}
-            <div className="mx-auto w-full max-w-6xl flex-1 px-6 pb-6">
-              {children}
+              {/* Main content */}
+              <div className="mx-auto w-full max-w-6xl px-3">
+                {children}
+              </div>
             </div>
           </SidebarInset>
 
