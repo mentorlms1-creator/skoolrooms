@@ -185,9 +185,9 @@ export function SidebarShell({
           </Sidebar>
 
           <SidebarInset className="bg-transparent">
-            <div className="flex-1 flex flex-col min-h-0">
-              {/* Desktop top bar */}
-              <div className="hidden md:block sticky top-0 z-20 px-8 py-5">
+            <div className="flex-1 flex flex-col min-h-0 gap-3 p-3">
+              {/* Desktop top bar — its own white bento */}
+              <div className="hidden md:block rounded-3xl bg-card px-8 py-5">
                 <div className="flex items-center justify-between gap-8">
                   {/* Left: Search box */}
                   <div className="relative flex-1 max-w-xl bg-card rounded-2xl shadow-sm ring-1 ring-foreground/5 flex items-center px-4 py-1.5 has-[:focus]:ring-foreground/10 transition-shadow">
@@ -244,8 +244,8 @@ export function SidebarShell({
                 </div>
               </header>
 
-              {/* Main content scroll area */}
-              <main className="flex-1 overflow-y-auto px-8 pb-12 custom-scrollbar">
+              {/* Main content — its own white bento */}
+              <main className="flex-1 overflow-y-auto rounded-3xl bg-card px-8 py-8 custom-scrollbar">
                 <div className="mx-auto w-full max-w-7xl">
                   {children}
                 </div>
