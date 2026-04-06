@@ -12,6 +12,8 @@
  */
 
 import { useState, useRef, useCallback, type DragEvent, type ChangeEvent } from 'react'
+import { Upload, FileText } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { Spinner } from '@/components/ui/Spinner'
 import { UPLOAD_LIMITS, UPLOAD_LIMIT_LABELS, UPLOAD_ALLOWED_FORMATS, type UploadFileType } from '@/constants/plans'
 
@@ -182,13 +184,15 @@ export function FileUpload({
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onClick={() => inputRef.current?.click()}
-        className={`
-          flex cursor-pointer flex-col items-center justify-center
-          rounded-lg border-2 border-dashed p-6
-          transition-colors duration-150
-          ${isDragOver ? 'border-primary bg-primary/10' : 'border-border hover:border-primary hover:bg-background'}
-          ${state === 'error' ? 'border-destructive' : ''}
-        `}
+        className={cn(
+          'flex cursor-pointer flex-col items-center justify-center',
+          'rounded-lg border-2 border-dashed p-6',
+          'transition-colors duration-150',
+          isDragOver
+            ? 'border-primary bg-primary/10'
+            : 'border-border hover:border-primary hover:bg-accent/50',
+          state === 'error' && 'border-destructive',
+        )}
         role="button"
         tabIndex={0}
         onKeyDown={(e) => {
@@ -216,15 +220,7 @@ export function FileUpload({
           </div>
         ) : fileName ? (
           <div className="flex flex-col items-center gap-1">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              className="h-8 w-8 text-muted-foreground"
-              aria-hidden="true"
-            >
-              <path d="M3 3.5A1.5 1.5 0 014.5 2h6.879a1.5 1.5 0 011.06.44l4.122 4.12A1.5 1.5 0 0117 7.622V16.5a1.5 1.5 0 01-1.5 1.5h-11A1.5 1.5 0 013 16.5v-13z" />
-            </svg>
+            <FileText className="h-8 w-8 text-muted-foreground" aria-hidden="true" />
             <p className="text-sm font-medium text-foreground">{fileName}</p>
             {fileSize && (
               <p className="text-xs text-muted-foreground">{formatFileSize(fileSize)}</p>
@@ -233,16 +229,7 @@ export function FileUpload({
           </div>
         ) : (
           <div className="flex flex-col items-center gap-1">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              className="h-8 w-8 text-muted-foreground"
-              aria-hidden="true"
-            >
-              <path d="M9.25 13.25a.75.75 0 001.5 0V4.636l2.955 3.129a.75.75 0 001.09-1.03l-4.25-4.5a.75.75 0 00-1.09 0l-4.25 4.5a.75.75 0 101.09 1.03L9.25 4.636v8.614z" />
-              <path d="M3.5 12.75a.75.75 0 00-1.5 0v2.5A2.75 2.75 0 004.75 18h10.5A2.75 2.75 0 0018 15.25v-2.5a.75.75 0 00-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5z" />
-            </svg>
+            <Upload className="h-8 w-8 text-muted-foreground" aria-hidden="true" />
             <p className="text-sm font-medium text-foreground">
               Click to upload or drag and drop
             </p>

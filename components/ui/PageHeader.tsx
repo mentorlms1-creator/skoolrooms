@@ -4,38 +4,30 @@
  */
 
 import Link from 'next/link'
+import { ArrowLeft } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 type PageHeaderProps = {
   title: string
   description?: string
   action?: React.ReactNode
+  filter?: React.ReactNode
   backHref?: string
+  className?: string
 }
 
-export function PageHeader({ title, description, action, backHref }: PageHeaderProps) {
+export function PageHeader({ title, description, action, filter, backHref, className }: PageHeaderProps) {
   return (
-    <div className="mb-6">
+    <div className={cn('mb-6', className)}>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           {backHref && (
             <Link
               href={backHref}
-              className="flex items-center justify-center rounded-md p-2.5 min-h-[44px] min-w-[44px] text-muted-foreground hover:bg-background hover:text-foreground transition-colors"
+              className="flex items-center justify-center rounded-md p-2.5 min-h-[44px] min-w-[44px] text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
               aria-label="Go back"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-                className="h-5 w-5"
-                aria-hidden="true"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z"
-                  clipRule="evenodd"
-                />
-              </svg>
+              <ArrowLeft className="h-5 w-5" aria-hidden="true" />
             </Link>
           )}
           <div className="min-w-0">
@@ -45,7 +37,10 @@ export function PageHeader({ title, description, action, backHref }: PageHeaderP
             )}
           </div>
         </div>
-        {action && <div className="shrink-0">{action}</div>}
+        <div className="flex flex-wrap items-center gap-3">
+          {filter && <div className="shrink-0">{filter}</div>}
+          {action && <div className="shrink-0">{action}</div>}
+        </div>
       </div>
     </div>
   )

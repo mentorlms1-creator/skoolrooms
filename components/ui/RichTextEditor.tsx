@@ -11,6 +11,9 @@ import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import Link from '@tiptap/extension-link'
 import type { Editor } from '@tiptap/react'
+import { Bold, Italic, Heading2, Heading3, List, ListOrdered } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
 
 type RichTextEditorProps = {
   content: string
@@ -20,78 +23,69 @@ type RichTextEditorProps = {
   error?: string
 }
 
-type ToolbarButtonProps = {
-  onClick: () => void
-  isActive: boolean
-  children: React.ReactNode
-  title: string
-}
-
-function ToolbarButton({ onClick, isActive, children, title }: ToolbarButtonProps) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      title={title}
-      className={`
-        min-h-[2.75rem] flex items-center justify-center rounded px-2.5 py-2 text-sm font-medium transition-colors
-        ${
-          isActive
-            ? 'bg-primary/20 text-primary'
-            : 'text-muted-foreground hover:bg-background'
-        }
-      `}
-    >
-      {children}
-    </button>
-  )
-}
-
 function Toolbar({ editor }: { editor: Editor }) {
   return (
     <div className="flex flex-wrap gap-1 border-b border-border px-2 py-1.5">
-      <ToolbarButton
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
         onClick={() => editor.chain().focus().toggleBold().run()}
-        isActive={editor.isActive('bold')}
+        className={cn(editor.isActive('bold') && 'bg-primary/20 text-primary')}
         title="Bold"
       >
-        B
-      </ToolbarButton>
-      <ToolbarButton
+        <Bold className="h-4 w-4" />
+      </Button>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
         onClick={() => editor.chain().focus().toggleItalic().run()}
-        isActive={editor.isActive('italic')}
+        className={cn(editor.isActive('italic') && 'bg-primary/20 text-primary')}
         title="Italic"
       >
-        <span className="italic">I</span>
-      </ToolbarButton>
-      <ToolbarButton
+        <Italic className="h-4 w-4" />
+      </Button>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
         onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-        isActive={editor.isActive('heading', { level: 2 })}
+        className={cn(editor.isActive('heading', { level: 2 }) && 'bg-primary/20 text-primary')}
         title="Heading 2"
       >
-        H2
-      </ToolbarButton>
-      <ToolbarButton
+        <Heading2 className="h-4 w-4" />
+      </Button>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
         onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-        isActive={editor.isActive('heading', { level: 3 })}
+        className={cn(editor.isActive('heading', { level: 3 }) && 'bg-primary/20 text-primary')}
         title="Heading 3"
       >
-        H3
-      </ToolbarButton>
-      <ToolbarButton
+        <Heading3 className="h-4 w-4" />
+      </Button>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
         onClick={() => editor.chain().focus().toggleBulletList().run()}
-        isActive={editor.isActive('bulletList')}
+        className={cn(editor.isActive('bulletList') && 'bg-primary/20 text-primary')}
         title="Bullet List"
       >
-        &bull; List
-      </ToolbarButton>
-      <ToolbarButton
+        <List className="h-4 w-4" />
+      </Button>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
         onClick={() => editor.chain().focus().toggleOrderedList().run()}
-        isActive={editor.isActive('orderedList')}
+        className={cn(editor.isActive('orderedList') && 'bg-primary/20 text-primary')}
         title="Ordered List"
       >
-        1. List
-      </ToolbarButton>
+        <ListOrdered className="h-4 w-4" />
+      </Button>
     </div>
   )
 }
@@ -153,10 +147,10 @@ export function RichTextEditor({
         </label>
       )}
       <div
-        className={`
-          rounded-md border
-          ${error ? 'border-destructive' : 'border-border'}
-        `}
+        className={cn(
+          'rounded-md border bg-card',
+          error ? 'border-destructive' : 'border-border',
+        )}
       >
         {editor && <Toolbar editor={editor} />}
         <EditorContent

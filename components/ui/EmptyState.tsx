@@ -4,17 +4,19 @@
  */
 
 import type { ComponentType, SVGProps } from 'react'
+import { cn } from '@/lib/utils'
 
 type EmptyStateProps = {
   icon?: ComponentType<SVGProps<SVGSVGElement>>
   title: string
   description: string
   action?: React.ReactNode
+  className?: string
 }
 
-export function EmptyState({ icon: Icon, title, description, action }: EmptyStateProps) {
+export function EmptyState({ icon: Icon, title, description, action, className }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+    <div className={cn('flex flex-col items-center justify-center py-16 px-4 text-center', className)}>
       {Icon && (
         <div className="mb-4">
           <Icon className="h-12 w-12 text-muted-foreground" />
