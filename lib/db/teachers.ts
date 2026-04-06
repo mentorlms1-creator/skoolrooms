@@ -280,3 +280,232 @@ export async function isSubdomainAvailable(
 
   return (count ?? 0) === 0
 }
+
+// -----------------------------------------------------------------------------
+// Dashboard Stats — Aggregated stats for the teacher dashboard bento grid
+// -----------------------------------------------------------------------------
+
+export type TeacherDashboardStats = {
+  activeCourses: number
+  totalStudents: number
+  pendingPayments: number
+  totalRevenuePkr: number
+  accountCreatedAt: string
+}
+
+/**
+ * getTeacherDashboardStats — Fetch aggregated numbers for the dashboard stat cards.
+ * Returns course count, student count, pending payment count, and total revenue.
+ */
+export async function getTeacherDashboardStats(
+  teacherId: string
+): Promise<TeacherDashboardStats> {
+  const supabase = createAdminClient()
+
+  // Count published courses
+  const { count: courseCount } = await supabase
+    .from('courses')
+    .select('*', { count: 'exact', head: true })
+    .eq('teacher_id', teacherId)
+    .eq('status', 'published')
+    .is('deleted_at', null)
+
+  // Get all cohort IDs for this teacher
+  const { data: cohortRows } = await supabase
+    .from('cohorts')
+    .select('id')
+    .eq('teacher_id', teacherId)
+    .is('deleted_at', null)
+
+  const cohortIds = cohortRows?.map((c) => c.id as string) ?? []
+
+  let studentCount = 0
+  let pendingPaymentCount = 0
+  let totalRevenue = 0
+
+  if (cohortIds.length > 0) {
+    // Count active enrollments
+    const { count: enrollCount } = await supabase
+      .from('enrollments')
+      .select('*', { count: 'exact', head: true })
+      .in('cohort_id', cohortIds)
+      .eq('status', 'active')
+
+    studentCount = enrollCount ?? 0
+
+    // Count pending screenshot payments (status = 'pending_verification')
+    const { data: pendingPayments } = await supabase
+      .from('student_payments')
+      .select('id, enrollment_id, enrollments!inner(cohort_id)')
+      .eq('status', 'pending_verification')
+      .in('enrollments.cohort_id', cohortIds)
+
+    pendingPaymentCount = pendingPayments?.length ?? 0
+
+    // Sum verified payments for total revenue
+    const { data: verifiedPayments } = await supabase
+      .from('student_payments')
+      .select('teacher_payout_amount_pkr, enrollment_id, enrollments!inner(cohort_id)')
+      .eq('status', 'verified')
+      .in('enrollments.cohort_id', cohortIds)
+
+    if (verifiedPayments) {
+      totalRevenue = verifiedPayments.reduce(
+        (sum, p) => sum + ((p.teacher_payout_amount_pkr as number) ?? 0),
+        0
+      )
+    }
+  }
+
+  // Get teacher created_at for "active days" calculation
+  const { data: teacherRow } = await supabase
+    .from('teachers')
+    .select('created_at')
+    .eq('id', teacherId)
+    .single()
+
+  return {
+    activeCourses: courseCount ?? 0,
+    totalStudents: studentCount,
+    pendingPayments: pendingPaymentCount,
+    totalRevenuePkr: totalRevenue,
+    accountCreatedAt: (teacherRow?.created_at as string) ?? new Date().toISOString(),
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Revenue by month — For the revenue trend chart
+// -----------------------------------------------------------------------------
+
+export type MonthlyRevenue = {
+  month: string // "Jan", "Feb", etc.
+  revenue: number
+}
+
+/**
+ * getTeacherMonthlyRevenue — Returns last 6 months of revenue data
+ * for the teacher dashboard revenue chart.
+ */
+export async function getTeacherMonthlyRevenue(
+  teacherId: string
+): Promise<MonthlyRevenue[]> {
+  const supabase = createAdminClient()
+
+  // Get all teacher cohort IDs
+  const { data: cohortRows } = await supabase
+    .from('cohorts')
+    .select('id')
+    .eq('teacher_id', teacherId)
+    .is('deleted_at', null)
+
+  const cohortIds = cohortRows?.map((c) => c.id as string) ?? []
+
+  if (cohortIds.length === 0) {
+    return buildEmptyMonths()
+  }
+
+  // Fetch all verified payments in the last 6 months
+  const sixMonthsAgo = new Date()
+  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5)
+  sixMonthsAgo.setDate(1)
+  sixMonthsAgo.setHours(0, 0, 0, 0)
+
+  const { data: payments } = await supabase
+    .from('student_payments')
+    .select('teacher_payout_amount_pkr, verified_at, enrollment_id, enrollments!inner(cohort_id)')
+    .eq('status', 'verified')
+    .in('enrollments.cohort_id', cohortIds)
+    .gte('verified_at', sixMonthsAgo.toISOString())
+
+  // Aggregate by month
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  const monthMap = new Map<string, number>()
+
+  // Initialize last 6 months
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date()
+    d.setMonth(d.getMonth() - i)
+    const key = `${monthNames[d.getMonth()]} ${d.getFullYear()}`
+    monthMap.set(key, 0)
+  }
+
+  if (payments) {
+    for (const p of payments) {
+      if (p.verified_at) {
+        const date = new Date(p.verified_at as string)
+        const key = `${monthNames[date.getMonth()]} ${date.getFullYear()}`
+        if (monthMap.has(key)) {
+          monthMap.set(key, (monthMap.get(key) ?? 0) + ((p.teacher_payout_amount_pkr as number) ?? 0))
+        }
+      }
+    }
+  }
+
+  return Array.from(monthMap.entries()).map(([month, revenue]) => ({
+    month: month.split(' ')[0], // Just the short month name for chart display
+    revenue,
+  }))
+}
+
+function buildEmptyMonths(): MonthlyRevenue[] {
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  const result: MonthlyRevenue[] = []
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date()
+    d.setMonth(d.getMonth() - i)
+    result.push({ month: monthNames[d.getMonth()], revenue: 0 })
+  }
+  return result
+}
+
+// -----------------------------------------------------------------------------
+// Recent Enrollments — For the dashboard recent enrollments list
+// -----------------------------------------------------------------------------
+
+export type RecentEnrollmentRow = {
+  id: string
+  studentName: string
+  cohortName: string
+  courseName: string
+  status: string
+  createdAt: string
+}
+
+/**
+ * getRecentEnrollmentsByTeacher — Returns the latest enrollments across
+ * all teacher cohorts for the dashboard list card.
+ */
+export async function getRecentEnrollmentsByTeacher(
+  teacherId: string,
+  limit: number
+): Promise<RecentEnrollmentRow[]> {
+  const supabase = createAdminClient()
+
+  const { data, error } = await supabase
+    .from('enrollments')
+    .select(`
+      id, status, created_at,
+      students!inner(name),
+      cohorts!inner(name, teacher_id, courses!inner(title))
+    `)
+    .eq('cohorts.teacher_id', teacherId)
+    .order('created_at', { ascending: false })
+    .limit(limit)
+
+  if (error || !data) return []
+
+  return data.map((row) => {
+    // Supabase returns !inner joins as objects (single), but TS sees them loosely
+    const student = row.students as unknown as { name: string }
+    const cohort = row.cohorts as unknown as { name: string; courses: { title: string } }
+
+    return {
+      id: row.id as string,
+      studentName: student.name,
+      cohortName: cohort.name,
+      courseName: cohort.courses.title,
+      status: row.status as string,
+      createdAt: row.created_at as string,
+    }
+  })
+}
