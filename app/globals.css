@@ -121,16 +121,3 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-/* iOS WebKit + Tailwind v4 fix: preflight sets cursor:default on buttons.
-   iOS requires cursor:pointer for reliable tap events. Also enable tap
-   highlight so users get immediate visual feedback on touch. */
-@layer base {
-  button, [role="button"] {
-    cursor: pointer;
-    -webkit-tap-highlight-color: oklch(0.55 0.25 285 / 0.1);
-  }
-  a {
-    -webkit-tap-highlight-color: oklch(0.55 0.25 285 / 0.1);
-  }
-}
-
