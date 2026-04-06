@@ -102,7 +102,7 @@ export function SidebarShell({
     <div className="min-h-dvh bg-background p-2 sm:p-4 font-sans text-foreground">
       <div className="flex min-h-[calc(100dvh-16px)] sm:min-h-[calc(100dvh-32px)] gap-3">
         <SidebarProvider>
-          <Sidebar variant="floating" className="border-none bg-container rounded-[2rem]">
+          <Sidebar variant="floating" className="border-none">
             {/* Header: Logo */}
             <SidebarHeader className="px-6 pt-8 pb-6">
               <div className="flex items-center gap-3">
