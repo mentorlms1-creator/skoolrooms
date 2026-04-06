@@ -3,6 +3,8 @@
  * Uses text-primary by default. Server-compatible (no 'use client' needed).
  */
 
+import { cn } from '@/lib/utils'
+
 type SpinnerSize = 'sm' | 'md' | 'lg'
 
 type SpinnerProps = {
@@ -16,10 +18,10 @@ const sizeClasses: Record<SpinnerSize, string> = {
   lg: 'h-8 w-8',
 }
 
-export function Spinner({ size = 'md', className = '' }: SpinnerProps) {
+export function Spinner({ size = 'md', className }: SpinnerProps) {
   return (
     <svg
-      className={`animate-spin text-primary ${sizeClasses[size]} ${className}`}
+      className={cn('animate-spin text-primary', sizeClasses[size], className)}
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
       viewBox="0 0 24 24"
