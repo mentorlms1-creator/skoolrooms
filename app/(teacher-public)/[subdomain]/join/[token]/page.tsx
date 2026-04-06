@@ -17,7 +17,7 @@ import {
   computeCohortDisplayStatus,
 } from '@/lib/db/cohorts'
 import { Card } from '@/components/ui/Card'
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { WaitlistForm } from '@/components/public/WaitlistForm'
 import { formatPKT } from '@/lib/time/pkt'

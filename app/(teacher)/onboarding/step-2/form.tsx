@@ -6,7 +6,7 @@
 
 import { useState, useTransition, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/Input'
 import { RESERVED_SUBDOMAINS } from '@/constants/plans'
 import { ROUTES } from '@/constants/routes'

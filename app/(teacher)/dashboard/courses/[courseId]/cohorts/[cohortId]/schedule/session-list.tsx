@@ -11,7 +11,7 @@
 import { useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { SessionCard } from '@/components/teacher/SessionCard'
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui/button'
 import { useUIContext } from '@/providers/UIProvider'
 import { cancelSessionAction } from '@/lib/actions/class-sessions'
 

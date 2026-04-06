@@ -9,7 +9,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/Textarea'
 import { useUIContext } from '@/providers/UIProvider'
 import { requestWithdrawalAction } from '@/lib/actions/enrollment-management'

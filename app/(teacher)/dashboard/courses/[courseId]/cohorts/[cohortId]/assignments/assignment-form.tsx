@@ -11,7 +11,7 @@ import { useRouter } from 'next/navigation'
 import { Input } from '@/components/ui/Input'
 import { RichTextEditor } from '@/components/ui/RichTextEditor'
 import { FileUpload } from '@/components/ui/FileUpload'
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui/button'
 import { useUIContext } from '@/providers/UIProvider'
 import { createAssignmentAction } from '@/lib/actions/assignments'
 

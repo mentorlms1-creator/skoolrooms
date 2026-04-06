@@ -8,7 +8,7 @@
  */
 
 import { useState, useCallback, useRef } from 'react'
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui/button'
 import { useTeacherContext } from '@/providers/TeacherProvider'
 import { teacherSubdomainUrl } from '@/lib/platform/domain'
 import { completeOnboardingStep } from '@/lib/actions/onboarding'

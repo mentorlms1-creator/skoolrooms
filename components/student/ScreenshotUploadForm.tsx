@@ -9,7 +9,7 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { FileUpload } from '@/components/ui/FileUpload'
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/Card'
 import { submitScreenshotAction } from '@/lib/actions/student-payments'
 

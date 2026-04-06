@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation'
 import { useUIContext } from '@/providers/UIProvider'
 import { PaymentCard } from '@/components/teacher/PaymentCard'
 import { Modal } from '@/components/ui/Modal'
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui/button'
 import {
   approveEnrollmentAction,
   rejectEnrollmentAction,

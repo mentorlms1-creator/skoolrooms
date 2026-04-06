@@ -8,7 +8,7 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import { Card } from '@/components/ui/Card'
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { Modal } from '@/components/ui/Modal'
 import { formatPKT } from '@/lib/time/pkt'

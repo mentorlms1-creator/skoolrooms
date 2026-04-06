@@ -14,7 +14,7 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { Card } from '@/components/ui/Card'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { StatusBadge } from '@/components/ui/StatusBadge'
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui/button'
 import { ROUTES } from '@/constants/routes'
 
 export const metadata: Metadata = {

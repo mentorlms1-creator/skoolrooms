@@ -10,7 +10,7 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { RichTextEditor } from '@/components/ui/RichTextEditor'
 import { FileUpload } from '@/components/ui/FileUpload'
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui/button'
 import { useUIContext } from '@/providers/UIProvider'
 import { createAnnouncementAction } from '@/lib/actions/announcements'
 

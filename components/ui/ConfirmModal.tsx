@@ -6,7 +6,7 @@
  */
 
 import { Modal } from '@/components/ui/Modal'
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui/button'
 
 type ConfirmModalProps = {
   isOpen: boolean
