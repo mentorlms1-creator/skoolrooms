@@ -237,7 +237,7 @@ export default async function StudentDashboardPage() {
                 {announcements.map((a) => (
                   <div key={a.id} className="border-b border-border pb-3 last:border-0 last:pb-0">
                     <p className="font-medium text-foreground line-clamp-1">
-                      {a.body.length > 80 ? `${a.body.slice(0, 80)}...` : a.body}
+                      {a.body.replace(/<[^>]*>/g, '').slice(0, 80)}
                     </p>
                     <p className="mt-1 text-xs text-muted-foreground">
                       {a.cohorts.teachers.name} &middot;{' '}
