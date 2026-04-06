@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { Menu } from 'lucide-react'
 import { ROUTES } from '@/constants/routes'
 import { Button } from '@/components/ui/button'
@@ -14,8 +15,9 @@ export function PublicNavbar() {
   return (
     <header className="border-b border-border bg-card">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-        <Link href={ROUTES.PLATFORM.home} className="text-xl font-bold text-primary">
-          Lumscribe
+        <Link href={ROUTES.PLATFORM.home} className="flex items-center gap-2">
+          <Image src="/icon.png" alt="Skool Rooms" width={32} height={32} className="rounded-lg" />
+          <span className="text-xl font-bold text-primary">Skool Rooms</span>
         </Link>
 
         {/* Desktop nav */}

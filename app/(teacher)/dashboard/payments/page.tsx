@@ -11,7 +11,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { PaymentVerificationPanel } from './panel'
 
 export const metadata: Metadata = {
-  title: 'Payments \u2014 Lumscribe',
+  title: 'Payments \u2014 Skool Rooms',
 }
 
 export default async function PaymentVerificationPage() {

@@ -24,7 +24,7 @@ import { formatPKT } from '@/lib/time/pkt'
 import type { PlanSlug } from '@/types/domain'
 
 export const metadata: Metadata = {
-  title: 'Plan & Subscription \u2014 Lumscribe',
+  title: 'Plan & Subscription \u2014 Skool Rooms',
 }
 
 // Feature display names for the feature list

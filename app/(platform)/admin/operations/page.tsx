@@ -19,7 +19,7 @@ import {
 import { cn } from '@/lib/utils'
 
 export const metadata: Metadata = {
-  title: 'Operations — Lumscribe Admin',
+  title: 'Operations — Skool Rooms Admin',
 }
 
 export default async function AdminOperationsPage() {

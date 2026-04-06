@@ -10,7 +10,7 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { TeacherListTable } from '@/components/admin/TeacherListTable'
 
 export const metadata: Metadata = {
-  title: 'Teachers \u2014 Lumscribe Admin',
+  title: 'Teachers \u2014 Skool Rooms Admin',
 }
 
 export default async function AdminTeachersPage() {

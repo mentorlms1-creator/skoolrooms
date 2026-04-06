@@ -13,7 +13,7 @@ import { Card } from '@/components/ui/card'
 import { formatPKT } from '@/lib/time/pkt'
 
 export const metadata: Metadata = {
-  title: 'Analytics \u2014 Lumscribe',
+  title: 'Analytics \u2014 Skool Rooms',
 }
 
 export default async function TeacherAnalyticsPage() {

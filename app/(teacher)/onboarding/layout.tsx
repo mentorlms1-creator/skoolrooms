@@ -13,7 +13,7 @@ export default function OnboardingLayout({
       <div className="mx-auto max-w-xl px-4 py-12">
         {/* Brand heading */}
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-primary">Lumscribe</h1>
+          <h1 className="text-3xl font-bold text-primary">Skool Rooms</h1>
           <p className="mt-2 text-muted-foreground">Set up your teaching profile</p>
         </div>
 

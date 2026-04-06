@@ -10,7 +10,7 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { ProfileSettingsForm } from '@/components/teacher/ProfileSettingsForm'
 
 export const metadata: Metadata = {
-  title: 'Settings \u2014 Lumscribe',
+  title: 'Settings \u2014 Skool Rooms',
 }
 
 export default async function TeacherSettingsPage() {

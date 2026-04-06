@@ -27,7 +27,7 @@ import { ROUTES } from '@/constants/routes'
 import sanitizeHtml from 'sanitize-html'
 
 export const metadata: Metadata = {
-  title: 'Course Details \u2014 Lumscribe',
+  title: 'Course Details \u2014 Skool Rooms',
 }
 
 type CourseDetailPageProps = {

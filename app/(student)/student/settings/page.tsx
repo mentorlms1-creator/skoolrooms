@@ -12,7 +12,7 @@ import { formatPKT } from '@/lib/time/pkt'
 import { StudentSettingsForm } from './form'
 
 export const metadata: Metadata = {
-  title: 'Settings \u2014 Lumscribe Student',
+  title: 'Settings \u2014 Skool Rooms Student',
 }
 
 export default async function StudentSettingsPage() {

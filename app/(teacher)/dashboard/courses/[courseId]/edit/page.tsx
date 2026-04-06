@@ -14,7 +14,7 @@ import { ROUTES } from '@/constants/routes'
 import { EditCourseForm } from './form'
 
 export const metadata: Metadata = {
-  title: 'Edit Course \u2014 Lumscribe',
+  title: 'Edit Course \u2014 Skool Rooms',
 }
 
 type EditCoursePageProps = {

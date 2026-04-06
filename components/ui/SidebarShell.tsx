@@ -13,6 +13,7 @@
  */
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { LogOut, Plus, Search } from 'lucide-react'
 import { TEACHER_NAV_ITEMS, ADMIN_NAV_ITEMS, STUDENT_NAV_ITEMS, type NavItem } from '@/constants/nav-items'
@@ -106,25 +107,8 @@ export function SidebarShell({
             {/* Header: Logo */}
             <SidebarHeader className="px-6 pt-8 pb-6">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-foreground text-background">
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="3.5"
-                    className="h-6 w-6"
-                  >
-                    <circle cx="8" cy="8" r="1.5" fill="currentColor" stroke="none" />
-                    <circle cx="16" cy="8" r="1.5" fill="currentColor" stroke="none" />
-                    <circle cx="8" cy="16" r="1.5" fill="currentColor" stroke="none" />
-                    <circle cx="16" cy="16" r="1.5" fill="currentColor" stroke="none" />
-                    <path
-                      d="M12 5v14M5 12h14"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                </div>
-                <span className="text-2xl font-bold tracking-tight">Lumscribe</span>
+                <Image src="/icon.png" alt="Skool Rooms" width={36} height={36} className="rounded-lg" />
+                <span className="text-xl font-bold tracking-tight">Skool Rooms</span>
               </div>
             </SidebarHeader>
 
@@ -233,10 +217,8 @@ export function SidebarShell({
               <header className="flex h-16 items-center gap-3 rounded-3xl bg-container px-6 md:hidden">
                 <SidebarTrigger className="h-10 w-10 text-muted-foreground" />
                 <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-lg bg-foreground text-background flex items-center justify-center">
-                    <span className="text-xl font-bold">L</span>
-                  </div>
-                  <span className="text-xl font-bold">Lumscribe</span>
+                  <Image src="/icon.png" alt="Skool Rooms" width={32} height={32} className="rounded-lg" />
+                  <span className="text-xl font-bold">Skool Rooms</span>
                 </div>
                 <div className="ml-auto flex items-center gap-2">
                   <ThemeToggle />

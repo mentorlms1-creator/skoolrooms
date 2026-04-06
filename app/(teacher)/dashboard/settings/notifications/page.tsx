@@ -11,7 +11,7 @@ import { NotificationSettingsForm } from '@/components/teacher/NotificationSetti
 import { ROUTES } from '@/constants/routes'
 
 export const metadata: Metadata = {
-  title: 'Notifications \u2014 Lumscribe',
+  title: 'Notifications \u2014 Skool Rooms',
 }
 
 export default async function TeacherNotificationSettingsPage() {

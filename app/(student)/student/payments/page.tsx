@@ -16,7 +16,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { formatPKT } from '@/lib/time/pkt'
 
 export const metadata: Metadata = {
-  title: 'Payments \u2014 Lumscribe Student',
+  title: 'Payments \u2014 Skool Rooms Student',
 }
 
 export default async function StudentBillingPage() {

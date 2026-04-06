@@ -18,7 +18,7 @@ import { formatPKT } from '@/lib/time/pkt'
 import { ROUTES } from '@/constants/routes'
 
 export const metadata: Metadata = {
-  title: 'My Courses \u2014 Lumscribe Student',
+  title: 'My Courses \u2014 Skool Rooms Student',
 }
 
 export default async function StudentCoursesPage() {

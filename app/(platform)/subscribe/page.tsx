@@ -38,7 +38,7 @@ export default async function SubscribePage() {
       <header className="border-b border-border bg-card">
         <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-4">
           <a href={ROUTES.TEACHER.dashboard} className="text-xl font-bold text-primary">
-            Lumscribe
+            Skool Rooms
           </a>
           <a
             href={ROUTES.TEACHER.settings.plan}

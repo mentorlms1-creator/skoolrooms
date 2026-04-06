@@ -17,7 +17,7 @@ import {
 import { SubscriptionQueue } from '@/components/admin/SubscriptionQueue'
 
 export const metadata: Metadata = {
-  title: 'Payments — Lumscribe Admin',
+  title: 'Payments — Skool Rooms Admin',
 }
 
 export default async function AdminPaymentsPage() {

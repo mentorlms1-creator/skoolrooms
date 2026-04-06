@@ -12,7 +12,7 @@ import { PaymentSettingsForm } from '@/components/teacher/PaymentSettingsForm'
 import { ROUTES } from '@/constants/routes'
 
 export const metadata: Metadata = {
-  title: 'Payment Settings \u2014 Lumscribe',
+  title: 'Payment Settings \u2014 Skool Rooms',
 }
 
 export default async function TeacherPaymentSettingsPage() {

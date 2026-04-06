@@ -20,7 +20,7 @@ export default function HomePage() {
           Your Teaching, Your Brand, One Platform
         </h1>
         <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
-          Lumscribe gives independent tutors and coaching centers a branded LMS
+          Skool Rooms gives independent tutors and coaching centers a branded LMS
           with course management, scheduling, payments, and a public profile
           &mdash; all in one place.
         </p>
@@ -72,7 +72,7 @@ export default function HomePage() {
 
       {/* ── Footer ── */}
       <footer className="border-t border-border bg-background py-8 text-center text-sm text-muted-foreground">
-        Lumscribe &mdash; LMS for Tutors
+        Skool Rooms &mdash; LMS for Tutors
       </footer>
     </div>
   )

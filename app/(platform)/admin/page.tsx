@@ -35,7 +35,7 @@ import { RevenueChart } from './RevenueChart'
 import { PlanChart } from './PlanChart'
 
 export const metadata: Metadata = {
-  title: 'Admin Dashboard — Lumscribe',
+  title: 'Admin Dashboard — Skool Rooms',
 }
 
 export default async function AdminDashboardPage() {

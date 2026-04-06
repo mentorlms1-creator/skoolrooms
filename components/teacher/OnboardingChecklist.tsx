@@ -79,7 +79,7 @@ export function OnboardingChecklist() {
     <Card className="p-6">
       {/* Header */}
       <div className="mb-4">
-        <h2 className="text-lg font-semibold text-foreground">Get started with Lumscribe</h2>
+        <h2 className="text-lg font-semibold text-foreground">Get started with Skool Rooms</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           Complete these steps to set up your teaching platform.
         </p>

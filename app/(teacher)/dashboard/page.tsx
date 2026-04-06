@@ -36,7 +36,7 @@ import { cn } from '@/lib/utils'
 import { RevenueChart } from './RevenueChart'
 
 export const metadata: Metadata = {
-  title: 'Dashboard — Lumscribe',
+  title: 'Dashboard — Skool Rooms',
 }
 
 export default async function DashboardPage({

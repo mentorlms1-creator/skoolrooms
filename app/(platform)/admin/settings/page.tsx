@@ -10,7 +10,7 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { PlatformSettingsForm } from '@/components/admin/PlatformSettingsForm'
 
 export const metadata: Metadata = {
-  title: 'Settings — Lumscribe Admin',
+  title: 'Settings — Skool Rooms Admin',
 }
 
 export default async function AdminSettingsPage() {

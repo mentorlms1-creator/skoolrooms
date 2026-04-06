@@ -12,7 +12,7 @@ import { ROUTES } from '@/constants/routes'
 import { CreateCourseForm } from './form'
 
 export const metadata: Metadata = {
-  title: 'Create Course \u2014 Lumscribe',
+  title: 'Create Course \u2014 Skool Rooms',
 }
 
 export default async function NewCoursePage() {

@@ -18,7 +18,7 @@ import { Button } from '@/components/ui/button'
 import { ROUTES } from '@/constants/routes'
 
 export const metadata: Metadata = {
-  title: 'Courses \u2014 Lumscribe',
+  title: 'Courses \u2014 Skool Rooms',
 }
 
 /** Strip HTML tags from a string for plain-text preview */

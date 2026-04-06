@@ -10,8 +10,8 @@ import { ROUTES } from '@/constants/routes'
 import { PublicNavbar } from '@/components/public/PublicNavbar'
 
 export const metadata: Metadata = {
-  title: 'Pricing — Lumscribe',
-  description: 'Simple, transparent pricing for Lumscribe. Start free, upgrade when you grow.',
+  title: 'Pricing — Skool Rooms',
+  description: 'Simple, transparent pricing for Skool Rooms. Start free, upgrade when you grow.',
 }
 
 export default function PricingPage() {
@@ -98,7 +98,7 @@ export default function PricingPage() {
 
       {/* ── Footer ── */}
       <footer className="border-t border-border bg-background py-8 text-center text-sm text-muted-foreground">
-        Lumscribe &mdash; LMS for Tutors
+        Skool Rooms &mdash; LMS for Tutors
       </footer>
     </div>
   )

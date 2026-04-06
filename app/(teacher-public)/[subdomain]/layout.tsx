@@ -1,6 +1,6 @@
 /**
  * app/(teacher-public)/[subdomain]/layout.tsx — Teacher public subdomain layout
- * Minimal wrapper with "Powered by Lumscribe" footer.
+ * Minimal wrapper with "Powered by Skool Rooms" footer.
  */
 
 import Link from 'next/link'
@@ -21,7 +21,7 @@ export default function TeacherPublicLayout({
           href={ROUTES.PLATFORM.home}
           className="font-medium text-primary hover:underline"
         >
-          Lumscribe
+          Skool Rooms
         </Link>
       </footer>
     </div>

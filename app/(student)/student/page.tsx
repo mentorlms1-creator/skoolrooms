@@ -34,7 +34,7 @@ import { cn } from '@/lib/utils'
 import { ROUTES } from '@/constants/routes'
 
 export const metadata: Metadata = {
-  title: 'Dashboard \u2014 Lumscribe Student',
+  title: 'Dashboard \u2014 Skool Rooms Student',
 }
 
 /** Check if a UTC timestamp falls within "today" in PKT (UTC+5) */

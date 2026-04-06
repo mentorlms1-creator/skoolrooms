@@ -14,7 +14,7 @@ import { platformDomain } from '@/lib/platform/domain'
 export const revalidate = 3600
 
 export const metadata = {
-  title: 'Explore Teachers — Lumscribe',
+  title: 'Explore Teachers — Skool Rooms',
   description: 'Find the best tutors and teachers in Pakistan. Browse by subject, level, and fee range.',
 }
 

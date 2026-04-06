@@ -15,9 +15,12 @@ export const viewport: Viewport = {
 }
 
 export const metadata: Metadata = {
-  title: "Lumscribe — LMS for Tutors",
+  title: "Skool Rooms — LMS for Tutors",
   description:
     "An LMS platform for independent tutors, home teachers, and small coaching centers.",
+  icons: {
+    icon: '/icon.png',
+  },
 };
 
 export default function RootLayout({
