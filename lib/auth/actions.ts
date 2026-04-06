@@ -220,6 +220,51 @@ export async function signIn(
 }
 
 /**
+ * Sign in action for useActionState — works as progressive enhancement.
+ * The form submits as a native POST even before React hydrates (iOS fix).
+ * On success, redirects server-side (no client-side router.push needed).
+ */
+export async function signInAction(
+  portalType: 'teacher' | 'student',
+  redirectTo: string,
+  _prevState: { error: string | null },
+  formData: FormData
+): Promise<{ error: string | null }> {
+  const email = formData.get('email') as string
+  const password = formData.get('password') as string
+
+  if (!email || !password) {
+    return { error: 'Email and password are required' }
+  }
+
+  const supabase = await createClient()
+
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  })
+
+  if (error) {
+    return { error: 'Invalid email or password' }
+  }
+
+  const role = (data.user.user_metadata?.role as string) || 'teacher'
+
+  // Portal mismatch checks
+  if (portalType === 'teacher' && role === 'student') {
+    await supabase.auth.signOut()
+    return { error: 'This is the teacher login. Please use the student portal to sign in.' }
+  }
+  if (portalType === 'student' && role === 'teacher') {
+    await supabase.auth.signOut()
+    return { error: 'This is the student portal. Please use the teacher login to sign in.' }
+  }
+
+  // Server-side redirect — cookies are already set, no hydration needed
+  redirect(redirectTo)
+}
+
+/**
  * Sign out the current user (teacher/admin) and redirect to login.
  */
 export async function signOut(): Promise<never> {

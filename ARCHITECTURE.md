@@ -2817,6 +2817,36 @@ Applied to: `components/teacher/Sidebar.tsx`, `components/admin/AdminSidebar.tsx
 #### Responsive Padding
 Container elements use responsive padding: `p-4 sm:p-6` (tighter on mobile, standard on desktop). Never use fixed large padding that wastes space on 375px screens.
 
+#### Mobile Menus (iOS Safari/Chrome Compatibility)
+React `onClick` on `<button>` elements does not fire reliably on iOS WebKit (Safari/Chrome). This is a long-standing React issue (facebook/react#134). Two patterns are used depending on the menu type:
+
+**Dropdown menus** (PublicNavbar, StudentNav) — use `<details>`/`<summary>`:
+```html
+<details class="sm:hidden group">
+  <summary class="list-none cursor-pointer [&::-webkit-details-marker]:hidden">
+    <!-- Hamburger icon (group-open:hidden) / X icon (hidden group-open:block) -->
+  </summary>
+  <nav class="absolute left-0 right-0 border-t border-border bg-surface">
+    <!-- Menu links -->
+  </nav>
+</details>
+```
+This is native HTML — works before React hydrates, no JavaScript needed. Used by GitHub and GOV.UK.
+
+**Slide-out drawers** (teacher Sidebar, admin AdminSidebar) — use `onTouchEnd` alongside `onClick`:
+```tsx
+<button
+  onClick={() => setMobileOpen(!mobileOpen)}
+  onTouchEnd={(e) => { e.preventDefault(); setMobileOpen((prev) => !prev) }}
+>
+```
+These drawers need overlays and animations that require JS state. The `onTouchEnd` fires before `onClick` on iOS and is more reliable.
+
+**Global rules** (in `globals.css`):
+- `cursor: pointer` on all `button` and `[role="button"]` elements (Tailwind v4 preflight sets `cursor: default` which breaks iOS taps)
+- `-webkit-tap-highlight-color` for immediate tap feedback on iOS
+- `pointer-events-none` on SVG icons inside buttons (prevents iOS touch event interception)
+
 ---
 
 ## 10b. Complete URL Route Map
