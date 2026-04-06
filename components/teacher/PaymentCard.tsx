@@ -10,7 +10,7 @@ import Image from 'next/image'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/ui/StatusBadge'
-import { Modal } from '@/components/ui/Modal'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { formatPKT } from '@/lib/time/pkt'
 
 type PaymentCardPayment = {
@@ -153,27 +153,27 @@ export function PaymentCard({
         </div>
       </Card>
 
-      {/* Screenshot full-size modal */}
+      {/* Screenshot full-size dialog */}
       {payment.screenshot_url && (
-        <Modal
-          isOpen={screenshotOpen}
-          onClose={() => setScreenshotOpen(false)}
-          title="Payment Screenshot"
-          size="lg"
-        >
-          <div className="flex justify-center">
-            <div className="relative w-full" style={{ maxHeight: '70vh' }}>
-              <Image
-                src={payment.screenshot_url}
-                alt="Payment screenshot full size"
-                width={800}
-                height={600}
-                className="mx-auto max-h-[70vh] w-auto rounded-md"
-                sizes="(max-width: 768px) 100vw, 800px"
-              />
+        <Dialog open={screenshotOpen} onOpenChange={(open) => { if (!open) setScreenshotOpen(false) }}>
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Payment Screenshot</DialogTitle>
+            </DialogHeader>
+            <div className="flex justify-center">
+              <div className="relative w-full" style={{ maxHeight: '70vh' }}>
+                <Image
+                  src={payment.screenshot_url}
+                  alt="Payment screenshot full size"
+                  width={800}
+                  height={600}
+                  className="mx-auto max-h-[70vh] w-auto rounded-md"
+                  sizes="(max-width: 768px) 100vw, 800px"
+                />
+              </div>
             </div>
-          </div>
-        </Modal>
+          </DialogContent>
+        </Dialog>
       )}
     </>
   )

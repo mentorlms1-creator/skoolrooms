@@ -1,13 +1,17 @@
 /**
  * components/ui/StatusBadge.tsx — Universal status badge for all entity statuses
- * Maps status strings to appropriate colors. Server-compatible.
+ * Wraps shadcn Badge with status-specific color mapping. Server-compatible.
  */
+
+import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
 
 type StatusBadgeSize = 'sm' | 'md'
 
 type StatusBadgeProps = {
   status: string
   size?: StatusBadgeSize
+  className?: string
 }
 
 type StatusColor = 'success' | 'warning' | 'danger' | 'muted'
@@ -20,6 +24,7 @@ const statusColorMap: Record<string, StatusColor> = {
   published: 'success',
   enrolled: 'success',
   reviewed: 'success',
+  approved: 'success',
 
   // Warning states
   pending: 'warning',
@@ -47,15 +52,10 @@ const statusColorMap: Record<string, StatusColor> = {
 }
 
 const colorClasses: Record<StatusColor, string> = {
-  success: 'bg-success/10 text-success',
-  warning: 'bg-warning/10 text-warning',
-  danger: 'bg-destructive/10 text-destructive',
-  muted: 'bg-muted/10 text-muted-foreground',
-}
-
-const sizeClasses: Record<StatusBadgeSize, string> = {
-  sm: 'px-2 py-0.5 text-[13px]',
-  md: 'px-2.5 py-1 text-sm',
+  success: 'bg-success/10 text-success border-success/20',
+  warning: 'bg-warning/10 text-warning border-warning/20',
+  danger: 'bg-destructive/10 text-destructive border-destructive/20',
+  muted: 'bg-muted text-muted-foreground border-border',
 }
 
 /**
@@ -69,18 +69,20 @@ function formatStatusText(status: string): string {
     .join(' ')
 }
 
-export function StatusBadge({ status, size = 'md' }: StatusBadgeProps) {
-  const color = statusColorMap[status] || 'muted'
+export function StatusBadge({ status, size = 'md', className }: StatusBadgeProps) {
+  const normalized = status.toLowerCase().replace(/\s+/g, '_')
+  const color = statusColorMap[normalized] || 'muted'
 
   return (
-    <span
-      className={`
-        inline-flex items-center rounded-full font-medium whitespace-nowrap
-        ${colorClasses[color]}
-        ${sizeClasses[size]}
-      `}
+    <Badge
+      variant="outline"
+      className={cn(
+        colorClasses[color],
+        size === 'sm' ? 'text-xs px-2 py-0.5' : 'text-sm px-2.5 py-1',
+        className
+      )}
     >
       {formatStatusText(status)}
-    </span>
+    </Badge>
   )
 }

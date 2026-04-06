@@ -9,7 +9,7 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/Textarea'
+import { Textarea } from '@/components/ui/textarea'
 import { Card } from '@/components/ui/card'
 import { updateProfileAction } from '@/lib/actions/teacher-settings'
 
@@ -74,13 +74,16 @@ export function ProfileSettingsForm({ initialData }: ProfileSettingsFormProps) {
           />
         </div>
 
-        <Textarea
-          label="Bio"
-          name="bio"
-          defaultValue={initialData.bio}
-          placeholder="Tell students about yourself..."
-          rows={3}
-        />
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="bio">Bio</Label>
+          <Textarea
+            id="bio"
+            name="bio"
+            defaultValue={initialData.bio}
+            placeholder="Tell students about yourself..."
+            rows={3}
+          />
+        </div>
 
         <div className="space-y-2">
           <Label htmlFor="city">City</Label>

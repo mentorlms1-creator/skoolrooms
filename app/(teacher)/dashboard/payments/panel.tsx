@@ -9,7 +9,7 @@ import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useUIContext } from '@/providers/UIProvider'
 import { PaymentCard } from '@/components/teacher/PaymentCard'
-import { Modal } from '@/components/ui/Modal'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import {
   approveEnrollmentAction,
@@ -131,48 +131,51 @@ export function PaymentVerificationPanel({
         })}
       </div>
 
-      {/* Reject reason modal */}
-      <Modal
-        isOpen={rejectModalOpen}
-        onClose={() => {
-          if (!rejectLoading) {
+      {/* Reject reason dialog */}
+      <Dialog
+        open={rejectModalOpen}
+        onOpenChange={(open) => {
+          if (!open && !rejectLoading) {
             setRejectModalOpen(false)
           }
         }}
-        title="Reject Payment"
-        size="sm"
       >
-        <div className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            Please provide a reason for rejecting this payment. The student will
-            be notified with this reason.
-          </p>
-          <textarea
-            value={rejectReason}
-            onChange={(e) => setRejectReason(e.target.value)}
-            placeholder="e.g., Screenshot is unclear, amount does not match..."
-            rows={3}
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring"
-            disabled={rejectLoading}
-          />
-          <div className="flex items-center justify-end gap-3">
-            <Button
-              variant="secondary"
-              onClick={() => setRejectModalOpen(false)}
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Reject Payment</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Please provide a reason for rejecting this payment. The student will
+              be notified with this reason.
+            </p>
+            <textarea
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              placeholder="e.g., Screenshot is unclear, amount does not match..."
+              rows={3}
+              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring"
               disabled={rejectLoading}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="danger"
-              onClick={handleRejectConfirm}
-              loading={rejectLoading}
-            >
-              Reject Payment
-            </Button>
+            />
+            <div className="flex items-center justify-end gap-3">
+              <Button
+                variant="secondary"
+                onClick={() => setRejectModalOpen(false)}
+                disabled={rejectLoading}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="danger"
+                onClick={handleRejectConfirm}
+                loading={rejectLoading}
+              >
+                Reject Payment
+              </Button>
+            </div>
           </div>
-        </div>
-      </Modal>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

@@ -8,7 +8,16 @@
 
 import { createContext, useCallback, useContext, useState } from 'react'
 import { Toast } from '@/components/ui/Toast'
-import { ConfirmModal } from '@/components/ui/ConfirmModal'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 
 // -----------------------------------------------------------------------------
 // Types
@@ -152,17 +161,25 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
         ))}
       </div>
 
-      {/* Confirm modal — single instance reused */}
-      <ConfirmModal
-        isOpen={confirmState.isOpen}
-        onClose={handleConfirmClose}
-        onConfirm={handleConfirmAction}
-        title={confirmState.title}
-        message={confirmState.message}
-        confirmText={confirmState.confirmText}
-        confirmVariant={confirmState.confirmVariant}
-        loading={confirmState.loading}
-      />
+      {/* Confirm dialog — single instance reused */}
+      <AlertDialog open={confirmState.isOpen} onOpenChange={(open) => { if (!open) handleConfirmClose() }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{confirmState.title}</AlertDialogTitle>
+            <AlertDialogDescription>{confirmState.message}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={confirmState.loading}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmAction}
+              variant={confirmState.confirmVariant === 'danger' ? 'danger' : 'primary'}
+              disabled={confirmState.loading}
+            >
+              {confirmState.confirmText}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </UIContext.Provider>
   )
 }

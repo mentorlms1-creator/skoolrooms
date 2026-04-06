@@ -15,7 +15,8 @@ import { useRouter } from 'next/navigation'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/ui/StatusBadge'
-import { Textarea } from '@/components/ui/Textarea'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
 import { FileUpload } from '@/components/ui/FileUpload'
 import { useUIContext } from '@/providers/UIProvider'
 import { formatPKT } from '@/lib/time/pkt'
@@ -249,13 +250,16 @@ function SubmissionForm({
         {existingSubmission ? 'Re-submit Assignment' : 'Submit Assignment'}
       </h4>
 
-      <Textarea
-        label="Text Answer"
-        value={textAnswer}
-        onChange={(e) => setTextAnswer(e.target.value)}
-        placeholder="Type your answer here..."
-        rows={4}
-      />
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="text-answer">Text Answer</Label>
+        <Textarea
+          id="text-answer"
+          value={textAnswer}
+          onChange={(e) => setTextAnswer(e.target.value)}
+          placeholder="Type your answer here..."
+          rows={4}
+        />
+      </div>
 
       <div className="mt-3">
         <p className="mb-1.5 text-sm font-medium text-foreground">

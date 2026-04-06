@@ -10,7 +10,8 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/Textarea'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
 import { useUIContext } from '@/providers/UIProvider'
 import { requestWithdrawalAction } from '@/lib/actions/enrollment-management'
 
@@ -73,13 +74,16 @@ export function WithdrawalForm({ enrollmentId }: WithdrawalFormProps) {
   return (
     <div className="rounded-md border border-border bg-background p-4">
       <h4 className="mb-3 text-sm font-medium text-foreground">Request Withdrawal</h4>
-      <Textarea
-        label="Reason (optional)"
-        value={reason}
-        onChange={(e) => setReason(e.target.value)}
-        placeholder="Let your teacher know why you want to withdraw..."
-        rows={3}
-      />
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="withdrawal-reason">Reason (optional)</Label>
+        <Textarea
+          id="withdrawal-reason"
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          placeholder="Let your teacher know why you want to withdraw..."
+          rows={3}
+        />
+      </div>
 
       {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
 

@@ -7,7 +7,8 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/Textarea'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
 import { FileUpload } from '@/components/ui/FileUpload'
 import { saveOnboardingStep3 } from '@/lib/actions/onboarding'
 import { ROUTES } from '@/constants/routes'
@@ -79,14 +80,17 @@ export function Step3Form({
 
       {/* Bio */}
       <div>
-        <Textarea
-          label="Bio"
-          value={bio}
-          onChange={(e) => setBio(e.target.value)}
-          placeholder="Tell students about your teaching experience, qualifications, and what makes your classes special..."
-          rows={5}
-          error={error ?? undefined}
-        />
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="bio">Bio</Label>
+          <Textarea
+            id="bio"
+            value={bio}
+            onChange={(e) => setBio(e.target.value)}
+            placeholder="Tell students about your teaching experience, qualifications, and what makes your classes special..."
+            rows={5}
+          />
+          {error && <p className="text-sm text-destructive">{error}</p>}
+        </div>
         <p className="mt-1 text-xs text-muted-foreground">
           Minimum 10 characters. This appears on your public profile.
         </p>

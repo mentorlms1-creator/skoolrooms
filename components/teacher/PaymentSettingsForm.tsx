@@ -11,7 +11,7 @@ import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/Textarea'
+import { Textarea } from '@/components/ui/textarea'
 import { Card } from '@/components/ui/card'
 import { updatePaymentSettingsAction } from '@/lib/actions/teacher-settings'
 
@@ -151,13 +151,16 @@ export function PaymentSettingsForm({ initialData }: PaymentSettingsFormProps) {
         </div>
 
         {/* Instructions */}
-        <Textarea
-          label="Payment Instructions for Students"
-          name="instructions"
-          defaultValue={initialData.instructions}
-          placeholder="e.g., Send to HBL account 1234567890, share screenshot after payment"
-          rows={3}
-        />
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="instructions">Payment Instructions for Students</Label>
+          <Textarea
+            id="instructions"
+            name="instructions"
+            defaultValue={initialData.instructions}
+            placeholder="e.g., Send to HBL account 1234567890, share screenshot after payment"
+            rows={3}
+          />
+        </div>
 
         <p className="text-xs text-muted-foreground">
           At least one payment method (IBAN, JazzCash, or EasyPaisa) must be provided.
