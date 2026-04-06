@@ -1,22 +1,57 @@
 /**
  * app/(platform)/admin/page.tsx — Admin dashboard home
  *
- * Server Component. Displays MRR, signup counts, plan distribution.
+ * Server Component. Displays bento grid with KPIs, charts, and recent teachers.
+ * Charts are client components loaded via dynamic import (no SSR).
  */
 
 import type { Metadata } from 'next'
-import { getAdminDashboardStats, getOperationsStats } from '@/lib/db/admin'
+import dynamic from 'next/dynamic'
+import {
+  getAdminDashboardStats,
+  getOperationsStats,
+  getRecentTeachers,
+  getRevenueByCohort,
+} from '@/lib/db/admin'
+import { formatPKT } from '@/lib/time/pkt'
 import { PageHeader } from '@/components/ui/PageHeader'
-import { Card } from '@/components/ui/card'
+import { DateRangeFilter } from '@/components/ui/DateRangeFilter'
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Skeleton } from '@/components/ui/skeleton'
+
+const RevenueChart = dynamic(
+  () => import('./RevenueChart').then((m) => ({ default: m.RevenueChart })),
+  {
+    ssr: false,
+    loading: () => <Skeleton className="h-[260px] w-full" />,
+  }
+)
+
+const PlanChart = dynamic(
+  () => import('./PlanChart').then((m) => ({ default: m.PlanChart })),
+  {
+    ssr: false,
+    loading: () => <Skeleton className="h-[260px] w-full" />,
+  }
+)
 
 export const metadata: Metadata = {
-  title: 'Admin Dashboard \u2014 Lumscribe',
+  title: 'Admin Dashboard — Lumscribe',
 }
 
 export default async function AdminDashboardPage() {
-  const [stats, ops] = await Promise.all([
+  const [stats, ops, recentTeachers, revenueByCohort] = await Promise.all([
     getAdminDashboardStats(),
     getOperationsStats(),
+    getRecentTeachers(),
+    getRevenueByCohort(),
   ])
 
   return (
@@ -24,10 +59,11 @@ export default async function AdminDashboardPage() {
       <PageHeader
         title="Admin Dashboard"
         description="Platform overview and key metrics."
+        filter={<DateRangeFilter />}
       />
 
-      {/* KPI Cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {/* Row 1: Four stat cards */}
         <StatCard
           label="Monthly Recurring Revenue"
           value={`PKR ${stats.mrr.toLocaleString()}`}
@@ -37,44 +73,84 @@ export default async function AdminDashboardPage() {
           value={String(stats.signupsThisWeek)}
         />
         <StatCard
-          label="Signups This Month"
-          value={String(stats.signupsThisMonth)}
-        />
-        <StatCard
           label="Pending Payments"
           value={String(ops.pendingPaymentCount)}
         />
-      </div>
-
-      {/* Second row */}
-      <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard
           label="Active Cohorts"
           value={String(ops.totalActiveCohorts)}
         />
+
+        {/* Row 2: Revenue chart (2x1) + Plan distribution donut (2x1) */}
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <CardTitle>Revenue by Cohort</CardTitle>
+            <CardDescription>Top cohorts by confirmed payments</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <RevenueChart data={revenueByCohort} />
+          </CardContent>
+        </Card>
+
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <CardTitle>Plan Distribution</CardTitle>
+            <CardDescription>Teachers by subscription plan</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <PlanChart data={stats.planDistribution} />
+          </CardContent>
+        </Card>
+
+        {/* Row 3: Recent teachers (2x1) + Total Students (1x1) + Signups This Month (1x1) */}
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <CardTitle>Recent Teachers</CardTitle>
+            <CardDescription>Latest signups</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {recentTeachers.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No teachers have signed up yet.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {recentTeachers.map((teacher) => (
+                  <div
+                    key={teacher.id}
+                    className="flex items-center justify-between gap-3"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-foreground">
+                        {teacher.name}
+                      </p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {teacher.email}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <Badge variant="secondary" className="capitalize">
+                        {teacher.plan}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">
+                        {formatPKT(teacher.created_at, 'date')}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         <StatCard
           label="Total Students"
           value={String(ops.totalStudents)}
         />
-        <Card className="p-6">
-          <h3 className="text-sm font-medium text-muted-foreground">Plan Distribution</h3>
-          <div className="mt-3 space-y-2">
-            {stats.planDistribution.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No teachers yet.</p>
-            ) : (
-              stats.planDistribution.map((item) => (
-                <div key={item.plan} className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-foreground capitalize">
-                    {item.plan}
-                  </span>
-                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                    {item.count}
-                  </span>
-                </div>
-              ))
-            )}
-          </div>
-        </Card>
+        <StatCard
+          label="Signups This Month"
+          value={String(stats.signupsThisMonth)}
+        />
       </div>
     </>
   )
@@ -82,9 +158,11 @@ export default async function AdminDashboardPage() {
 
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
-    <Card className="p-6">
-      <h3 className="text-sm font-medium text-muted-foreground">{label}</h3>
-      <p className="mt-2 text-3xl font-bold text-foreground">{value}</p>
+    <Card>
+      <CardHeader>
+        <CardDescription>{label}</CardDescription>
+        <CardTitle className="text-3xl font-bold">{value}</CardTitle>
+      </CardHeader>
     </Card>
   )
 }

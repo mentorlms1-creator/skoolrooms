@@ -708,6 +708,104 @@ export async function getTeacherAnalytics(
 }
 
 // -----------------------------------------------------------------------------
+// getRecentTeachers — Last 5 teacher signups for admin dashboard
+// -----------------------------------------------------------------------------
+export type RecentTeacherRow = {
+  id: string
+  name: string
+  email: string
+  plan: string
+  created_at: string
+}
+
+export async function getRecentTeachers(): Promise<RecentTeacherRow[]> {
+  const supabase = createAdminClient()
+
+  const { data, error } = await supabase
+    .from('teachers')
+    .select('id, name, email, plan, created_at')
+    .order('created_at', { ascending: false })
+    .limit(5)
+
+  if (error || !data) return []
+
+  return data.map((t) => ({
+    id: t.id as string,
+    name: t.name as string,
+    email: t.email as string,
+    plan: t.plan as string,
+    created_at: t.created_at as string,
+  }))
+}
+
+// -----------------------------------------------------------------------------
+// getRevenueByCohort — Top cohorts by revenue (platform-wide) for admin dashboard
+// Returns up to 6 cohorts with the most confirmed revenue.
+// -----------------------------------------------------------------------------
+export type RevenueByCohortRow = {
+  cohortName: string
+  revenue: number
+}
+
+export async function getRevenueByCohort(): Promise<RevenueByCohortRow[]> {
+  const supabase = createAdminClient()
+
+  // Get all cohorts
+  const { data: cohorts } = await supabase
+    .from('cohorts')
+    .select('id, name')
+    .is('deleted_at', null)
+
+  if (!cohorts || cohorts.length === 0) return []
+
+  const cohortIds = cohorts.map((c) => c.id as string)
+  const cohortNames: Record<string, string> = {}
+  for (const c of cohorts) {
+    cohortNames[c.id as string] = c.name as string
+  }
+
+  // Get enrollments for these cohorts
+  const { data: enrollments } = await supabase
+    .from('enrollments')
+    .select('id, cohort_id')
+    .in('cohort_id', cohortIds)
+
+  if (!enrollments || enrollments.length === 0) return []
+
+  const enrollmentIds = enrollments.map((e) => e.id as string)
+  const enrollmentCohortMap: Record<string, string> = {}
+  for (const e of enrollments) {
+    enrollmentCohortMap[e.id as string] = e.cohort_id as string
+  }
+
+  // Get confirmed payments
+  const { data: payments } = await supabase
+    .from('student_payments')
+    .select('amount_pkr, enrollment_id')
+    .in('enrollment_id', enrollmentIds)
+    .eq('status', 'confirmed')
+
+  if (!payments || payments.length === 0) return []
+
+  const cohortRevenue: Record<string, number> = {}
+  for (const p of payments) {
+    const cohortId = enrollmentCohortMap[p.enrollment_id as string]
+    if (cohortId) {
+      cohortRevenue[cohortId] = (cohortRevenue[cohortId] ?? 0) + (p.amount_pkr as number)
+    }
+  }
+
+  // Sort by revenue descending, take top 6
+  return Object.entries(cohortRevenue)
+    .map(([cohortId, revenue]) => ({
+      cohortName: cohortNames[cohortId] ?? 'Unknown',
+      revenue,
+    }))
+    .sort((a, b) => b.revenue - a.revenue)
+    .slice(0, 6)
+}
+
+// -----------------------------------------------------------------------------
 // getPendingSubscriptions — For admin payments page
 // -----------------------------------------------------------------------------
 export type PendingSubscriptionRow = {
