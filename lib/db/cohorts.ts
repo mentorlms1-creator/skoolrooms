@@ -295,6 +295,54 @@ export async function getActiveEnrollmentCount(
 }
 
 // -----------------------------------------------------------------------------
+// duplicateCohort — Create a copy of a cohort with fresh dates + invite_token
+// Copies settings only; class_sessions/enrollments/announcements start empty.
+// start_date = today+30d, end_date = today+60d, status='draft'
+// -----------------------------------------------------------------------------
+export async function duplicateCohort(
+  sourceCohortId: string,
+  teacherId: string,
+): Promise<CohortRow | null> {
+  const source = await getCohortById(sourceCohortId)
+  if (!source || source.teacher_id !== teacherId) return null
+
+  const supabase = createAdminClient()
+
+  const startDate = new Date()
+  startDate.setDate(startDate.getDate() + 30)
+  const endDate = new Date()
+  endDate.setDate(endDate.getDate() + 60)
+
+  const { data, error } = await supabase
+    .from('cohorts')
+    .insert({
+      teacher_id: teacherId,
+      course_id: source.course_id,
+      name: `${source.name} (copy)`,
+      session_type: source.session_type,
+      fee_type: source.fee_type,
+      fee_pkr: source.fee_pkr,
+      billing_day: source.billing_day,
+      max_students: source.max_students,
+      pending_can_see_schedule: source.pending_can_see_schedule,
+      pending_can_see_announcements: source.pending_can_see_announcements,
+      waitlist_enabled: source.waitlist_enabled,
+      is_registration_open: false,
+      status: 'draft',
+      start_date: startDate.toISOString().split('T')[0],
+      end_date: endDate.toISOString().split('T')[0],
+      invite_token: crypto.randomUUID(),
+      archived_at: null,
+      deleted_at: null,
+    })
+    .select('*')
+    .single()
+
+  if (error || !data) return null
+  return data as CohortRow
+}
+
+// -----------------------------------------------------------------------------
 // computeCohortDisplayStatus — Pure function, no DB call
 // Returns a human-readable display status based on cohort state.
 //

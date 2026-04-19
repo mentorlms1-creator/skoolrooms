@@ -5,7 +5,10 @@
  * renders the client-side edit form.
  */
 
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { Tag } from 'lucide-react'
+
 import { requireTeacher } from '@/lib/auth/guards'
 import { getCohortById } from '@/lib/db/cohorts'
 import { getCourseById } from '@/lib/db/courses'
@@ -17,10 +20,13 @@ import { EditCohortForm } from './form'
 
 type EditCohortPageProps = {
   params: Promise<{ courseId: string; cohortId: string }>
+  searchParams: Promise<{ from?: string }>
 }
 
-export default async function EditCohortPage({ params }: EditCohortPageProps) {
+export default async function EditCohortPage({ params, searchParams }: EditCohortPageProps) {
   const { courseId, cohortId } = await params
+  const { from } = await searchParams
+  const fromDuplicate = from === 'duplicate'
   const teacher = await requireTeacher()
 
   const [cohort, course] = await Promise.all([
@@ -50,6 +56,23 @@ export default async function EditCohortPage({ params }: EditCohortPageProps) {
         title="Edit Cohort"
         backHref={ROUTES.TEACHER.cohortDetail(courseId, cohortId)}
       />
+
+      {fromDuplicate && (
+        <div className="mb-4 rounded-md border border-warning bg-warning/10 p-4 text-sm text-warning-foreground">
+          <strong>Review dates before publishing.</strong> This cohort was duplicated with default dates (30-day duration starting in 30 days). Update start and end dates to match your actual schedule, then set status to Upcoming or Active when ready.
+        </div>
+      )}
+
+      {/* Discount codes quick link */}
+      <div className="mb-4">
+        <Link
+          href={`/dashboard/courses/${courseId}/cohorts/${cohortId}/discount-codes`}
+          className="inline-flex items-center gap-2 rounded-md border border-border bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-muted transition-colors"
+        >
+          <Tag className="h-4 w-4" />
+          Manage Discount Codes
+        </Link>
+      </div>
 
       <Card className="p-6">
         <EditCohortForm

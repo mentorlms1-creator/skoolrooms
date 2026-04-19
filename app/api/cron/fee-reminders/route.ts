@@ -153,6 +153,19 @@ export async function GET(request: NextRequest) {
         continue
       }
 
+      // Idempotency: skip if we already sent an upcoming reminder for this student+month
+      const { data: existingReminder } = await supabase
+        .from('notifications_log')
+        .select('id')
+        .eq('recipient_id', student.id)
+        .eq('type', 'fee_reminder')
+        .eq('status', 'sent')
+        .contains('metadata', { billing_month: billingMonth, variant: 'upcoming' })
+        .limit(1)
+        .maybeSingle()
+
+      if (existingReminder) continue
+
       const email = student.email
       if (!studentReminders.has(email)) {
         studentReminders.set(email, {
@@ -171,7 +184,7 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    // Send one combined email per student
+    // Send one combined email per student (first reminder)
     let sentCount = 0
     for (const [, reminder] of studentReminders) {
       const cohortSummary = reminder.cohortDetails
@@ -188,13 +201,154 @@ export async function GET(request: NextRequest) {
           cohortSummary,
           billingDay: reminder.cohortDetails[0].billingDay,
           cohortCount: reminder.cohortDetails.length,
+          billing_month: billingMonth,
+          variant: 'upcoming',
         },
+      })
+      await supabase.from('notifications_log').insert({
+        recipient_type: 'student',
+        recipient_id: reminder.studentId,
+        type: 'fee_reminder',
+        channel: 'email',
+        status: 'sent',
+        metadata: { billing_month: billingMonth, variant: 'upcoming' },
       })
       sentCount++
     }
 
-    console.log(`[cron:fee-reminders] Done. Sent ${sentCount} fee reminder emails`)
-    return NextResponse.json({ success: true, sent: sentCount })
+    // -------------------------------------------------------------------------
+    // Second pass: overdue reminders (FEE_OVERDUE_DAYS_AFTER days after billing_day)
+    // -------------------------------------------------------------------------
+    const overdueTargetDate = new Date(now)
+    overdueTargetDate.setDate(overdueTargetDate.getDate() - TIMING.FEE_OVERDUE_DAYS_AFTER)
+    const overdueTargetBillingDay = overdueTargetDate.getDate()
+
+    let overdueSentCount = 0
+
+    if (overdueTargetBillingDay <= TIMING.MAX_BILLING_DAY) {
+      console.log(`[cron:fee-reminders] Overdue pass: billing_day=${overdueTargetBillingDay}`)
+
+      const overdueBillingMonth = firstOfMonthPKT(overdueTargetDate)
+
+      const { data: overdueCohorts } = await supabase
+        .from('cohorts')
+        .select('id, name, fee_pkr, billing_day, teacher_id')
+        .eq('fee_type', 'monthly')
+        .eq('billing_day', overdueTargetBillingDay)
+        .in('status', ['active', 'upcoming'])
+        .is('deleted_at', null)
+
+      if (overdueCohorts && overdueCohorts.length > 0) {
+        const overdueCohortIds = overdueCohorts.map((c) => c.id as string)
+
+        const { data: overdueEnrollments } = await supabase
+          .from('enrollments')
+          .select('id, cohort_id, student_id, students!inner(id, name, email)')
+          .in('cohort_id', overdueCohortIds)
+          .eq('status', 'active')
+
+        const overdueCohortMap = new Map<string, { name: string; fee_pkr: number; billing_day: number; teacher_id: string }>()
+        for (const c of overdueCohorts) {
+          overdueCohortMap.set(c.id as string, {
+            name: c.name as string,
+            fee_pkr: c.fee_pkr as number,
+            billing_day: c.billing_day as number,
+            teacher_id: c.teacher_id as string,
+          })
+        }
+
+        // Filter to cohorts with active teachers
+        const overdueFilteredCohortIds = new Set(
+          overdueCohorts
+            .filter((c) => activeTeacherIds.has(c.teacher_id as string))
+            .map((c) => c.id as string)
+        )
+
+        const overdueStudentReminders = new Map<string, StudentReminder>()
+
+        for (const enrollment of (overdueEnrollments ?? [])) {
+          const student = enrollment.students as unknown as { id: string; name: string; email: string }
+          const cohortId = enrollment.cohort_id as string
+          const cohortInfo = overdueCohortMap.get(cohortId)
+          if (!cohortInfo || !student) continue
+          if (!overdueFilteredCohortIds.has(cohortId)) continue
+
+          // Skip if confirmed payment exists for this billing month
+          const { data: confirmedPayment } = await supabase
+            .from('student_payments')
+            .select('id')
+            .eq('enrollment_id', enrollment.id as string)
+            .eq('payment_month', overdueBillingMonth)
+            .eq('status', 'confirmed')
+            .limit(1)
+            .maybeSingle()
+
+          if (confirmedPayment) continue
+
+          // Idempotency: skip if already sent overdue reminder for this student+month
+          const { data: existingOverdueReminder } = await supabase
+            .from('notifications_log')
+            .select('id')
+            .eq('recipient_id', student.id)
+            .eq('type', 'fee_overdue_5day')
+            .eq('status', 'sent')
+            .contains('metadata', { billing_month: overdueBillingMonth, variant: 'overdue' })
+            .limit(1)
+            .maybeSingle()
+
+          if (existingOverdueReminder) continue
+
+          const email = student.email
+          if (!overdueStudentReminders.has(email)) {
+            overdueStudentReminders.set(email, {
+              studentId: student.id,
+              studentName: student.name,
+              studentEmail: email,
+              cohortDetails: [],
+            })
+          }
+          overdueStudentReminders.get(email)!.cohortDetails.push({
+            cohortName: cohortInfo.name,
+            feePkr: cohortInfo.fee_pkr,
+            teacherName: teacherNameMap.get(cohortInfo.teacher_id) ?? 'Your Teacher',
+            billingDay: cohortInfo.billing_day,
+          })
+        }
+
+        for (const [, reminder] of overdueStudentReminders) {
+          const cohortSummary = reminder.cohortDetails
+            .map((c) => `${c.cohortName} (Rs. ${c.feePkr.toLocaleString('en-PK')}) — ${c.teacherName}`)
+            .join(', ')
+
+          await sendEmail({
+            to: reminder.studentEmail,
+            type: 'fee_overdue_5day',
+            recipientId: reminder.studentId,
+            recipientType: 'student',
+            data: {
+              studentName: reminder.studentName,
+              cohortSummary,
+              billingDay: reminder.cohortDetails[0].billingDay,
+              cohortCount: reminder.cohortDetails.length,
+              billing_month: overdueBillingMonth,
+              variant: 'overdue',
+            },
+          })
+          await supabase.from('notifications_log').insert({
+            recipient_type: 'student',
+            recipient_id: reminder.studentId,
+            type: 'fee_overdue_5day',
+            channel: 'email',
+            status: 'sent',
+            metadata: { billing_month: overdueBillingMonth, variant: 'overdue' },
+          })
+          overdueSentCount++
+        }
+      }
+    }
+
+    console.log(`[cron:fee-reminders] Done. Sent ${sentCount} upcoming + ${overdueSentCount} overdue fee reminders`)
+    return NextResponse.json({ success: true, sent: sentCount, overdueSent: overdueSentCount })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error'
     console.error('[cron:fee-reminders] Unexpected error:', message)

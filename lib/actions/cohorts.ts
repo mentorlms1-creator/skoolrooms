@@ -13,6 +13,7 @@ import {
   archiveCohort,
   countActiveCohorts,
   getWaitlistCount,
+  duplicateCohort,
 } from '@/lib/db/cohorts'
 import type { CreateCohortInput } from '@/lib/db/cohorts'
 import { countActiveConfirmedEnrollments } from '@/lib/db/enrollments'
@@ -412,6 +413,35 @@ export async function updateCohortAction(
   }
 
   return { success: true, data: null }
+}
+
+// -----------------------------------------------------------------------------
+// duplicateCohortAction — Duplicate a cohort as a new draft
+// -----------------------------------------------------------------------------
+
+export async function duplicateCohortAction(
+  cohortId: string,
+): Promise<ApiResponse<{ cohortId: string; inviteToken: string }>> {
+  const teacher = await getAuthenticatedTeacher()
+
+  if (!teacher) {
+    return { success: false, error: 'Not authenticated' }
+  }
+
+  if (checkPlanLock(teacher)) {
+    return getPlanLockError()
+  }
+
+  const newCohort = await duplicateCohort(cohortId, teacher.id)
+
+  if (!newCohort) {
+    return { success: false, error: 'Cohort not found or you do not have permission to duplicate it.' }
+  }
+
+  return {
+    success: true,
+    data: { cohortId: newCohort.id, inviteToken: newCohort.invite_token },
+  }
 }
 
 // -----------------------------------------------------------------------------

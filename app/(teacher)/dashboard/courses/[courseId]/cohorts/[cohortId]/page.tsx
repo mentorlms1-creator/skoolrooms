@@ -15,6 +15,7 @@ import { Card } from '@/components/ui/card'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { Button } from '@/components/ui/button'
 import { InviteLinkCopy } from '@/components/teacher/InviteLinkCopy'
+import { DuplicateCohortButton } from '@/components/teacher/DuplicateCohortButton'
 import { ROUTES } from '@/constants/routes'
 import { formatPKT } from '@/lib/time/pkt'
 
@@ -62,6 +63,7 @@ export default async function CohortDetailPage({ params }: CohortDetailPageProps
         action={
           <div className="flex items-center gap-3">
             <StatusBadge status={displayStatus} />
+            <DuplicateCohortButton cohortId={cohortId} courseId={courseId} />
             {!isArchived && (
               <Link href={ROUTES.TEACHER.cohortEdit(courseId, cohortId)}>
                 <Button variant="secondary">Edit</Button>
