@@ -5,6 +5,7 @@
 // =============================================================================
 
 import { NextRequest, NextResponse } from 'next/server'
+import { headers } from 'next/headers'
 import { createClient, createAdminClient } from '@/supabase/server'
 import { getStudentByAuthId } from '@/lib/db/students'
 import { getCohortById } from '@/lib/db/cohorts'
@@ -17,6 +18,7 @@ import {
   getPaymentByIdempotencyKey,
   createPayment,
 } from '@/lib/db/student-payments'
+import { rateLimit } from '@/lib/rate-limit'
 import { PaymentStatus, PaymentMethod } from '@/types/domain'
 import type { ApiResponse, EnrollOutput } from '@/types/api'
 
@@ -26,6 +28,17 @@ import type { ApiResponse, EnrollOutput } from '@/types/api'
 export async function POST(
   request: NextRequest,
 ): Promise<NextResponse<ApiResponse<EnrollOutput>>> {
+  // Rate limit: 10 enrollments per IP per hour
+  const headersList = await headers()
+  const ip = headersList.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+  const { allowed } = rateLimit(`enroll:${ip}`, 10, 60 * 60 * 1000)
+  if (!allowed) {
+    return NextResponse.json(
+      { success: false, error: 'Too many enrollment attempts. Please try again later.', code: 'RATE_LIMITED' },
+      { status: 429 },
+    )
+  }
+
   // 1. Auth: check student via session
   const supabase = await createClient()
   const { data: { user }, error: authError } = await supabase.auth.getUser()

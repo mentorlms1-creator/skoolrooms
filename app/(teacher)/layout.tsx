@@ -25,11 +25,11 @@ export default async function TeacherLayout({
     data: { user },
   } = await supabase.auth.getUser()
 
-  if (!user) redirect(ROUTES.PLATFORM.login)
+  if (!user) redirect(ROUTES.PLATFORM.teacherLogin)
 
   // 2. Fetch teacher row — getTeacherByAuthId uses createAdminClient() (not async)
   const teacher = await getTeacherByAuthId(user.id)
-  if (!teacher) redirect(ROUTES.PLATFORM.login)
+  if (!teacher) redirect(ROUTES.PLATFORM.teacherLogin)
   if (teacher.is_suspended) redirect('/suspended')
 
   // 3. Fetch plan details and usage in parallel

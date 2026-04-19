@@ -31,7 +31,7 @@ export default function StudentLoginPage() {
           {/* Footer links */}
           <div className="mt-6 flex flex-col items-center gap-3 text-sm">
             <Link
-              href={ROUTES.PLATFORM.login}
+              href={ROUTES.PLATFORM.teacherLogin}
               className="text-muted-foreground hover:text-foreground"
             >
               Sign in as a teacher instead

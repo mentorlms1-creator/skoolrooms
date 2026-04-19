@@ -16,7 +16,7 @@ import type { User } from '@supabase/supabase-js'
 /**
  * Requires an authenticated teacher.
  * Returns the full `teachers` row.
- * Redirects to /login if not authenticated or no teacher row.
+ * Redirects to /login/teacher if not authenticated or no teacher row.
  * Redirects to /suspended if teacher is suspended.
  */
 export async function requireTeacher() {
@@ -25,7 +25,7 @@ export async function requireTeacher() {
     data: { user },
   } = await supabase.auth.getUser()
 
-  if (!user) redirect('/login')
+  if (!user) redirect('/login/teacher')
 
   const { data: teacher } = await supabase
     .from('teachers')
@@ -33,7 +33,7 @@ export async function requireTeacher() {
     .eq('supabase_auth_id', user.id)
     .single()
 
-  if (!teacher) redirect('/login')
+  if (!teacher) redirect('/login/teacher')
   if (teacher.is_suspended) redirect('/suspended')
 
   return teacher

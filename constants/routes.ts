@@ -14,6 +14,7 @@ export const ROUTES = {
     explore: '/explore',
     pricing: '/pricing',
     login: '/login',
+    teacherLogin: '/login/teacher',
     signup: '/signup',
     studentLogin: '/student-login',
     forgotPassword: '/forgot-password',

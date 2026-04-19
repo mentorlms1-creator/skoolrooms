@@ -23,13 +23,13 @@ export default async function SubscribePage() {
 
   // Redirect to login if not authenticated
   if (!user) {
-    redirect(ROUTES.PLATFORM.login)
+    redirect(ROUTES.PLATFORM.teacherLogin)
   }
 
   // Only teachers can subscribe
   const teacher = await getTeacherByAuthId(user.id)
   if (!teacher) {
-    redirect(ROUTES.PLATFORM.login)
+    redirect(ROUTES.PLATFORM.teacherLogin)
   }
 
   return (
