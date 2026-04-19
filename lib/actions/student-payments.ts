@@ -39,8 +39,14 @@ export async function submitScreenshotAction(
     return { success: false, error: 'Student profile not found.' }
   }
 
-  // 2. Validate screenshot URL
-  if (!screenshotUrl || !screenshotUrl.startsWith('https://')) {
+  // 2. Validate screenshot URL: must be hosted on our R2 bucket.
+  // Without this check a student could submit any https:// URL as their proof.
+  const r2PublicPrefix = process.env.CLOUDFLARE_R2_PUBLIC_URL
+  if (
+    !screenshotUrl ||
+    !r2PublicPrefix ||
+    !screenshotUrl.startsWith(`${r2PublicPrefix}/screenshots/`)
+  ) {
     return { success: false, error: 'Invalid screenshot URL.' }
   }
 

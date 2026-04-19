@@ -102,16 +102,24 @@ export async function POST(
     )
   }
 
-  const { fileType, contentType, fileName, entityId } = body as {
+  const { fileType, contentType, fileName, entityId, sizeBytes } = body as {
     fileType?: string
     contentType?: string
     fileName?: string
     entityId?: string
+    sizeBytes?: number
   }
 
   if (!fileType || !contentType || !fileName || !entityId) {
     return NextResponse.json(
       { success: false, error: 'Missing required fields: fileType, contentType, fileName, entityId' },
+      { status: 400 },
+    )
+  }
+
+  if (typeof sizeBytes !== 'number' || !Number.isFinite(sizeBytes) || sizeBytes <= 0) {
+    return NextResponse.json(
+      { success: false, error: 'sizeBytes must be a positive number' },
       { status: 400 },
     )
   }
@@ -138,17 +146,30 @@ export async function POST(
     )
   }
 
-  // 5. Build R2 key and determine max size
+  // 5. Validate the client's claimed size against the static UPLOAD_LIMITS.
+  // The lib also re-checks against the dynamic platform_settings limit (which
+  // is the source of truth admin-side); this check is the cheap rejection.
+  const maxSizeBytes = UPLOAD_LIMITS[validatedFileType]
+  if (sizeBytes > maxSizeBytes) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: `File too large. Maximum size for ${validatedFileType} is ${UPLOAD_LIMIT_LABELS[validatedFileType]}.`,
+      },
+      { status: 400 },
+    )
+  }
+
+  // 6. Build R2 key
   const ext = extensionFromMime(contentType)
   const key = buildR2Key(validatedFileType, entityId, ext)
-  const maxSizeBytes = UPLOAD_LIMITS[validatedFileType]
 
-  // 6. Generate presigned URL
+  // 7. Generate presigned URL bound to the client's exact size
   try {
     const { uploadUrl, publicUrl } = await getPresignedUploadUrl({
       key,
       contentType,
-      maxSizeBytes,
+      sizeBytes,
     })
 
     return NextResponse.json({

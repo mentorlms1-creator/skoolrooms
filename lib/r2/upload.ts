@@ -39,8 +39,10 @@ function getS3Client(): S3Client {
  *
  * @param params.key - The R2 object key (e.g. 'thumbnails/{teacherId}/{courseId}.jpg')
  * @param params.contentType - MIME type (e.g. 'image/jpeg')
- * @param params.maxSizeBytes - Maximum file size in bytes. Validated against
- *   platform_settings upload limits before generating the URL.
+ * @param params.sizeBytes - Exact file size in bytes from the client. Validated
+ *   against platform_settings upload limits, then signed into the URL so the
+ *   browser PUT must send a matching Content-Length header. Forces SigV4 to
+ *   include content-length in SignedHeaders so R2 enforces the bound.
  *
  * @returns uploadUrl (presigned PUT URL) + publicUrl (public access URL)
  *
@@ -56,9 +58,9 @@ function getS3Client(): S3Client {
 export async function getPresignedUploadUrl(params: {
   key: string
   contentType: string
-  maxSizeBytes: number
+  sizeBytes: number
 }): Promise<{ uploadUrl: string; publicUrl: string }> {
-  const { key, contentType, maxSizeBytes } = params
+  const { key, contentType, sizeBytes } = params
   const bucket = process.env.CLOUDFLARE_R2_BUCKET!
   const publicBaseUrl = process.env.CLOUDFLARE_R2_PUBLIC_URL!
 
@@ -68,7 +70,7 @@ export async function getPresignedUploadUrl(params: {
     const limitMb = await getUploadLimitMb(fileType)
     const limitBytes = limitMb * 1024 * 1024
 
-    if (maxSizeBytes > limitBytes) {
+    if (sizeBytes > limitBytes) {
       throw new Error(
         `File too large. Maximum size for ${fileType} is ${limitMb}MB.`,
       )
@@ -79,11 +81,15 @@ export async function getPresignedUploadUrl(params: {
     Bucket: bucket,
     Key: key,
     ContentType: contentType,
-    ContentLength: maxSizeBytes,
+    ContentLength: sizeBytes,
   })
 
+  // signableHeaders forces content-length into the signature so the URL is
+  // bound to a specific upload size. Without this, AWS SDK v3 leaves the body
+  // unsigned and a malicious client could upload arbitrary bytes.
   const uploadUrl = await getSignedUrl(getS3Client(), command, {
     expiresIn: 3600, // 1 hour
+    signableHeaders: new Set(['content-length', 'content-type']),
   })
 
   const publicUrl = `${publicBaseUrl}/${key}`
