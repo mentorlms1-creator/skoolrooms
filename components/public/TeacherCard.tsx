@@ -8,17 +8,20 @@
 import Image from 'next/image'
 import { Card } from '@/components/ui/card'
 import type { ExplorableTeacher } from '@/lib/db/explore'
+import type { TeacherRatingAggregate } from '@/lib/db/feedback'
+import { StarRating } from '@/components/public/StarRating'
 
 type TeacherCardProps = {
   teacher: ExplorableTeacher
   platformDomain: string
+  rating?: TeacherRatingAggregate
 }
 
 function formatFeePKR(amount: number): string {
   return `Rs. ${amount.toLocaleString('en-PK')}`
 }
 
-export function TeacherCard({ teacher, platformDomain }: TeacherCardProps) {
+export function TeacherCard({ teacher, platformDomain, rating }: TeacherCardProps) {
   const profileUrl = `https://${teacher.subdomain}.${platformDomain}`
 
   return (
@@ -48,6 +51,11 @@ export function TeacherCard({ teacher, platformDomain }: TeacherCardProps) {
           <h3 className="text-lg font-semibold text-foreground">{teacher.name}</h3>
           {teacher.city && (
             <p className="mt-0.5 text-sm text-muted-foreground">{teacher.city}</p>
+          )}
+          {rating && rating.count > 0 && (
+            <div className="mt-1">
+              <StarRating value={rating.avg} count={rating.count} />
+            </div>
           )}
 
           {/* Bio */}

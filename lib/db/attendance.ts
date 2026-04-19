@@ -44,6 +44,14 @@ export type AttendanceSummary = {
   percentage: number
 }
 
+// One row per scheduled session for a student/cohort timeline view
+export type AttendanceTimelineEntry = {
+  session_id: string
+  scheduled_at: string
+  cancelled: boolean
+  present: boolean
+}
+
 // Input type for bulk upsert
 export type BulkAttendanceRecord = {
   studentId: string
@@ -236,6 +244,51 @@ export async function getOverallAttendanceSummary(
   const percentage = total > 0 ? Math.round((attended / total) * 100) : 0
 
   return { attended, total, percentage }
+}
+
+// -----------------------------------------------------------------------------
+// getAttendanceTimelineForStudent — Returns one row per non-deleted session in
+// the cohort, projecting whether the student was present and whether the
+// session was cancelled. Canonical source for both UI timeline + Lane H PDF.
+// -----------------------------------------------------------------------------
+export async function getAttendanceTimelineForStudent(
+  studentId: string,
+  cohortId: string,
+): Promise<AttendanceTimelineEntry[]> {
+  const supabase = createAdminClient()
+
+  const { data: sessions, error: sessionError } = await supabase
+    .from('class_sessions')
+    .select('id, scheduled_at, cancelled_at')
+    .eq('cohort_id', cohortId)
+    .is('deleted_at', null)
+    .order('scheduled_at', { ascending: true })
+
+  if (sessionError || !sessions || sessions.length === 0) return []
+
+  const sessionIds = (sessions as Array<{ id: string }>).map((s) => s.id)
+
+  const { data: attendanceRows } = await supabase
+    .from('attendance')
+    .select('class_session_id, present')
+    .eq('student_id', studentId)
+    .in('class_session_id', sessionIds)
+
+  const presentMap = new Map<string, boolean>()
+  if (attendanceRows) {
+    for (const row of attendanceRows as Array<{ class_session_id: string; present: boolean }>) {
+      presentMap.set(row.class_session_id, row.present)
+    }
+  }
+
+  return (sessions as Array<{ id: string; scheduled_at: string; cancelled_at: string | null }>).map(
+    (s) => ({
+      session_id: s.id,
+      scheduled_at: s.scheduled_at,
+      cancelled: s.cancelled_at !== null,
+      present: presentMap.get(s.id) ?? false,
+    }),
+  )
 }
 
 // -----------------------------------------------------------------------------

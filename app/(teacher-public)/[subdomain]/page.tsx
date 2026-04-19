@@ -5,7 +5,7 @@
 
 import { notFound } from 'next/navigation'
 import { getTeacherBySubdomain } from '@/lib/db/teachers'
-import { getPublishedCoursesByTeacher } from '@/lib/db/courses'
+import { getPublishedCoursesByTeacherWithCurriculum } from '@/lib/db/courses'
 import { getPublishedTestimonialsByTeacher } from '@/lib/db/testimonials'
 import { TeacherBio } from '@/components/public/TeacherBio'
 import { CourseCard } from '@/components/public/CourseCard'
@@ -25,7 +25,7 @@ export default async function TeacherPublicPage({ params }: PageProps) {
   }
 
   const [courses, testimonials] = await Promise.all([
-    getPublishedCoursesByTeacher(teacher.id),
+    getPublishedCoursesByTeacherWithCurriculum(teacher.id),
     getPublishedTestimonialsByTeacher(teacher.id),
   ])
 
@@ -52,6 +52,9 @@ export default async function TeacherPublicPage({ params }: PageProps) {
                 title={course.title}
                 description={course.description}
                 thumbnailUrl={course.thumbnail_url}
+                category={course.category}
+                tags={course.tags}
+                curriculum={course.curriculum}
               />
             ))}
           </div>

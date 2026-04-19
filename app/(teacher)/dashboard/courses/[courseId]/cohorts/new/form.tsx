@@ -5,6 +5,7 @@
  *
  * Client Component. Collects cohort details and calls createCohortAction.
  * billing_day field only shown when fee_type is 'monthly'.
+ * "Free course" toggle hides fee_type/fee_pkr/billing_day and forces fee=0.
  */
 
 import { useState, useTransition } from 'react'
@@ -19,6 +20,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from 'sonner'
 import { createCohortAction } from '@/lib/actions/cohorts'
 import { ROUTES } from '@/constants/routes'
@@ -39,6 +41,7 @@ export function CreateCohortForm({ courseId }: CreateCohortFormProps) {
   const [name, setName] = useState('')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
+  const [isFree, setIsFree] = useState(false)
   const [feeType, setFeeType] = useState('one_time')
   const [feePkr, setFeePkr] = useState('')
   const [billingDay, setBillingDay] = useState('')
@@ -58,10 +61,15 @@ export function CreateCohortForm({ courseId }: CreateCohortFormProps) {
       formData.set('name', name)
       formData.set('start_date', startDate)
       formData.set('end_date', endDate)
-      formData.set('fee_type', feeType)
-      formData.set('fee_pkr', feePkr)
-      if (feeType === 'monthly') {
-        formData.set('billing_day', billingDay)
+      if (isFree) {
+        formData.set('fee_type', 'one_time')
+        formData.set('fee_pkr', '0')
+      } else {
+        formData.set('fee_type', feeType)
+        formData.set('fee_pkr', feePkr)
+        if (feeType === 'monthly') {
+          formData.set('billing_day', billingDay)
+        }
       }
       if (maxStudents.trim() !== '') {
         formData.set('max_students', maxStudents)
@@ -125,50 +133,67 @@ export function CreateCohortForm({ courseId }: CreateCohortFormProps) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="fee-type">Fee Type</Label>
-          <Select value={feeType} onValueChange={setFeeType}>
-            <SelectTrigger id="fee-type" className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {FEE_TYPE_OPTIONS.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>
-                  {opt.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="fee-pkr">Fee (PKR)</Label>
-          <Input
-            id="fee-pkr"
-            type="number"
-            min={0}
-            placeholder="e.g. 5000"
-            value={feePkr}
-            onChange={(e) => setFeePkr(e.target.value)}
-            required
+      <div className="flex flex-col gap-2 rounded-md border border-border p-4">
+        <label className="flex items-center gap-2 text-sm font-medium text-foreground">
+          <Checkbox
+            checked={isFree}
+            onCheckedChange={(v) => setIsFree(v === true)}
           />
-        </div>
+          Free course
+        </label>
+        <p className="text-xs text-muted-foreground">
+          Free cohorts skip payment — students enroll instantly. You won&apos;t earn from this cohort.
+        </p>
       </div>
 
-      {feeType === 'monthly' && (
-        <div className="space-y-2">
-          <Label htmlFor="billing-day">Billing Day</Label>
-          <Input
-            id="billing-day"
-            type="number"
-            min={1}
-            max={28}
-            placeholder="1-28"
-            value={billingDay}
-            onChange={(e) => setBillingDay(e.target.value)}
-            required
-          />
-        </div>
+      {!isFree && (
+        <>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="fee-type">Fee Type</Label>
+              <Select value={feeType} onValueChange={setFeeType}>
+                <SelectTrigger id="fee-type" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {FEE_TYPE_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="fee-pkr">Fee (PKR)</Label>
+              <Input
+                id="fee-pkr"
+                type="number"
+                min={0}
+                placeholder="e.g. 5000"
+                value={feePkr}
+                onChange={(e) => setFeePkr(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+
+          {feeType === 'monthly' && (
+            <div className="space-y-2">
+              <Label htmlFor="billing-day">Billing Day</Label>
+              <Input
+                id="billing-day"
+                type="number"
+                min={1}
+                max={28}
+                placeholder="1-28"
+                value={billingDay}
+                onChange={(e) => setBillingDay(e.target.value)}
+                required
+              />
+            </div>
+          )}
+        </>
       )}
 
       <div className="space-y-2">

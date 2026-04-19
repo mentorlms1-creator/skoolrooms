@@ -119,9 +119,18 @@ export async function createCohortAction(
     return { success: false, error: 'Fee must be 0 or more (in PKR).' }
   }
 
+  // Free cohorts (fee=0) MUST be one_time. Monthly+free is meaningless.
+  let effectiveFeeType = feeType
+  if (feePkr === 0) {
+    if (feeType === 'monthly') {
+      return { success: false, error: 'Free cohorts cannot use monthly billing.' }
+    }
+    effectiveFeeType = 'one_time'
+  }
+
   // billing_day validation: required and must be 1-28 for monthly cohorts
   let billingDay: number | null = null
-  if (feeType === 'monthly') {
+  if (effectiveFeeType === 'monthly') {
     if (billingDayRaw === null || billingDayRaw.trim() === '') {
       return {
         success: false,
@@ -174,7 +183,7 @@ export async function createCohortAction(
     startDate,
     endDate,
     maxStudents,
-    feeType: feeType as FeeType,
+    feeType: effectiveFeeType as FeeType,
     feePkr,
     billingDay,
     isRegistrationOpen,
@@ -288,6 +297,11 @@ export async function updateCohortAction(
       return { success: false, error: 'Fee must be 0 or more (in PKR).' }
     }
     updates.fee_pkr = feePkr
+    // Force fee_type=one_time when switching to free
+    if (feePkr === 0) {
+      updates.fee_type = 'one_time'
+      updates.billing_day = null
+    }
   }
 
   // billing_day validation
@@ -333,6 +347,22 @@ export async function updateCohortAction(
         success: false,
         error: `Cannot change billing day — ${subjectPrefix} confirmed payments. Archive this cohort and create a new one to change billing day.`,
         code: 'BILLING_DAY_LOCKED',
+      }
+    }
+  }
+
+  // Free toggle lock: cannot flip free<->paid mid-cohort once anyone has paid.
+  if (updates.fee_pkr !== undefined) {
+    const willBeFree = (updates.fee_pkr as number) === 0
+    const wasFree = cohort.fee_pkr === 0
+    if (willBeFree !== wasFree) {
+      const lockedCount = await countActiveConfirmedEnrollments(cohortId)
+      if (lockedCount > 0) {
+        return {
+          success: false,
+          error: 'Cannot toggle free/paid — students already have confirmed payments. Archive this cohort and create a new one.',
+          code: 'FREE_TOGGLE_LOCKED',
+        }
       }
     }
   }

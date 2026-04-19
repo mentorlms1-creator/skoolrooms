@@ -18,7 +18,8 @@ import {
 } from '@/lib/db/student-payments'
 import { getFeedbackByCohort } from '@/lib/db/feedback'
 import { getTeacherBalance } from '@/lib/db/balances'
-import { getOverdueSubmissions } from '@/lib/db/assignments'
+import { getOverdueSubmissions, getSubmissionStatsForStudent } from '@/lib/db/assignments'
+import { getAttendanceTimelineForStudent } from '@/lib/db/attendance'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Card } from '@/components/ui/card'
 import { StatusBadge } from '@/components/ui/StatusBadge'
@@ -145,6 +146,30 @@ export default async function CohortStudentsPage({ params }: StudentsPageProps) 
 
   const cohortArchived = cohort.status === 'archived'
 
+  // Prefetch progress data per active enrollment for the Progress dialog.
+  // Capped to active enrollments only — this is the surface where teachers act.
+  const progressByEnrollment = new Map<
+    string,
+    {
+      cohortName: string
+      timeline: Awaited<ReturnType<typeof getAttendanceTimelineForStudent>>
+      stats: Awaited<ReturnType<typeof getSubmissionStatsForStudent>>
+    }
+  >()
+  await Promise.all(
+    activeEnrollments.map(async (enrollment) => {
+      const [timeline, stats] = await Promise.all([
+        getAttendanceTimelineForStudent(enrollment.students.id, cohortId),
+        getSubmissionStatsForStudent(enrollment.students.id, cohortId),
+      ])
+      progressByEnrollment.set(enrollment.id, {
+        cohortName: cohort.name,
+        timeline,
+        stats,
+      })
+    }),
+  )
+
   return (
     <>
       <PageHeader
@@ -231,6 +256,7 @@ export default async function CohortStudentsPage({ params }: StudentsPageProps) 
                           hasPendingWithdrawal={!!enrollment.withdrawal_requested_at}
                           cohortFeeType={cohort.fee_type}
                           allPayments={modalPaymentsByEnrollment.get(enrollment.id) ?? []}
+                          progress={progressByEnrollment.get(enrollment.id) ?? null}
                         />
                       </div>
                       <div className="mt-2 flex items-center justify-between">
@@ -312,6 +338,7 @@ export default async function CohortStudentsPage({ params }: StudentsPageProps) 
                                 hasPendingWithdrawal={!!enrollment.withdrawal_requested_at}
                                 cohortFeeType={cohort.fee_type}
                                 allPayments={modalPaymentsByEnrollment.get(enrollment.id) ?? []}
+                                progress={progressByEnrollment.get(enrollment.id) ?? null}
                               />
                             </div>
                           </td>

@@ -192,6 +192,46 @@ export async function cancelSession(
 }
 
 // -----------------------------------------------------------------------------
+// markSessionRescheduled — Cancel original + link to replacement.
+// Updates the original session row: cancelled_at = now, rescheduled_to_id = newId.
+// Does NOT mutate scheduled_at (auditability — original time stays visible).
+// -----------------------------------------------------------------------------
+export async function markSessionRescheduled(
+  oldId: string,
+  newId: string,
+): Promise<ClassSessionRow | null> {
+  const supabase = createAdminClient()
+  const now = new Date().toISOString()
+  const { data, error } = await supabase
+    .from('class_sessions')
+    .update({
+      cancelled_at: now,
+      rescheduled_to_id: newId,
+      updated_at: now,
+    })
+    .eq('id', oldId)
+    .is('deleted_at', null)
+    .select('*')
+    .single()
+  if (error || !data) return null
+  return data as ClassSessionRow
+}
+
+// -----------------------------------------------------------------------------
+// softDeleteSession — Hard rollback for a single session id (used when
+// a follow-up write fails after createSession succeeded).
+// -----------------------------------------------------------------------------
+export async function softDeleteSession(sessionId: string): Promise<boolean> {
+  const supabase = createAdminClient()
+  const now = new Date().toISOString()
+  const { error } = await supabase
+    .from('class_sessions')
+    .update({ deleted_at: now, updated_at: now })
+    .eq('id', sessionId)
+  return !error
+}
+
+// -----------------------------------------------------------------------------
 // deleteFutureSessions — Soft delete all future non-cancelled sessions
 // for a cohort. Sets deleted_at = now on sessions where scheduled_at > now.
 // -----------------------------------------------------------------------------

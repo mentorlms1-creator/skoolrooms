@@ -23,6 +23,7 @@ export const EmailType = {
   CLASS_REMINDER_24H: 'class_reminder_24h',
   CLASS_REMINDER_1H: 'class_reminder_1h',
   CLASS_CANCELLED: 'class_cancelled',
+  CLASS_RESCHEDULED: 'class_rescheduled',
 
   // Payment
   PAYMENT_APPROVED: 'payment_approved',
@@ -277,3 +278,8 @@ export const FileType = {
 } as const
 
 export type FileType = (typeof FileType)[keyof typeof FileType]
+
+// -----------------------------------------------------------------------------
+// CourseCategory — re-export for ergonomics (defined in constants/course-categories)
+// -----------------------------------------------------------------------------
+export type { CourseCategory } from '@/constants/course-categories'

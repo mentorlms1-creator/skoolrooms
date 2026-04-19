@@ -8,13 +8,16 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { User, Mail, Phone, Calendar, BookOpen, CreditCard } from 'lucide-react'
+import { User, Mail, Phone, Calendar, BookOpen, CreditCard, Users as GuardianIcon } from 'lucide-react'
 import { requireTeacher } from '@/lib/auth/guards'
 import { getStudentById } from '@/lib/db/students'
 import { getEnrollmentsByStudentForTeacher } from '@/lib/db/enrollments'
 import { getLatestPaymentsByEnrollmentIds } from '@/lib/db/student-payments'
 import { getTeacherBalance } from '@/lib/db/balances'
+import { listNotesForStudent } from '@/lib/db/teacher-student-notes'
 import { PageHeader } from '@/components/ui/PageHeader'
+import { GuardianEditDialog } from './GuardianEditDialog'
+import { NotesSection } from './NotesSection'
 import {
   Card,
   CardContent,
@@ -56,10 +59,17 @@ export default async function TeacherStudentDetailPage(
   const activeEnrollmentIds = enrollments
     .filter((e) => e.status === 'active')
     .map((e) => e.id)
-  const [balance, fullPayments] = await Promise.all([
+  const [balance, fullPayments, notes] = await Promise.all([
     getTeacherBalance(teacher.id),
     getLatestPaymentsByEnrollmentIds(activeEnrollmentIds),
+    listNotesForStudent(teacher.id, student.id),
   ])
+
+  const cohortOptions = enrollments.map((e) => ({
+    id: e.cohorts.id,
+    name: e.cohorts.name,
+    courseTitle: e.cohorts.courses.title,
+  }))
   const slimPaymentByEnrollment = new Map<string, RowPayment>()
   for (const [enrollmentId, p] of fullPayments) {
     slimPaymentByEnrollment.set(enrollmentId, {
@@ -181,6 +191,45 @@ export default async function TeacherStudentDetailPage(
             </CardContent>
           </Card>
 
+          {/* Guardian */}
+          <Card className="border-none shadow-sm ring-1 ring-foreground/5 rounded-[2rem] overflow-hidden bg-card">
+            <CardHeader className="px-8 pt-8 pb-4">
+              <CardTitle className="flex items-center justify-between gap-2 text-xl font-bold">
+                <span className="flex items-center gap-2">
+                  <GuardianIcon className="h-5 w-5 text-muted-foreground" />
+                  Guardian
+                </span>
+                <GuardianEditDialog
+                  studentId={student.id}
+                  defaults={{
+                    parent_name: student.parent_name,
+                    parent_phone: student.parent_phone,
+                    parent_email: student.parent_email,
+                  }}
+                />
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="px-8 pb-8">
+              <div className="space-y-3">
+                <InfoItem
+                  icon={<User className="h-4 w-4 text-muted-foreground" />}
+                  label="Name"
+                  value={student.parent_name ?? '—'}
+                />
+                <InfoItem
+                  icon={<Phone className="h-4 w-4 text-muted-foreground" />}
+                  label="Phone"
+                  value={student.parent_phone ?? '—'}
+                />
+                <InfoItem
+                  icon={<Mail className="h-4 w-4 text-muted-foreground" />}
+                  label="Email"
+                  value={student.parent_email ?? '—'}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Quick stats */}
           <Card className="border-none shadow-sm ring-1 ring-foreground/5 rounded-[2rem] overflow-hidden bg-card">
             <CardHeader className="px-8 pt-8 pb-4">
@@ -207,6 +256,14 @@ export default async function TeacherStudentDetailPage(
             </CardContent>
           </Card>
         </div>
+      </div>
+
+      <div className="mt-6">
+        <NotesSection
+          studentId={student.id}
+          initialNotes={notes}
+          cohortOptions={cohortOptions}
+        />
       </div>
     </>
   )

@@ -2,10 +2,12 @@
 
 /**
  * components/public/ExploreFilters.tsx — Client-side filter controls for explore page
- * Filters teacher list by subject, level, fee range.
+ * Filters teacher list by subject, level, fee range, city.
+ * City filter syncs to ?city= URL param via router.replace (no history spam).
  */
 
 import { useState, useMemo } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Label } from '@/components/ui/label'
 import {
   Select,
@@ -21,6 +23,9 @@ type ExploreFiltersProps = {
   teachers: ExplorableTeacher[]
   allSubjects: string[]
   allLevels: string[]
+  allCities: string[]
+  initialCity?: string
+  ratings: Record<string, { avg: number; count: number }>
   platformDomain: string
 }
 
@@ -28,15 +33,42 @@ export function ExploreFilters({
   teachers,
   allSubjects,
   allLevels,
+  allCities,
+  initialCity = '',
+  ratings,
   platformDomain,
 }: ExploreFiltersProps) {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+
   const [subject, setSubject] = useState('')
   const [level, setLevel] = useState('')
   const [maxFee, setMaxFee] = useState('')
   const [openOnly, setOpenOnly] = useState(false)
+  const [city, setCity] = useState(initialCity)
+
+  const updateCityParam = (next: string) => {
+    setCity(next)
+    const params = new URLSearchParams(searchParams.toString())
+    if (next) {
+      params.set('city', next)
+    } else {
+      params.delete('city')
+    }
+    const qs = params.toString()
+    router.replace(qs ? `/explore?${qs}` : '/explore', { scroll: false })
+  }
 
   const filtered = useMemo(() => {
     return teachers.filter((teacher) => {
+      // City filter (case-insensitive exact match)
+      if (city) {
+        const wanted = city.trim().toLowerCase()
+        if (!teacher.city || teacher.city.trim().toLowerCase() !== wanted) {
+          return false
+        }
+      }
+
       // Subject filter
       if (subject) {
         const hasSubject = teacher.subject_tags.some(
@@ -68,12 +100,33 @@ export function ExploreFilters({
 
       return true
     })
-  }, [teachers, subject, level, maxFee, openOnly])
+  }, [teachers, subject, level, maxFee, openOnly, city])
 
   return (
     <div>
       {/* Filter controls */}
       <div className="mb-8 flex flex-wrap items-end gap-4 rounded-lg border border-border bg-card p-4">
+        {/* City filter */}
+        <div className="space-y-1.5">
+          <Label htmlFor="filter-city">City</Label>
+          <Select
+            value={city || '_all'}
+            onValueChange={(v) => updateCityParam(v === '_all' ? '' : v)}
+          >
+            <SelectTrigger id="filter-city" className="w-full sm:w-44">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="_all">All Cities</SelectItem>
+              {allCities.map((c) => (
+                <SelectItem key={c} value={c}>
+                  {c}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         {/* Subject filter */}
         <div className="space-y-1.5">
           <Label htmlFor="filter-subject">Subject</Label>
@@ -147,7 +200,7 @@ export function ExploreFilters({
         </div>
 
         {/* Clear button */}
-        {(subject || level || maxFee || openOnly) && (
+        {(subject || level || maxFee || openOnly || city) && (
           <button
             type="button"
             onClick={() => {
@@ -155,6 +208,7 @@ export function ExploreFilters({
               setLevel('')
               setMaxFee('')
               setOpenOnly(false)
+              updateCityParam('')
             }}
             className="pb-1 text-sm text-primary hover:text-primary/90 underline"
           >
@@ -183,6 +237,7 @@ export function ExploreFilters({
               key={teacher.id}
               teacher={teacher}
               platformDomain={platformDomain}
+              rating={ratings[teacher.id]}
             />
           ))}
         </div>

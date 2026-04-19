@@ -21,6 +21,9 @@ import {
 import { rateLimit } from '@/lib/rate-limit'
 import { PaymentStatus, PaymentMethod } from '@/types/domain'
 import { firstBillingMonth } from '@/lib/time/pkt'
+import { sendEmail } from '@/lib/email/sender'
+import { createNotification } from '@/lib/db/notifications'
+import { ROUTES } from '@/constants/routes'
 import type { ApiResponse, EnrollOutput } from '@/types/api'
 
 // -----------------------------------------------------------------------------
@@ -251,7 +254,7 @@ export async function POST(
     })
   }
 
-  // 11. Handle 'enrolled' result — create enrollment + payment
+  // 11. Handle 'enrolled' result — create enrollment (+ payment if paid)
   const referenceCode = await generateReferenceCode()
 
   const enrollment = await createEnrollment({
@@ -268,7 +271,86 @@ export async function POST(
     )
   }
 
-  // Create student_payments row
+  // 11a. Free cohort: auto-approve, skip payment row.
+  if (cohort.fee_pkr === 0) {
+    const { error: activateError } = await adminSupabase
+      .from('enrollments')
+      .update({ status: 'active', updated_at: new Date().toISOString() })
+      .eq('id', enrollment.id)
+
+    if (activateError) {
+      console.error('[enroll] Failed to activate free enrollment:', activateError.message)
+      return NextResponse.json(
+        { success: false, error: 'Failed to activate free enrollment' },
+        { status: 500 },
+      )
+    }
+
+    // Notify student + teacher (mirror approval flow). Failures must not 500
+    // an enrollment that already succeeded.
+    const { data: teacherRow } = await adminSupabase
+      .from('teachers')
+      .select('id, name, email')
+      .eq('id', cohort.teacher_id)
+      .single()
+    const teacherName = (teacherRow?.name as string) ?? 'Your Teacher'
+
+    try {
+      await sendEmail({
+        to: student.email,
+        type: 'enrollment_confirmed',
+        recipientId: student.id,
+        recipientType: 'student',
+        data: {
+          studentName: student.name,
+          teacherName,
+          cohortName: cohort.name,
+          referenceCode,
+        },
+      })
+    } catch (err) {
+      console.error('[enroll] enrollment_confirmed email failed:', err)
+    }
+
+    void createNotification({
+      userType: 'student',
+      userId: student.id,
+      kind: 'enrollment_confirmed',
+      title: 'Enrollment Confirmed',
+      body: `Your enrollment in ${cohort.name} has been confirmed.`,
+      linkUrl: ROUTES.STUDENT.courses,
+    })
+
+    if (teacherRow?.email) {
+      try {
+        await sendEmail({
+          to: teacherRow.email as string,
+          type: 'new_enrollment_notification',
+          recipientId: teacherRow.id as string,
+          recipientType: 'teacher',
+          data: {
+            teacherName,
+            studentName: student.name,
+            cohortName: cohort.name,
+            amountPkr: 0,
+          },
+        })
+      } catch (err) {
+        console.error('[enroll] new_enrollment_notification email failed:', err)
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        enrollmentId: enrollment.id,
+        referenceCode,
+        status: 'active',
+      },
+    })
+  }
+
+  // 11b. Paid cohort: create student_payments row.
   // platform_cut_pkr and teacher_payout_amount_pkr are 0 at enrollment time —
   // they are calculated at APPROVAL time, not enrollment time
   const paymentMonth = cohort.fee_type === 'monthly' && cohort.billing_day != null

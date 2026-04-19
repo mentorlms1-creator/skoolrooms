@@ -7,19 +7,28 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { updateStudentProfileAction } from '@/lib/actions/student-settings'
+import { updateOwnGuardianContact } from '@/lib/actions/students'
 
 type Props = {
   defaultName: string
   defaultPhone: string
   email: string
   memberSince: string
+  guardianDefaults: {
+    parent_name: string | null
+    parent_phone: string | null
+    parent_email: string | null
+  }
 }
 
-export function StudentSettingsForm({ defaultName, defaultPhone, email, memberSince }: Props) {
+export function StudentSettingsForm({ defaultName, defaultPhone, email, memberSince, guardianDefaults }: Props) {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [parentName, setParentName] = useState(guardianDefaults.parent_name ?? '')
+  const [parentPhone, setParentPhone] = useState(guardianDefaults.parent_phone ?? '')
+  const [parentEmail, setParentEmail] = useState(guardianDefaults.parent_email ?? '')
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -28,10 +37,22 @@ export function StudentSettingsForm({ defaultName, defaultPhone, email, memberSi
     setLoading(true)
 
     const formData = new FormData(e.currentTarget)
-    const result = await updateStudentProfileAction(formData)
+    const profileResult = await updateStudentProfileAction(formData)
 
-    if (!result.success) {
-      setError(result.error)
+    if (!profileResult.success) {
+      setError(profileResult.error)
+      setLoading(false)
+      return
+    }
+
+    const guardianResult = await updateOwnGuardianContact({
+      parent_name: parentName,
+      parent_phone: parentPhone,
+      parent_email: parentEmail,
+    })
+
+    if (!guardianResult.success) {
+      setError(guardianResult.error)
       setLoading(false)
       return
     }
@@ -91,6 +112,56 @@ export function StudentSettingsForm({ defaultName, defaultPhone, email, memberSi
           <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/50">Member Since</p>
         </div>
         <p className="text-foreground font-medium">{memberSince}</p>
+      </div>
+
+      <div className="rounded-2xl bg-container ring-1 ring-foreground/[0.03] p-4 space-y-4">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/50">
+            Emergency / Guardian Contact
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">Optional. Shared only with your teachers.</p>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="parent_name" className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/50">
+            Guardian name
+          </Label>
+          <Input
+            id="parent_name"
+            value={parentName}
+            onChange={(e) => setParentName(e.target.value)}
+            maxLength={120}
+            placeholder="e.g. Mother, Father, Sibling"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="parent_phone" className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/50">
+            Guardian phone
+          </Label>
+          <Input
+            id="parent_phone"
+            type="tel"
+            value={parentPhone}
+            onChange={(e) => setParentPhone(e.target.value)}
+            maxLength={32}
+            placeholder="+92 300 1234567"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="parent_email" className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/50">
+            Guardian email
+          </Label>
+          <Input
+            id="parent_email"
+            type="email"
+            value={parentEmail}
+            onChange={(e) => setParentEmail(e.target.value)}
+            maxLength={254}
+            placeholder="guardian@example.com"
+          />
+        </div>
       </div>
 
       <div className="flex justify-end">

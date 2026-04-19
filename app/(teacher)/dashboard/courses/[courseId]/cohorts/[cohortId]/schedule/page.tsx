@@ -64,6 +64,8 @@ export default async function SchedulePage({ params }: PageProps) {
             scheduled_at: s.scheduled_at,
             duration_minutes: s.duration_minutes,
             cancelled_at: s.cancelled_at,
+            rescheduled_to_id: s.rescheduled_to_id,
+            is_recurring: s.is_recurring,
           }))}
           isArchived={isArchived}
         />

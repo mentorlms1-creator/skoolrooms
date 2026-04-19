@@ -33,6 +33,7 @@ export const TEACHER_NAV_ITEMS: NavItem[] = [
   { label: 'Dashboard', href: ROUTES.TEACHER.dashboard, icon: LayoutDashboard },
   { label: 'Courses', href: ROUTES.TEACHER.courses, icon: BookOpen },
   { label: 'Students', href: ROUTES.TEACHER.students, icon: Users },
+  { label: 'Student Health', href: ROUTES.TEACHER.studentsHealth, icon: TrendingUp, group: 'Management' },
   { label: 'Messages', href: ROUTES.TEACHER.messages, icon: MessageSquare, group: 'Management' },
   { label: 'Payments', href: ROUTES.TEACHER.payments, icon: CreditCard, group: 'Management' },
   { label: 'Earnings', href: ROUTES.TEACHER.earnings, icon: Wallet, group: 'Management' },

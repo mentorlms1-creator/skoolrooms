@@ -451,6 +451,79 @@ export async function getUpcomingAssignmentsByStudent(
 }
 
 // -----------------------------------------------------------------------------
+// getSubmissionStatsForStudent — Aggregate submission counts for a student
+// across all assignments in a cohort. Buckets:
+//   total_assignments  — non-deleted assignments in the cohort
+//   submitted          — student has a submission row
+//   on_time            — submission row was submitted on/before due_date
+//   late               — submission row was submitted after due_date
+//   missing            — past-due AND no submission row
+// -----------------------------------------------------------------------------
+export type StudentSubmissionStats = {
+  total_assignments: number
+  submitted: number
+  on_time: number
+  late: number
+  missing: number
+}
+
+export async function getSubmissionStatsForStudent(
+  studentId: string,
+  cohortId: string,
+): Promise<StudentSubmissionStats> {
+  const supabase = createAdminClient()
+
+  const { data: assignments, error: assignError } = await supabase
+    .from('assignments')
+    .select('id, due_date')
+    .eq('cohort_id', cohortId)
+    .is('deleted_at', null)
+
+  if (assignError || !assignments || assignments.length === 0) {
+    return { total_assignments: 0, submitted: 0, on_time: 0, late: 0, missing: 0 }
+  }
+
+  const typedAssignments = assignments as Array<{ id: string; due_date: string }>
+  const ids = typedAssignments.map((a) => a.id)
+
+  const { data: subs } = await supabase
+    .from('assignment_submissions')
+    .select('assignment_id, submitted_at')
+    .eq('student_id', studentId)
+    .in('assignment_id', ids)
+
+  const subByAssignment = new Map<string, string>()
+  for (const row of (subs as Array<{ assignment_id: string; submitted_at: string }> | null) ?? []) {
+    subByAssignment.set(row.assignment_id, row.submitted_at)
+  }
+
+  const now = new Date().toISOString()
+  let submitted = 0
+  let onTime = 0
+  let late = 0
+  let missing = 0
+
+  for (const a of typedAssignments) {
+    const submittedAt = subByAssignment.get(a.id)
+    if (submittedAt) {
+      submitted += 1
+      if (submittedAt <= a.due_date) onTime += 1
+      else late += 1
+    } else if (a.due_date < now) {
+      missing += 1
+    }
+  }
+
+  return {
+    total_assignments: typedAssignments.length,
+    submitted,
+    on_time: onTime,
+    late,
+    missing,
+  }
+}
+
+// -----------------------------------------------------------------------------
 // getOverdueSubmissions — Students who haven't submitted past due_date.
 // Uses two-step approach: fetch past-due assignments, then find enrolled
 // students without submissions.

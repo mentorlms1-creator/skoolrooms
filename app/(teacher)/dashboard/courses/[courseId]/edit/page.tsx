@@ -45,6 +45,8 @@ export default async function EditCoursePage({ params }: EditCoursePageProps) {
           defaultDescription={course.description ?? ''}
           defaultThumbnailUrl={course.thumbnail_url ?? undefined}
           defaultStatus={course.status}
+          defaultCategory={course.category}
+          defaultTags={course.tags ?? []}
         />
       </Card>
     </>

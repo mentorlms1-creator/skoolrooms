@@ -83,13 +83,62 @@ export async function getPublishedCoursesByTeacher(
   return data as CourseRow[]
 }
 
+// Curriculum item (mirrors course_curriculum_items, see migration 012)
+export type CurriculumItemRow = {
+  id: string
+  course_id: string
+  week_number: number
+  title: string
+  description: string | null
+  display_order: number
+  created_at: string
+  updated_at: string
+}
+
+export type CourseWithCurriculum = CourseRow & {
+  curriculum: CurriculumItemRow[]
+}
+
+// -----------------------------------------------------------------------------
+// getPublishedCoursesByTeacherWithCurriculum — Published courses with their
+// curriculum items nested. Used by the public teacher subdomain page.
+// -----------------------------------------------------------------------------
+export async function getPublishedCoursesByTeacherWithCurriculum(
+  teacherId: string,
+): Promise<CourseWithCurriculum[]> {
+  const supabase = createAdminClient()
+
+  const { data, error } = await supabase
+    .from('courses')
+    .select('*, course_curriculum_items(*)')
+    .eq('teacher_id', teacherId)
+    .eq('status', 'published')
+    .is('deleted_at', null)
+    .order('created_at', { ascending: false })
+
+  if (error || !data) return []
+
+  return (data as Array<CourseRow & { course_curriculum_items: CurriculumItemRow[] | null }>).map(
+    (row) => {
+      const items = (row.course_curriculum_items ?? []).slice().sort(
+        (a, b) => a.display_order - b.display_order,
+      )
+      const { course_curriculum_items: _ignored, ...rest } = row
+      void _ignored
+      return { ...(rest as CourseRow), curriculum: items }
+    },
+  )
+}
+
 // -----------------------------------------------------------------------------
 // createCourse — Insert a new course with status='draft'
 // -----------------------------------------------------------------------------
 export async function createCourse(
   teacherId: string,
   title: string,
-  description: string | null
+  description: string | null,
+  category: string | null = null,
+  tags: string[] = [],
 ): Promise<CourseRow | null> {
   const supabase = createAdminClient()
 
@@ -100,6 +149,8 @@ export async function createCourse(
       title,
       description,
       status: 'draft',
+      category,
+      tags,
     })
     .select('*')
     .single()

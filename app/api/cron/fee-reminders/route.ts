@@ -40,12 +40,13 @@ export async function GET(request: NextRequest) {
 
     console.log(`[cron:fee-reminders] Looking for cohorts with billing_day=${targetBillingDay}`)
 
-    // Find monthly cohorts with matching billing_day
+    // Find monthly cohorts with matching billing_day (skip free cohorts)
     const { data: cohorts, error: cohortError } = await supabase
       .from('cohorts')
       .select('id, name, fee_pkr, billing_day, teacher_id')
       .eq('fee_type', 'monthly')
       .eq('billing_day', targetBillingDay)
+      .gt('fee_pkr', 0)
       .in('status', ['active', 'upcoming'])
       .is('deleted_at', null)
 
@@ -235,6 +236,7 @@ export async function GET(request: NextRequest) {
         .select('id, name, fee_pkr, billing_day, teacher_id')
         .eq('fee_type', 'monthly')
         .eq('billing_day', overdueTargetBillingDay)
+        .gt('fee_pkr', 0)
         .in('status', ['active', 'upcoming'])
         .is('deleted_at', null)
 

@@ -220,6 +220,7 @@ function buildSubject(type: EmailType, data: Record<string, unknown>): string {
     class_reminder_24h: `${platformName} — Class Tomorrow`,
     class_reminder_1h: `${platformName} — Class Starting Soon`,
     class_cancelled: `${platformName} — Class Cancelled`,
+    class_rescheduled: `${platformName} — Class Rescheduled`,
     payment_approved: `${platformName} — Payment Confirmed`,
     payment_rejected: `${platformName} — Payment Update`,
     subscription_renewal_reminder: `${platformName} — Subscription Renewal Reminder`,
@@ -290,6 +291,32 @@ function buildHtmlContent(type: EmailType, data: Record<string, unknown>): strin
         <p style="color: #666; font-size: 12px;">
           If you did not make this change, please contact support immediately.
         </p>
+      </body>
+      </html>
+    `
+  }
+
+  if (type === 'class_rescheduled') {
+    const cohortName = (data.cohortName as string) || 'your class'
+    const oldTime = (data.oldTimePKT as string) || ''
+    const newTime = (data.newTimePKT as string) || ''
+    const meetLink = (data.meetLink as string) || ''
+    const teacherName = (data.teacherName as string) || ''
+    const reason = (data.reason as string) || ''
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head><meta charset="utf-8"></head>
+      <body style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h2 style="color: #1a1a1a;">${platformName}</h2>
+        ${recipientName ? `<p>Hi ${recipientName},</p>` : ''}
+        <p>A session for <strong>${cohortName}</strong>${teacherName ? ` with ${teacherName}` : ''} has been rescheduled.</p>
+        ${oldTime ? `<p><strong>Original time:</strong> <span style="text-decoration: line-through; color: #888;">${oldTime}</span></p>` : ''}
+        ${newTime ? `<p><strong>New time:</strong> ${newTime}</p>` : ''}
+        ${meetLink ? `<p><strong>Join link:</strong> <a href="${meetLink}" style="color: #4f46e5;">${meetLink}</a></p>` : ''}
+        ${reason ? `<p style="color: #555;"><em>${reason}</em></p>` : ''}
+        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+        <p style="color: #666; font-size: 12px;">Sent by ${platformName}</p>
       </body>
       </html>
     `

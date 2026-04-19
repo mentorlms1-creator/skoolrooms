@@ -12,10 +12,15 @@ import {
   createSessionsBatch,
   cancelSession,
   getSessionById,
+  markSessionRescheduled,
+  softDeleteSession,
 } from '@/lib/db/class-sessions'
 import { RRule } from 'rrule'
 import { canUseFeature } from '@/lib/plans/features'
 import { checkPlanLock, getPlanLockError } from '@/lib/auth/plan-guard'
+import { sendEmail } from '@/lib/email/sender'
+import { formatPKT } from '@/lib/time/pkt'
+import { createAdminClient } from '@/supabase/server'
 import type { ApiResponse } from '@/types/api'
 
 // -----------------------------------------------------------------------------
@@ -248,4 +253,133 @@ export async function cancelSessionAction(
   }
 
   return { success: true, data: null }
+}
+
+// -----------------------------------------------------------------------------
+// rescheduleSessionAction — Cancel original + create replacement linked via
+// rescheduled_to_id. Sends class_rescheduled email to enrolled students.
+// -----------------------------------------------------------------------------
+
+export async function rescheduleSessionAction(
+  sessionId: string,
+  formData: FormData,
+): Promise<ApiResponse<{ newSessionId: string; notified: number }>> {
+  const teacher = await getAuthenticatedTeacher()
+  if (!teacher) {
+    return { success: false, error: 'Not authenticated' }
+  }
+
+  if (checkPlanLock(teacher)) {
+    return getPlanLockError()
+  }
+
+  const session = await getSessionById(sessionId)
+  if (!session) {
+    return { success: false, error: 'Session not found' }
+  }
+
+  const cohort = await getCohortById(session.cohort_id)
+  if (!cohort || cohort.teacher_id !== teacher.id) {
+    return { success: false, error: 'Session not found' }
+  }
+
+  if (cohort.status === 'archived') {
+    return {
+      success: false,
+      error: 'This cohort is archived. No changes allowed.',
+      code: 'COHORT_ARCHIVED',
+    }
+  }
+
+  if (session.cancelled_at) {
+    return { success: false, error: 'Cannot reschedule a cancelled session.' }
+  }
+
+  if (session.rescheduled_to_id) {
+    return { success: false, error: 'This session has already been rescheduled.' }
+  }
+
+  const newScheduledAt = (formData.get('new_scheduled_at') as string | null)?.trim() ?? ''
+  const newMeetLinkRaw = (formData.get('new_meet_link') as string | null)?.trim() ?? ''
+  const reason = ((formData.get('reason') as string | null) ?? '').trim()
+
+  if (!newScheduledAt) {
+    return { success: false, error: 'New date and time is required.' }
+  }
+  const parsed = Date.parse(newScheduledAt)
+  if (isNaN(parsed)) {
+    return { success: false, error: 'Invalid date.' }
+  }
+  if (parsed <= Date.now()) {
+    return { success: false, error: 'New time must be in the future.' }
+  }
+  if (reason.length > 500) {
+    return { success: false, error: 'Reason must be 500 characters or fewer.' }
+  }
+  const newMeetLink = newMeetLinkRaw || session.meet_link
+  if (!newMeetLink.startsWith('https://')) {
+    return { success: false, error: 'Meet link must be a valid HTTPS URL.' }
+  }
+
+  // Step 1: insert new session
+  const newSession = await createSession({
+    cohortId: session.cohort_id,
+    meetLink: newMeetLink,
+    scheduledAt: new Date(parsed).toISOString(),
+    durationMinutes: session.duration_minutes,
+    isRecurring: false,
+    recurrenceRule: null,
+  })
+
+  if (!newSession) {
+    return { success: false, error: 'Failed to create rescheduled session.' }
+  }
+
+  // Step 2: mark original as rescheduled
+  const updated = await markSessionRescheduled(sessionId, newSession.id)
+  if (!updated) {
+    // Rollback: soft-delete the new session so we don't orphan it
+    await softDeleteSession(newSession.id)
+    return { success: false, error: 'Failed to reschedule session. Please try again.' }
+  }
+
+  // Step 3: notify enrolled students (active + pending honoring schedule visibility)
+  const supabaseAdmin = createAdminClient()
+  const { data: enrollmentRows } = await supabaseAdmin
+    .from('enrollments')
+    .select('status, students!inner(id, name, email)')
+    .eq('cohort_id', session.cohort_id)
+    .in('status', ['active', 'pending'])
+
+  type EnrollRow = { status: string; students: { id: string; name: string; email: string } }
+  const recipients = ((enrollmentRows ?? []) as unknown as EnrollRow[]).filter((row) => {
+    if (row.status === 'active') return true
+    return cohort.pending_can_see_schedule
+  })
+
+  let notified = 0
+  for (const r of recipients) {
+    try {
+      await sendEmail({
+        to: r.students.email,
+        type: 'class_rescheduled',
+        recipientId: r.students.id,
+        recipientType: 'student',
+        data: {
+          studentName: r.students.name,
+          teacherName: teacher.name,
+          cohortName: cohort.name,
+          oldTimePKT: formatPKT(session.scheduled_at, 'datetime'),
+          newTimePKT: formatPKT(newSession.scheduled_at, 'datetime'),
+          meetLink: newSession.meet_link,
+          reason,
+        },
+      })
+      notified++
+    } catch (err) {
+      console.error('[rescheduleSessionAction] email failed:', err)
+    }
+  }
+
+  return { success: true, data: { newSessionId: newSession.id, notified } }
 }

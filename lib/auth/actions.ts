@@ -6,7 +6,21 @@ import { headers } from 'next/headers'
 import { platformUrl } from '@/lib/platform/domain'
 import { rateLimit } from '@/lib/rate-limit'
 import { convertReferralAction } from '@/lib/actions/referrals'
+import { getStudentByAuthId, markStudentLoggedIn } from '@/lib/db/students'
 import type { ApiResponse } from '@/types/api'
+
+// Best-effort write of last_login_at for the Student Health page.
+// Wrapped in try/catch — login must NEVER fail because of this side effect.
+async function recordStudentLogin(authId: string): Promise<void> {
+  try {
+    const student = await getStudentByAuthId(authId)
+    if (student) {
+      await markStudentLoggedIn(student.id)
+    }
+  } catch {
+    // intentionally swallow — login flow continues
+  }
+}
 
 // =============================================================================
 // Auth Server Actions
@@ -223,6 +237,9 @@ export async function signIn(
   }
 
   const role = (data.user.user_metadata?.role as string) || 'teacher'
+  if (role === 'student') {
+    await recordStudentLogin(data.user.id)
+  }
   return { success: true, data: { role } }
 }
 
@@ -265,6 +282,10 @@ export async function signInAction(
   if (portalType === 'student' && role === 'teacher') {
     await supabase.auth.signOut()
     return { error: 'This is the student portal. Please use the teacher login to sign in.' }
+  }
+
+  if (role === 'student') {
+    await recordStudentLogin(data.user.id)
   }
 
   // Server-side redirect — cookies are already set, no hydration needed

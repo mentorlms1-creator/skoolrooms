@@ -37,6 +37,11 @@ export default async function StudentSettingsPage() {
             defaultPhone={student.phone as string}
             email={student.email as string}
             memberSince={formatPKT(student.created_at as string, 'date')}
+            guardianDefaults={{
+              parent_name: (student.parent_name as string | null) ?? null,
+              parent_phone: (student.parent_phone as string | null) ?? null,
+              parent_email: (student.parent_email as string | null) ?? null,
+            }}
           />
         </CardContent>
       </Card>

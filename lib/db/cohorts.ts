@@ -343,6 +343,127 @@ export async function duplicateCohort(
 }
 
 // -----------------------------------------------------------------------------
+// getCohortAnalytics — Per-cohort revenue + projection + completion rate.
+// Returns null when the cohort doesn't belong to the requesting teacher.
+// -----------------------------------------------------------------------------
+export type CohortAnalytics = {
+  revenue_collected_pkr: number
+  revenue_pending_pkr: number
+  projected_revenue_pkr: number
+  projection_horizon_label: string | null
+  manual_revenue_pkr: number
+  completion_rate: number | null
+  enrolled_active: number
+  enrolled_total: number
+  months_remaining: number | null
+}
+
+export async function getCohortAnalytics(
+  cohortId: string,
+  teacherId: string,
+): Promise<CohortAnalytics | null> {
+  const supabase = createAdminClient()
+
+  const { data: cohort, error: cohortError } = await supabase
+    .from('cohorts')
+    .select('id, teacher_id, status, fee_type, fee_pkr, end_date')
+    .eq('id', cohortId)
+    .is('deleted_at', null)
+    .single()
+
+  if (cohortError || !cohort) return null
+  if ((cohort.teacher_id as string) !== teacherId) return null
+
+  const { data: enrollments } = await supabase
+    .from('enrollments')
+    .select('id, status')
+    .eq('cohort_id', cohortId)
+
+  const enrollmentRows = (enrollments as Array<{ id: string; status: string }> | null) ?? []
+  const activeEnrollments = enrollmentRows.filter((e) => e.status === 'active')
+  const enrolledIds = enrollmentRows.map((e) => e.id)
+
+  let collected = 0
+  let pending = 0
+  let manual = 0
+  if (enrolledIds.length > 0) {
+    const { data: payments } = await supabase
+      .from('student_payments')
+      .select('teacher_payout_amount_pkr, status, payment_method, refunded_at, platform_cut_pkr')
+      .in('enrollment_id', enrolledIds)
+
+    for (const p of (payments as Array<{
+      teacher_payout_amount_pkr: number
+      status: string
+      payment_method: string
+      refunded_at: string | null
+      platform_cut_pkr: number
+    }> | null) ?? []) {
+      if (p.status === 'confirmed' && !p.refunded_at) {
+        collected += p.teacher_payout_amount_pkr
+        if (p.platform_cut_pkr === 0 && p.payment_method === 'manual') {
+          manual += p.teacher_payout_amount_pkr
+        }
+      } else if (p.status === 'pending_verification' && !p.refunded_at) {
+        pending += p.teacher_payout_amount_pkr
+      }
+    }
+  }
+
+  const today = new Date()
+  const todayStr = today.toISOString().split('T')[0]
+  const feeType = cohort.fee_type as string
+  const feePkr = cohort.fee_pkr as number
+  const endDateStr = cohort.end_date as string | null
+
+  let monthsRemaining: number | null = null
+  let projected = 0
+  let horizonLabel: string | null = null
+
+  if (feeType === 'monthly') {
+    if (endDateStr) {
+      const endDate = new Date(endDateStr)
+      const diffMs = endDate.getTime() - today.getTime()
+      monthsRemaining = Math.max(0, Math.ceil(diffMs / (30 * 24 * 60 * 60 * 1000)))
+      projected = feePkr * activeEnrollments.length * monthsRemaining
+      horizonLabel = monthsRemaining > 0 ? `Next ${monthsRemaining} month${monthsRemaining === 1 ? '' : 's'}` : null
+    } else {
+      monthsRemaining = 12
+      projected = feePkr * activeEnrollments.length * 12
+      horizonLabel = 'Next 12 months'
+    }
+  } else {
+    const pendingEnrollments = enrollmentRows.filter((e) => e.status === 'pending').length
+    projected = feePkr * pendingEnrollments
+    horizonLabel = pendingEnrollments > 0 ? 'Pending enrollments' : null
+  }
+
+  let completionRate: number | null = null
+  if ((cohort.status as string) === 'archived') {
+    const counted = enrollmentRows.filter(
+      (e) => e.status === 'active' || e.status === 'completed' || e.status === 'withdrawn',
+    ).length
+    const completed = enrollmentRows.filter((e) => e.status === 'completed').length
+    completionRate = counted > 0 ? Math.round((completed / counted) * 100) : null
+  }
+
+  // Suppress unused var lint warning; kept for future-need analytics callers.
+  void todayStr
+
+  return {
+    revenue_collected_pkr: collected,
+    revenue_pending_pkr: pending,
+    projected_revenue_pkr: projected,
+    projection_horizon_label: horizonLabel,
+    manual_revenue_pkr: manual,
+    completion_rate: completionRate,
+    enrolled_active: activeEnrollments.length,
+    enrolled_total: enrollmentRows.length,
+    months_remaining: monthsRemaining,
+  }
+}
+
+// -----------------------------------------------------------------------------
 // computeCohortDisplayStatus — Pure function, no DB call
 // Returns a human-readable display status based on cohort state.
 //

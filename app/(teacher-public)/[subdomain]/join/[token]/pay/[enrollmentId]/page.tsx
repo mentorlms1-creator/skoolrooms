@@ -78,6 +78,11 @@ export default async function PaymentPage({ params, searchParams }: PageProps) {
     notFound()
   }
 
+  // Defensive: free cohorts never need a payment screen.
+  if (cohort.fee_pkr === 0) {
+    redirect('/student')
+  }
+
   // --- Fetch teacher info + payment settings ---
   const adminSupabase = createAdminClient()
 

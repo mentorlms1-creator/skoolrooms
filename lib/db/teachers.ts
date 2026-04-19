@@ -181,6 +181,68 @@ export async function getTeacherPlanDetails(
 }
 
 // -----------------------------------------------------------------------------
+// getTeacherPlanSnapshot — Returns the snapshot row for a teacher (or null).
+// Snapshot represents grandfathered terms captured at subscription time.
+// -----------------------------------------------------------------------------
+export type TeacherPlanSnapshot = {
+  isGrandfathered: boolean
+  capturedAt: string | null
+  features: Record<string, boolean>
+  limits: Record<string, number>
+}
+
+export async function getTeacherPlanSnapshot(
+  teacherId: string,
+  livePlanDetails: PlanDetails | null,
+): Promise<TeacherPlanSnapshot | null> {
+  const supabase = createAdminClient()
+
+  const { data: row } = await supabase
+    .from('teacher_plan_snapshot')
+    .select('snapshot_json, created_at')
+    .eq('teacher_id', teacherId)
+    .single()
+
+  if (!row || !row.snapshot_json) return null
+
+  const snapshot = row.snapshot_json as {
+    features?: Record<string, boolean>
+    limits?: Record<string, number>
+  }
+  const snapshotFeatures = snapshot.features ?? {}
+  const snapshotLimits = snapshot.limits ?? {}
+
+  // Treat snapshot as grandfathered only when it actually differs from live.
+  let differs = false
+  if (livePlanDetails) {
+    for (const [key, value] of Object.entries(snapshotFeatures)) {
+      if (livePlanDetails.features[key] !== value) {
+        differs = true
+        break
+      }
+    }
+    if (!differs) {
+      for (const [key, value] of Object.entries(snapshotLimits)) {
+        const live = livePlanDetails.limits[key]
+        if (live !== value) {
+          differs = true
+          break
+        }
+      }
+    }
+  } else {
+    differs = true
+  }
+
+  return {
+    isGrandfathered: differs,
+    capturedAt: (row.created_at as string | null) ?? null,
+    features: snapshotFeatures,
+    limits: snapshotLimits,
+  }
+}
+
+// -----------------------------------------------------------------------------
 // getTeacherUsage — Build UsageData shape for TeacherProvider
 // Counts published courses, active enrollments, and active cohorts.
 // -----------------------------------------------------------------------------

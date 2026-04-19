@@ -28,8 +28,9 @@ import {
   getAssignmentsByCohort,
   getSubmissionsByStudentForCohort,
 } from '@/lib/db/assignments'
-import { getAttendanceSummary } from '@/lib/db/attendance'
+import { getAttendanceSummary, getAttendanceTimelineForStudent } from '@/lib/db/attendance'
 import { PageHeader } from '@/components/ui/PageHeader'
+import { AttendanceRing } from '@/components/ui/AttendanceRing'
 import { Card, CardContent } from '@/components/ui/card'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -68,10 +69,11 @@ export default async function EnrollmentDetailPage({ params }: PageParams) {
   const isArchived = cohort.status === 'archived'
 
   // Fetch data in parallel based on visibility
-  const [announcements, assignments, attendanceSummary] = await Promise.all([
+  const [announcements, assignments, attendanceSummary, attendanceTimeline] = await Promise.all([
     canSeeAnnouncements ? getAnnouncementsByCohort(cohort.id) : Promise.resolve([]),
     isActiveOrPending ? getAssignmentsByCohort(cohort.id) : Promise.resolve([]),
     isActive ? getAttendanceSummary(student.id, cohort.id) : Promise.resolve(null),
+    isActive ? getAttendanceTimelineForStudent(student.id, cohort.id) : Promise.resolve([]),
   ])
 
   // Fetch announcement reads + comments if announcements are visible
@@ -262,6 +264,63 @@ export default async function EnrollmentDetailPage({ params }: PageParams) {
           </Card>
         )}
       </div>
+
+      {/* Your progress — Lane E2 */}
+      {attendanceSummary && (
+        <section className="mb-8">
+          <div className="mb-4 flex items-center gap-2">
+            <Activity className="h-5 w-5 text-success" />
+            <h2 className="text-xl font-bold text-foreground">Your progress</h2>
+          </div>
+          <Card className="rounded-[2rem] border-none shadow-sm ring-1 ring-foreground/5 bg-card overflow-hidden">
+            <CardContent className="px-8 pt-8 pb-8">
+              {attendanceTimeline.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No classes have been scheduled yet.</p>
+              ) : (
+                <div className="space-y-6">
+                  <AttendanceRing
+                    percentage={attendanceSummary.percentage}
+                    attended={attendanceSummary.attended}
+                    total={attendanceSummary.total}
+                  />
+                  <div>
+                    <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/50">
+                      Recent classes
+                    </p>
+                    <ul className="divide-y divide-border rounded-2xl ring-1 ring-foreground/[0.03] overflow-hidden">
+                      {attendanceTimeline.slice(-5).reverse().map((s) => {
+                        const future = new Date(s.scheduled_at).getTime() > Date.now()
+                        let label = 'Absent'
+                        let cls = 'bg-destructive/10 text-destructive'
+                        if (s.cancelled) {
+                          label = 'Cancelled'
+                          cls = 'bg-muted/30 text-muted-foreground'
+                        } else if (future) {
+                          label = 'Upcoming'
+                          cls = 'bg-primary/10 text-primary'
+                        } else if (s.present) {
+                          label = 'Present'
+                          cls = 'bg-success/10 text-success'
+                        }
+                        return (
+                          <li key={s.session_id} className="flex items-center justify-between gap-3 px-3 py-2 text-sm">
+                            <span className="text-muted-foreground">
+                              {formatPKT(s.scheduled_at, 'datetime')}
+                            </span>
+                            <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${cls}`}>
+                              {label}
+                            </span>
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </section>
+      )}
 
       {/* Announcements section */}
       {canSeeAnnouncements && (

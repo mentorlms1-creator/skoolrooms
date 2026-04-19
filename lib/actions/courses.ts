@@ -16,7 +16,33 @@ import {
 import { getLimit } from '@/lib/plans/limits'
 import { checkPlanLock, getPlanLockError } from '@/lib/auth/plan-guard'
 import { completeOnboardingStep } from '@/lib/actions/onboarding'
+import { isValidCourseCategory, normalizeTags } from '@/constants/course-categories'
 import type { ApiResponse } from '@/types/api'
+
+function parseCategoryFromForm(formData: FormData): { ok: true; value: string | null } | { ok: false; error: string } {
+  const raw = (formData.get('category') as string | null)?.trim() ?? ''
+  if (!raw) return { ok: true, value: null }
+  if (!isValidCourseCategory(raw)) {
+    return { ok: false, error: 'Invalid course category.' }
+  }
+  return { ok: true, value: raw }
+}
+
+function parseTagsFromForm(formData: FormData): string[] {
+  const raw = formData.getAll('tags')
+  // Accept either repeated `tags` entries or a single comma-separated string
+  if (raw.length === 0) return []
+  const flat: string[] = []
+  for (const v of raw) {
+    if (typeof v !== 'string') continue
+    if (v.includes(',')) {
+      for (const part of v.split(',')) flat.push(part)
+    } else {
+      flat.push(v)
+    }
+  }
+  return normalizeTags(flat)
+}
 
 // -----------------------------------------------------------------------------
 // Helpers
@@ -65,10 +91,16 @@ export async function createCourseAction(
     }
   }
 
+  const categoryParsed = parseCategoryFromForm(formData)
+  if (!categoryParsed.ok) {
+    return { success: false, error: categoryParsed.error }
+  }
+  const tags = parseTagsFromForm(formData)
+
   // No plan limit check on draft creation — only published courses count
   // toward max_courses. The limit is enforced in updateCourseAction when
   // status is set to 'published'.
-  const course = await createCourse(teacher.id, title, description)
+  const course = await createCourse(teacher.id, title, description, categoryParsed.value, tags)
 
   if (!course) {
     return { success: false, error: 'Failed to create course. Please try again.' }
@@ -149,6 +181,17 @@ export async function updateCourseAction(
   if (description !== null) updates.description = description
   if (status !== null) updates.status = status
   if (thumbnailUrl !== null) updates.thumbnail_url = thumbnailUrl
+
+  if (formData.has('category')) {
+    const categoryParsed = parseCategoryFromForm(formData)
+    if (!categoryParsed.ok) {
+      return { success: false, error: categoryParsed.error }
+    }
+    updates.category = categoryParsed.value
+  }
+  if (formData.has('tags')) {
+    updates.tags = parseTagsFromForm(formData)
+  }
 
   const updated = await updateCourse(courseId, updates)
 

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { MoreHorizontal, Receipt, BadgeMinus, Eye, List } from 'lucide-react'
+import { MoreHorizontal, Receipt, BadgeMinus, Eye, List, Activity } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,6 +14,11 @@ import { Button } from '@/components/ui/button'
 import { RevokeDialog } from './RevokeDialog'
 import { RefundDialog } from './RefundDialog'
 import { EnrollmentPaymentsModal, type ModalPayment } from './EnrollmentPaymentsModal'
+import {
+  StudentProgressDialog,
+  type ProgressSubmissionStats,
+  type ProgressTimelineEntry,
+} from './StudentProgressDialog'
 
 export type RowPayment = {
   id: string
@@ -35,6 +40,11 @@ type StudentRowActionsProps = {
   hasPendingWithdrawal: boolean
   cohortFeeType?: string
   allPayments?: ModalPayment[]
+  progress?: {
+    cohortName: string
+    timeline: ProgressTimelineEntry[]
+    stats: ProgressSubmissionStats
+  } | null
 }
 
 export function StudentRowActions({
@@ -46,10 +56,12 @@ export function StudentRowActions({
   hasPendingWithdrawal,
   cohortFeeType,
   allPayments,
+  progress,
 }: StudentRowActionsProps) {
   const [revokeOpen, setRevokeOpen] = useState(false)
   const [refundOpen, setRefundOpen] = useState(false)
   const [paymentsOpen, setPaymentsOpen] = useState(false)
+  const [progressOpen, setProgressOpen] = useState(false)
 
   const alreadyRefunded = !!payment?.refunded_at
   const screenshotUrl = payment?.screenshot_url
@@ -73,6 +85,13 @@ export function StudentRowActions({
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>{studentName}</DropdownMenuLabel>
           <DropdownMenuSeparator />
+
+          {progress && (
+            <DropdownMenuItem onSelect={() => setProgressOpen(true)}>
+              <Activity className="mr-2 h-4 w-4" />
+              Progress
+            </DropdownMenuItem>
+          )}
 
           {isMonthly && (
             <DropdownMenuItem onSelect={() => setPaymentsOpen(true)}>
@@ -136,6 +155,17 @@ export function StudentRowActions({
           availableBalance={availableBalance}
           open={paymentsOpen}
           onOpenChange={setPaymentsOpen}
+        />
+      )}
+
+      {progress && (
+        <StudentProgressDialog
+          open={progressOpen}
+          onOpenChange={setProgressOpen}
+          studentName={studentName}
+          cohortName={progress.cohortName}
+          timeline={progress.timeline}
+          stats={progress.stats}
         />
       )}
     </>

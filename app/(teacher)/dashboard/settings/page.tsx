@@ -6,7 +6,7 @@
 
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { ChevronRight, Gift, Quote } from 'lucide-react'
+import { ChevronRight, Gift, Quote, Receipt } from 'lucide-react'
 import { requireTeacher } from '@/lib/auth/guards'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { ProfileSettingsForm } from '@/components/teacher/ProfileSettingsForm'
@@ -70,7 +70,7 @@ export default async function TeacherSettingsPage() {
 
           <Link
             href="/dashboard/settings/testimonials"
-            className="flex items-center justify-between border-t border-border px-5 py-4 hover:bg-muted/30 transition-colors rounded-b-xl"
+            className="flex items-center justify-between border-t border-border px-5 py-4 hover:bg-muted/30 transition-colors"
           >
             <div className="flex items-center gap-3">
               <Quote className="h-5 w-5 text-muted-foreground" />
@@ -78,6 +78,22 @@ export default async function TeacherSettingsPage() {
                 <p className="text-sm font-medium text-foreground">Testimonials</p>
                 <p className="text-xs text-muted-foreground">
                   Add student testimonials to your public page
+                </p>
+              </div>
+            </div>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </Link>
+
+          <Link
+            href="/dashboard/settings/billing"
+            className="flex items-center justify-between border-t border-border px-5 py-4 hover:bg-muted/30 transition-colors rounded-b-xl"
+          >
+            <div className="flex items-center gap-3">
+              <Receipt className="h-5 w-5 text-muted-foreground" />
+              <div>
+                <p className="text-sm font-medium text-foreground">Billing</p>
+                <p className="text-xs text-muted-foreground">
+                  Subscription history, payouts and invoices
                 </p>
               </div>
             </div>

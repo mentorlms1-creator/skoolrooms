@@ -17,8 +17,10 @@ type SessionCardProps = {
     scheduled_at: string
     duration_minutes: number
     cancelled_at: string | null
+    rescheduled_to_id?: string | null
   }
   cancelButton?: React.ReactNode
+  rescheduleButton?: React.ReactNode
 }
 
 function getSessionStatus(
@@ -35,7 +37,7 @@ function getSessionStatus(
   return 'upcoming'
 }
 
-export function SessionCard({ session, cancelButton }: SessionCardProps) {
+export function SessionCard({ session, cancelButton, rescheduleButton }: SessionCardProps) {
   const status = getSessionStatus(
     session.scheduled_at,
     session.duration_minutes,
@@ -95,7 +97,8 @@ export function SessionCard({ session, cancelButton }: SessionCardProps) {
         <div className="flex items-center gap-3">
           <StatusBadge status={status} size="sm" />
 
-          {/* Cancel button - only for future non-cancelled sessions */}
+          {/* Action buttons - only for future non-cancelled sessions */}
+          {isFuture && rescheduleButton}
           {isFuture && cancelButton}
         </div>
       </div>

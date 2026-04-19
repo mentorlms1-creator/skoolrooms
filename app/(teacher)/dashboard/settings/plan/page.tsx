@@ -2,61 +2,59 @@
  * app/(teacher)/dashboard/settings/plan/page.tsx — Teacher plan management page
  *
  * Server Component. Shows:
- * - Current plan name, price, expiry/trial status
- * - Feature list (included vs locked)
+ * - Current plan name, price, expiry/trial status, grandfathered badge
+ * - Full feature/limit table with check/lock icons + "Was" column when grandfathered
  * - Usage bars for plan limits
  * - Upgrade/renew CTA
- * - Subscription history
+ * Subscription history lives at /dashboard/settings/billing (Lane E2 split).
  */
 
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { requireTeacher } from '@/lib/auth/guards'
-import { getTeacherPlanDetails, getTeacherUsage } from '@/lib/db/teachers'
-import { getTeacherSubscriptions } from '@/lib/db/subscriptions'
+import {
+  getTeacherPlanDetails,
+  getTeacherPlanSnapshot,
+  getTeacherUsage,
+} from '@/lib/db/teachers'
 import { Card } from '@/components/ui/card'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { UsageBars } from '@/components/ui/UsageBars'
+import { PlanFeatureIcon } from '@/components/ui/PlanFeatureIcon'
+import { Badge } from '@/components/ui/badge'
 import { ROUTES } from '@/constants/routes'
 import { PLANS, UNLIMITED_VALUE } from '@/constants/plans'
+import { FEATURE_REGISTRY } from '@/constants/features'
 import { formatPKT } from '@/lib/time/pkt'
-import type { PlanSlug } from '@/types/domain'
+import type { PlanSlug, FeatureKey } from '@/types/domain'
 
 export const metadata: Metadata = {
   title: 'Plan & Subscription \u2014 Skool Rooms',
 }
 
-// Feature display names for the feature list
-const FEATURE_DISPLAY_NAMES: Record<string, string> = {
-  attendance_tracking: 'Attendance Tracking',
-  assignment_submission: 'Assignment Submissions',
-  analytics_dashboard: 'Analytics Dashboard',
-  student_portal: 'Student Portal',
-  class_reminders: 'Class Reminders',
-  whatsapp_notifications: 'WhatsApp Notifications',
-  progress_report_pdf: 'Progress Report PDF',
-  cohort_archive_history: 'Cohort Archive History',
-  fee_reminders: 'Fee Reminders',
-  revenue_analytics: 'Revenue Analytics',
-  student_health_signals: 'Student Health Signals',
-  custom_domain: 'Custom Domain',
-  multi_teacher: 'Multi-Teacher Support',
-  remove_branding: 'Remove Branding',
-  recurring_classes: 'Recurring Classes',
-  waitlist: 'Waitlist',
-  discount_codes: 'Discount Codes',
+const LIMIT_DISPLAY: Array<{ key: string; label: string; suffix?: string }> = [
+  { key: 'max_courses', label: 'Courses' },
+  { key: 'max_students', label: 'Students' },
+  { key: 'max_cohorts_active', label: 'Active Cohorts' },
+  { key: 'max_storage_mb', label: 'Storage', suffix: ' MB' },
+]
+
+function formatLimit(value: number | null | undefined, suffix?: string): string {
+  if (value === null || value === undefined) return '—'
+  if (value >= UNLIMITED_VALUE) return 'Unlimited'
+  return `${value.toLocaleString()}${suffix ?? ''}`
 }
 
 export default async function PlanSettingsPage() {
   const teacher = await requireTeacher()
   const teacherId = teacher.id as string
 
-  const [planDetails, usage, subscriptions] = await Promise.all([
+  const [planDetails, usage] = await Promise.all([
     getTeacherPlanDetails(teacherId),
     getTeacherUsage(teacherId),
-    getTeacherSubscriptions(teacherId),
   ])
+  const snapshot = await getTeacherPlanSnapshot(teacherId, planDetails)
 
   const currentPlan = teacher.plan as PlanSlug
   const planInfo = PLANS[currentPlan]
@@ -65,7 +63,6 @@ export default async function PlanSettingsPage() {
     ? new Date(teacher.trial_ends_at as string) > new Date()
     : false
 
-  // Determine plan status text
   let planStatusText = ''
   let planStatusType = 'active'
   if (isFreePlan) {
@@ -85,7 +82,6 @@ export default async function PlanSettingsPage() {
     planStatusText = 'Active'
   }
 
-  // Build usage items for the bars
   const usageItems = [
     {
       label: 'Courses',
@@ -110,19 +106,68 @@ export default async function PlanSettingsPage() {
     },
   ]
 
-  // Build enabled/disabled feature lists
-  const enabledFeatures: string[] = []
-  const disabledFeatures: string[] = []
-
-  if (planDetails) {
-    for (const [key, displayName] of Object.entries(FEATURE_DISPLAY_NAMES)) {
-      if (planDetails.features[key]) {
-        enabledFeatures.push(displayName)
-      } else {
-        disabledFeatures.push(displayName)
-      }
-    }
+  // Build feature/limit rows
+  type FeatureRow = {
+    label: string
+    liveValue: string
+    snapshotValue: string | null
+    enabledLive: boolean | null
+    enabledSnapshot: boolean | null
+    isLimit: boolean
+    deltaLabel: string | null
   }
+
+  const rows: FeatureRow[] = []
+
+  for (const feature of FEATURE_REGISTRY) {
+    const key = feature.key as FeatureKey
+    const live = planDetails?.features[key] ?? false
+    const snap = snapshot ? snapshot.features[key] : undefined
+    const snapshotValue = snap === undefined ? null : snap ? 'Included' : 'Locked'
+    const deltaLabel =
+      snap !== undefined && snap !== live ? (snap ? 'Was: included' : 'Was: locked') : null
+    rows.push({
+      label: feature.displayName,
+      liveValue: live ? 'Included' : 'Locked',
+      snapshotValue,
+      enabledLive: live,
+      enabledSnapshot: snap === undefined ? null : snap,
+      isLimit: false,
+      deltaLabel,
+    })
+  }
+
+  for (const limit of LIMIT_DISPLAY) {
+    const liveRaw = planDetails?.limits[limit.key]
+    const snapRaw = snapshot ? snapshot.limits[limit.key] : undefined
+    const liveStr = formatLimit(liveRaw, limit.suffix)
+    const snapStr = snapRaw === undefined ? null : formatLimit(snapRaw, limit.suffix)
+    const deltaLabel =
+      snapRaw !== undefined && liveRaw !== undefined && snapRaw !== liveRaw
+        ? `Was: ${snapStr}`
+        : null
+    rows.push({
+      label: limit.label,
+      liveValue: liveStr,
+      snapshotValue: snapStr,
+      enabledLive: null,
+      enabledSnapshot: null,
+      isLimit: true,
+      deltaLabel,
+    })
+  }
+
+  const isGrandfathered = !!snapshot?.isGrandfathered
+  const showWasColumn = isGrandfathered && rows.some((r) => r.deltaLabel)
+
+  // What's-different list (snapshot has more than live)
+  const differences = isGrandfathered
+    ? rows.filter((r) => r.deltaLabel).map((r) => ({
+        label: r.label,
+        was: r.snapshotValue ?? '—',
+        now: r.liveValue,
+      }))
+    : []
 
   return (
     <div className="space-y-6">
@@ -133,9 +178,20 @@ export default async function PlanSettingsPage() {
 
       {/* Current Plan Card */}
       <Card className="p-6">
-        <div className="flex items-start justify-between">
+        <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-lg font-semibold text-foreground">{planInfo?.name ?? currentPlan} Plan</h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-semibold text-foreground">{planInfo?.name ?? currentPlan} Plan</h2>
+              {isGrandfathered && (
+                <Badge variant="outline" title={
+                  snapshot?.capturedAt
+                    ? `On legacy terms captured ${formatPKT(snapshot.capturedAt, 'date')}.`
+                    : 'On legacy terms.'
+                }>
+                  Grandfathered
+                </Badge>
+              )}
+            </div>
             <p className="mt-1 text-sm text-muted-foreground">
               {planInfo && planInfo.price_pkr > 0
                 ? `Rs. ${planInfo.price_pkr.toLocaleString()} / month`
@@ -177,134 +233,92 @@ export default async function PlanSettingsPage() {
         <UsageBars items={usageItems} />
       </Card>
 
-      {/* Features */}
+      {/* Features + Limits table */}
       <Card className="p-6">
-        <h3 className="mb-4 text-base font-semibold text-foreground">Features</h3>
-        <div className="grid gap-4 sm:grid-cols-2">
-          {/* Included features */}
-          <div>
-            <h4 className="mb-2 text-sm font-medium text-success">Included</h4>
-            <ul className="space-y-1.5">
-              {enabledFeatures.map((f) => (
-                <li key={f} className="flex items-center gap-2 text-sm text-foreground">
-                  <CheckCircle />
-                  {f}
-                </li>
-              ))}
-              {enabledFeatures.length === 0 && (
-                <li className="text-sm text-muted-foreground">Core features (courses, cohorts, payments, subdomain) are included with every plan.</li>
-              )}
-            </ul>
-          </div>
-
-          {/* Locked features */}
-          <div>
-            <h4 className="mb-2 text-sm font-medium text-muted-foreground">Not Available</h4>
-            <ul className="space-y-1.5">
-              {disabledFeatures.map((f) => (
-                <li key={f} className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <LockIcon />
-                  {f}
-                </li>
-              ))}
-              {disabledFeatures.length === 0 && (
-                <li className="text-sm text-success">All features available!</li>
-              )}
-            </ul>
-          </div>
+        <h3 className="mb-4 text-base font-semibold text-foreground">Features & limits</h3>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border text-left text-muted-foreground">
+                <th className="pb-2 pr-4 font-medium">Feature / Limit</th>
+                <th className="pb-2 pr-4 font-medium">Live plan</th>
+                <th className="pb-2 pr-4 font-medium">Your effective</th>
+                {showWasColumn && <th className="pb-2 font-medium">Was</th>}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => {
+                const effectiveValue = row.snapshotValue ?? row.liveValue
+                const effectiveEnabled =
+                  row.enabledSnapshot !== null
+                    ? row.enabledSnapshot
+                    : row.enabledLive
+                return (
+                  <tr key={row.label} className="border-b border-border/40">
+                    <td className="py-2 pr-4 text-foreground">{row.label}</td>
+                    <td className="py-2 pr-4 text-muted-foreground">
+                      <Cell value={row.liveValue} enabled={row.enabledLive} isLimit={row.isLimit} />
+                    </td>
+                    <td className="py-2 pr-4 text-foreground">
+                      <Cell value={effectiveValue} enabled={effectiveEnabled} isLimit={row.isLimit} />
+                    </td>
+                    {showWasColumn && (
+                      <td className="py-2 text-xs text-muted-foreground">
+                        {row.deltaLabel ?? ''}
+                      </td>
+                    )}
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
         </div>
       </Card>
 
-      {/* Subscription History */}
-      {subscriptions.length > 0 && (
+      {/* What's different — collapsible-style list */}
+      {isGrandfathered && differences.length > 0 && (
         <Card className="p-6">
-          <h3 className="mb-4 text-base font-semibold text-foreground">Subscription History</h3>
-          {/* Mobile card view */}
-          <div className="md:hidden flex flex-col gap-3">
-            {subscriptions.map((sub) => (
-              <div key={sub.id} className="rounded-md border border-border p-3 sm:p-4 text-sm">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-foreground capitalize">{sub.plan}</span>
-                  <StatusBadge status={sub.status} size="sm" />
-                </div>
-                <p className="mt-1 text-foreground">Rs. {sub.amount_pkr.toLocaleString()}</p>
-                <p className="mt-1 text-muted-foreground">
-                  {formatPKT(sub.period_start, 'date')} &mdash; {formatPKT(sub.period_end, 'date')}
-                </p>
-                <p className="mt-1 text-muted-foreground">{formatPKT(sub.created_at, 'date')}</p>
-              </div>
+          <h3 className="mb-3 text-base font-semibold text-foreground">
+            What&apos;s different from the current plan?
+          </h3>
+          <ul className="space-y-2 text-sm">
+            {differences.map((d) => (
+              <li key={d.label} className="flex items-center justify-between border-b border-border/40 pb-2">
+                <span className="text-foreground">{d.label}</span>
+                <span className="text-muted-foreground">
+                  Was <span className="font-medium text-foreground">{d.was}</span> · Now {d.now}
+                </span>
+              </li>
             ))}
-          </div>
-          {/* Desktop table view */}
-          <div className="hidden md:block overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border text-left text-muted-foreground">
-                  <th className="pb-2 pr-4 font-medium">Plan</th>
-                  <th className="pb-2 pr-4 font-medium">Amount</th>
-                  <th className="pb-2 pr-4 font-medium">Period</th>
-                  <th className="pb-2 pr-4 font-medium">Status</th>
-                  <th className="pb-2 font-medium">Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {subscriptions.map((sub) => (
-                  <tr key={sub.id} className="border-b border-border/50">
-                    <td className="py-2.5 pr-4 font-medium text-foreground capitalize">{sub.plan}</td>
-                    <td className="py-2.5 pr-4 text-foreground">Rs. {sub.amount_pkr.toLocaleString()}</td>
-                    <td className="py-2.5 pr-4 text-muted-foreground">
-                      {formatPKT(sub.period_start, 'date')} &mdash;{' '}
-                      {formatPKT(sub.period_end, 'date')}
-                    </td>
-                    <td className="py-2.5 pr-4">
-                      <StatusBadge status={sub.status} size="sm" />
-                    </td>
-                    <td className="py-2.5 text-muted-foreground">
-                      {formatPKT(sub.created_at, 'date')}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          </ul>
         </Card>
       )}
+
+      {/* Pointer to billing history */}
+      <p className="text-sm text-muted-foreground">
+        Looking for receipts and payouts?{' '}
+        <Link href={ROUTES.TEACHER.settings.billing} className="text-primary hover:underline">
+          View billing history &rarr;
+        </Link>
+      </p>
     </div>
   )
 }
 
-// -- Icons --
-
-function CheckCircle() {
+function Cell({
+  value,
+  enabled,
+  isLimit,
+}: {
+  value: string
+  enabled: boolean | null
+  isLimit: boolean
+}) {
+  if (isLimit) return <span>{value}</span>
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 20 20"
-      fill="currentColor"
-      className="h-4 w-4 shrink-0 text-success"
-    >
-      <path
-        fillRule="evenodd"
-        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
-        clipRule="evenodd"
-      />
-    </svg>
-  )
-}
-
-function LockIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 20 20"
-      fill="currentColor"
-      className="h-4 w-4 shrink-0 text-muted-foreground"
-    >
-      <path
-        fillRule="evenodd"
-        d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z"
-        clipRule="evenodd"
-      />
-    </svg>
+    <span className="inline-flex items-center gap-2">
+      <PlanFeatureIcon enabled={enabled === true} />
+      <span className={enabled ? 'text-foreground' : 'text-muted-foreground'}>{value}</span>
+    </span>
   )
 }

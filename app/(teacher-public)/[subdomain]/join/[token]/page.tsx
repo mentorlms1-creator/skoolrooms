@@ -17,10 +17,11 @@ import {
   computeCohortDisplayStatus,
 } from '@/lib/db/cohorts'
 import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { WaitlistForm } from '@/components/public/WaitlistForm'
+import { EnrollNowButton } from '@/components/public/EnrollNowButton'
 import { formatPKT } from '@/lib/time/pkt'
+import { ROUTES } from '@/constants/routes'
 
 type PageProps = {
   params: Promise<{ subdomain: string; token: string }>
@@ -115,7 +116,8 @@ export default async function JoinCohortPage({ params }: PageProps) {
     cohort.max_students !== null
       ? cohort.max_students - enrollmentCount
       : null
-  const feeLabel = cohort.fee_type === 'monthly' ? '/month' : 'one-time'
+  const isFree = cohort.fee_pkr === 0
+  const feeLabel = isFree ? '' : cohort.fee_type === 'monthly' ? '/month' : 'one-time'
 
   return (
     <div className="mx-auto max-w-lg px-4 py-16">
@@ -167,10 +169,14 @@ export default async function JoinCohortPage({ params }: PageProps) {
 
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Fee</span>
-              <span className="font-medium text-foreground">
-                {formatFeePKR(cohort.fee_pkr)}{' '}
-                <span className="text-xs text-muted-foreground">{feeLabel}</span>
-              </span>
+              {isFree ? (
+                <span className="font-medium text-foreground">Free</span>
+              ) : (
+                <span className="font-medium text-foreground">
+                  {formatFeePKR(cohort.fee_pkr)}{' '}
+                  <span className="text-xs text-muted-foreground">{feeLabel}</span>
+                </span>
+              )}
             </div>
 
             {spotsLeft !== null && (
@@ -187,14 +193,19 @@ export default async function JoinCohortPage({ params }: PageProps) {
             )}
           </div>
 
-          {/* Enroll button — non-functional until Week 4 */}
+          {/* Enroll button */}
           <div className="mt-6">
-            <Button className="w-full" size="lg" disabled>
-              Enroll Now
-            </Button>
-            <p className="mt-2 text-center text-xs text-muted-foreground">
-              Enrollment will be available soon.
-            </p>
+            <EnrollNowButton
+              cohortId={cohort.id}
+              inviteToken={token}
+              isFree={isFree}
+              loginHref={ROUTES.PLATFORM.studentLogin}
+            />
+            {isFree && (
+              <p className="mt-2 text-center text-xs text-muted-foreground">
+                Free — no payment required.
+              </p>
+            )}
           </div>
         </div>
       </Card>

@@ -21,6 +21,7 @@ export type ExplorableTeacher = {
   starting_fee_pkr: number
   student_count: number
   has_open_cohorts: boolean
+  course_categories: string[]
 }
 
 export type ExploreFilters = {
@@ -28,6 +29,7 @@ export type ExploreFilters = {
   level?: string
   minFee?: number
   maxFee?: number
+  city?: string
 }
 
 // -----------------------------------------------------------------------------
@@ -92,6 +94,25 @@ export async function getExplorableTeachers(
     .neq('status', 'archived')
 
   if (cohortError || !cohorts) return []
+
+  // Fetch published course categories per teacher (distinct, non-null) for
+  // the course_categories field on ExplorableTeacher. Lane F filter UI
+  // consumes this.
+  const { data: categoryRows } = await supabase
+    .from('courses')
+    .select('teacher_id, category')
+    .in('teacher_id', teacherIds)
+    .eq('status', 'published')
+    .is('deleted_at', null)
+    .not('category', 'is', null)
+
+  const categoriesByTeacher = new Map<string, Set<string>>()
+  for (const row of (categoryRows ?? []) as Array<{ teacher_id: string; category: string | null }>) {
+    if (!row.category) continue
+    const tid = row.teacher_id
+    if (!categoriesByTeacher.has(tid)) categoriesByTeacher.set(tid, new Set())
+    categoriesByTeacher.get(tid)!.add(row.category)
+  }
 
   // Build cohort map by teacher
   const cohortsByTeacher = new Map<string, Array<{
@@ -189,6 +210,11 @@ export async function getExplorableTeachers(
     if (filters?.minFee !== undefined && startingFee < filters.minFee) continue
     if (filters?.maxFee !== undefined && startingFee > filters.maxFee) continue
 
+    if (filters?.city) {
+      const wanted = filters.city.trim().toLowerCase()
+      if (!teacher.city || teacher.city.trim().toLowerCase() !== wanted) continue
+    }
+
     result.push({
       id: teacher.id as string,
       name: teacher.name as string,
@@ -201,6 +227,7 @@ export async function getExplorableTeachers(
       starting_fee_pkr: startingFee,
       student_count: studentCount,
       has_open_cohorts: hasOpen,
+      course_categories: Array.from(categoriesByTeacher.get(teacher.id as string) ?? []),
     })
   }
 

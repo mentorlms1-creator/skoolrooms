@@ -30,6 +30,7 @@ import {
   CardContent,
 } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { AttendanceRing } from '@/components/ui/AttendanceRing'
 import { FeedbackPromptCard } from '@/components/student/FeedbackPromptCard'
 import { formatPKT } from '@/lib/time/pkt'
 import { cn } from '@/lib/utils'
@@ -89,12 +90,6 @@ export default async function StudentDashboardPage() {
   const activeEnrollments = enrollments.filter((e) => e.status === 'active')
   const todaySessions = sessions.filter((s) => isTodayPKT(s.scheduled_at)).slice(0, 3)
 
-  // Attendance ring values
-  const attendancePercent = attendanceSummary.percentage
-  const ringRadius = 40
-  const ringCircumference = 2 * Math.PI * ringRadius
-  const ringOffset = ringCircumference - (attendancePercent / 100) * ringCircumference
-
   return (
     <>
       <PageHeader
@@ -140,60 +135,13 @@ export default async function StudentDashboardPage() {
           iconBg="bg-warning/10"
         />
 
-        {/* Attendance Rate — SVG ring */}
+        {/* Attendance Rate — shared ring */}
         <Card className="flex items-center justify-center p-7">
-          <div className="flex items-center gap-4">
-            <svg
-              width="96"
-              height="96"
-              viewBox="0 0 96 96"
-              className="shrink-0"
-              aria-label={`Attendance rate: ${attendancePercent}%`}
-              role="img"
-            >
-              {/* Background ring */}
-              <circle
-                cx="48"
-                cy="48"
-                r={ringRadius}
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="8"
-                className="text-muted/30"
-              />
-              {/* Progress ring */}
-              <circle
-                cx="48"
-                cy="48"
-                r={ringRadius}
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="8"
-                strokeLinecap="round"
-                strokeDasharray={ringCircumference}
-                strokeDashoffset={ringOffset}
-                className="text-primary"
-                transform="rotate(-90 48 48)"
-              />
-              {/* Percentage text */}
-              <text
-                x="48"
-                y="48"
-                textAnchor="middle"
-                dominantBaseline="central"
-                className="fill-foreground text-lg font-bold"
-                fontSize="18"
-              >
-                {attendancePercent}%
-              </text>
-            </svg>
-            <div className="min-w-0">
-              <p className="text-xs text-muted-foreground/70">Attendance</p>
-              <p className="text-sm text-muted-foreground">
-                {attendanceSummary.attended}/{attendanceSummary.total} classes
-              </p>
-            </div>
-          </div>
+          <AttendanceRing
+            percentage={attendanceSummary.percentage}
+            attended={attendanceSummary.attended}
+            total={attendanceSummary.total}
+          />
         </Card>
 
         {/* -- Row 2: Today's Schedule (full-width) -- */}

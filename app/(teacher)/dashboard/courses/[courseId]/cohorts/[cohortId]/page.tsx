@@ -8,8 +8,15 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { requireTeacher } from '@/lib/auth/guards'
-import { getCohortById, getActiveEnrollmentCount, computeCohortDisplayStatus } from '@/lib/db/cohorts'
+import {
+  getCohortById,
+  getActiveEnrollmentCount,
+  computeCohortDisplayStatus,
+  getCohortAnalytics,
+} from '@/lib/db/cohorts'
 import { getCourseById } from '@/lib/db/courses'
+import { canUseFeature } from '@/lib/plans/features'
+import { CohortAnalyticsCard } from '@/components/teacher/CohortAnalyticsCard'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Card } from '@/components/ui/card'
 import { StatusBadge } from '@/components/ui/StatusBadge'
@@ -42,6 +49,11 @@ export default async function CohortDetailPage({ params }: CohortDetailPageProps
 
   const enrollmentCount = await getActiveEnrollmentCount(cohortId)
   const displayStatus = computeCohortDisplayStatus(cohort, enrollmentCount)
+
+  const canSeeRevenueAnalytics = await canUseFeature(teacher.id, 'revenue_analytics')
+  const analytics = canSeeRevenueAnalytics
+    ? await getCohortAnalytics(cohortId, teacher.id)
+    : null
 
   const isArchived = cohort.status === 'archived'
 
@@ -119,6 +131,9 @@ export default async function CohortDetailPage({ params }: CohortDetailPageProps
           </Card>
         )}
 
+        {/* Cohort analytics — Lane E2 */}
+        <CohortAnalyticsCard analytics={analytics} locked={!canSeeRevenueAnalytics} />
+
         {/* Quick links */}
         <Card className="p-6">
           <h2 className="mb-4 text-lg font-semibold text-foreground">Manage</h2>
@@ -134,6 +149,9 @@ export default async function CohortDetailPage({ params }: CohortDetailPageProps
             </Link>
             <Link href={ROUTES.TEACHER.cohortAttendance(courseId, cohortId)}>
               <Button variant="secondary">Attendance</Button>
+            </Link>
+            <Link href={ROUTES.TEACHER.courseCurriculum(courseId)}>
+              <Button variant="secondary">Curriculum</Button>
             </Link>
           </div>
         </Card>
