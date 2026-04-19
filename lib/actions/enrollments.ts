@@ -105,6 +105,19 @@ export async function approveEnrollmentAction(
   const confirmResult = await confirmPaymentAndCreditBalance(payment, teacher, cohort)
   if (!confirmResult.success) return confirmResult
 
+  // Atomically increment discount code use count (if one was applied)
+  if (payment.discount_code_id) {
+    const supabaseAdmin = createAdminClient()
+    const { data: rpcResult } = await supabaseAdmin
+      .rpc('increment_discount_use', { p_code_id: payment.discount_code_id })
+    if (!rpcResult) {
+      // Code expired or hit max_uses between submission and approval — log warning, don't block
+      console.warn(
+        `[approveEnrollment] increment_discount_use returned false for code ${payment.discount_code_id} on enrollment ${enrollmentId}`
+      )
+    }
+  }
+
   // Update enrollment status to active
   const updatedEnrollment = await updateEnrollmentStatus(
     enrollmentId,

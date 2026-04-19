@@ -16,7 +16,9 @@ import {
   getLatestPaymentsByEnrollmentIds,
   getAllPaymentsByEnrollmentIds,
 } from '@/lib/db/student-payments'
+import { getFeedbackByCohort } from '@/lib/db/feedback'
 import { getTeacherBalance } from '@/lib/db/balances'
+import { getOverdueSubmissions } from '@/lib/db/assignments'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Card } from '@/components/ui/card'
 import { StatusBadge } from '@/components/ui/StatusBadge'
@@ -47,11 +49,19 @@ export default async function CohortStudentsPage({ params }: StudentsPageProps) 
     notFound()
   }
 
-  const [enrollments, waitlistEntries, balance] = await Promise.all([
+  const [enrollments, waitlistEntries, balance, overdueRecords, feedbackList] = await Promise.all([
     getEnrollmentsByCohort(cohortId),
     getWaitlistByCohort(cohortId),
     getTeacherBalance(teacher.id),
+    getOverdueSubmissions(cohortId),
+    cohort.status === 'archived' ? getFeedbackByCohort(cohortId) : Promise.resolve([]),
   ])
+
+  // Build per-student overdue count map (O(n) pass over overdue records)
+  const overdueByStudent = new Map<string, number>()
+  for (const record of overdueRecords) {
+    overdueByStudent.set(record.student_id, (overdueByStudent.get(record.student_id) ?? 0) + 1)
+  }
 
   // Separate enrollments by status
   const activeEnrollments = enrollments.filter((e) => e.status === 'active')
@@ -180,6 +190,7 @@ export default async function CohortStudentsPage({ params }: StudentsPageProps) 
                 {activeEnrollments.map((enrollment) => {
                   const hasPending = hasPendingPaymentByEnrollment.get(enrollment.id) ?? false
                   const monthsPaid = monthsPaidByEnrollment.get(enrollment.id) ?? 0
+                  const overdueCount = overdueByStudent.get(enrollment.students.id) ?? 0
                   return (
                     <div key={enrollment.id} className="rounded-md border border-border p-3 text-sm">
                       <div className="flex items-start justify-between gap-2">
@@ -197,6 +208,19 @@ export default async function CohortStudentsPage({ params }: StudentsPageProps) 
                               Months paid: {monthsPaid}/{elapsedMonths}
                             </p>
                           )}
+                          {overdueCount > 0 && (
+                            <span className="mt-1 inline-flex items-center rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
+                              {overdueCount} overdue
+                            </span>
+                          )}
+                          <a
+                            href={`/api/teacher/progress-report/${enrollment.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-1 block text-xs text-primary hover:underline"
+                          >
+                            Download Report
+                          </a>
                         </div>
                         <StudentRowActions
                           enrollmentId={enrollment.id}
@@ -229,6 +253,7 @@ export default async function CohortStudentsPage({ params }: StudentsPageProps) 
                       {isMonthly && (
                         <th className="pb-2 font-medium text-muted-foreground">Months paid</th>
                       )}
+                      <th className="pb-2 font-medium text-muted-foreground">Overdue</th>
                       <th className="pb-2 font-medium text-muted-foreground">Status</th>
                       <th className="pb-2 font-medium text-muted-foreground text-right">Actions</th>
                     </tr>
@@ -237,6 +262,7 @@ export default async function CohortStudentsPage({ params }: StudentsPageProps) 
                     {activeEnrollments.map((enrollment) => {
                       const hasPending = hasPendingPaymentByEnrollment.get(enrollment.id) ?? false
                       const monthsPaid = monthsPaidByEnrollment.get(enrollment.id) ?? 0
+                      const overdueCount = overdueByStudent.get(enrollment.students.id) ?? 0
                       return (
                         <tr key={enrollment.id} className="border-b border-border/50">
                           <td className="py-3 font-medium text-foreground">
@@ -258,19 +284,36 @@ export default async function CohortStudentsPage({ params }: StudentsPageProps) 
                             </td>
                           )}
                           <td className="py-3">
+                            {overdueCount > 0 ? (
+                              <span className="inline-flex items-center rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
+                                {overdueCount} overdue
+                              </span>
+                            ) : null}
+                          </td>
+                          <td className="py-3">
                             <StatusBadge status={enrollment.status} size="sm" />
                           </td>
                           <td className="py-3 text-right">
-                            <StudentRowActions
-                              enrollmentId={enrollment.id}
-                              studentName={enrollment.students.name}
-                              payment={slimPaymentByEnrollment.get(enrollment.id) ?? null}
-                              availableBalance={balance.available_balance_pkr}
-                              cohortArchived={cohortArchived}
-                              hasPendingWithdrawal={!!enrollment.withdrawal_requested_at}
-                              cohortFeeType={cohort.fee_type}
-                              allPayments={modalPaymentsByEnrollment.get(enrollment.id) ?? []}
-                            />
+                            <div className="inline-flex items-center gap-2">
+                              <a
+                                href={`/api/teacher/progress-report/${enrollment.id}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs text-primary underline-offset-2 hover:underline"
+                              >
+                                PDF
+                              </a>
+                              <StudentRowActions
+                                enrollmentId={enrollment.id}
+                                studentName={enrollment.students.name}
+                                payment={slimPaymentByEnrollment.get(enrollment.id) ?? null}
+                                availableBalance={balance.available_balance_pkr}
+                                cohortArchived={cohortArchived}
+                                hasPendingWithdrawal={!!enrollment.withdrawal_requested_at}
+                                cohortFeeType={cohort.fee_type}
+                                allPayments={modalPaymentsByEnrollment.get(enrollment.id) ?? []}
+                              />
+                            </div>
                           </td>
                         </tr>
                       )
@@ -403,6 +446,52 @@ export default async function CohortStudentsPage({ params }: StudentsPageProps) 
           )}
         </Card>
       </div>
+
+      {/* Feedback section — only shown for archived cohorts */}
+      {cohort.status === 'archived' && (
+        <div className="mt-8">
+          <h2 className="mb-4 text-lg font-semibold text-foreground">Student Feedback</h2>
+          {feedbackList.length === 0 ? (
+            <Card className="p-6">
+              <p className="text-sm text-muted-foreground">
+                No feedback submitted yet for this cohort.
+              </p>
+            </Card>
+          ) : (
+            <Card className="p-6">
+              {/* Average rating */}
+              <div className="mb-4 flex items-center gap-3">
+                <span className="text-3xl font-bold text-foreground">
+                  {(feedbackList.reduce((sum, f) => sum + f.rating, 0) / feedbackList.length).toFixed(1)}
+                </span>
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    Average rating from {feedbackList.length} review{feedbackList.length !== 1 ? 's' : ''}
+                  </p>
+                  <p className="text-xs text-muted-foreground">out of 5</p>
+                </div>
+              </div>
+
+              {/* Individual feedback rows */}
+              <div className="space-y-3 divide-y divide-border">
+                {feedbackList.map((f) => (
+                  <div key={f.id} className="pt-3 first:pt-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-foreground">{'★'.repeat(f.rating)}{'☆'.repeat(5 - f.rating)}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {formatPKT(f.created_at, 'date')}
+                      </span>
+                    </div>
+                    {f.comment && (
+                      <p className="mt-1 text-sm text-muted-foreground">{f.comment}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+        </div>
+      )}
     </>
   )
 }

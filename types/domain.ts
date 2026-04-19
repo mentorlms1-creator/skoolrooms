@@ -73,6 +73,9 @@ export const EmailType = {
 
   // Admin broadcast
   ADMIN_BROADCAST: 'admin_broadcast',
+
+  // Account changes
+  SUBDOMAIN_CHANGED: 'subdomain_changed',
 } as const
 
 export type EmailType = (typeof EmailType)[keyof typeof EmailType]

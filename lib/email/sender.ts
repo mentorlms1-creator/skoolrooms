@@ -248,6 +248,7 @@ function buildSubject(type: EmailType, data: Record<string, unknown>): string {
     new_message: `${platformName} — New Message`,
     referral_converted: `${platformName} — Referral Reward`,
     admin_broadcast: (data.subject as string) || `${platformName} — Important Update`,
+    subdomain_changed: `${platformName} — Your subdomain has changed`,
   }
 
   return subjects[type] || `${platformName} — Notification`
@@ -261,6 +262,38 @@ function buildSubject(type: EmailType, data: Record<string, unknown>): string {
 function buildHtmlContent(type: EmailType, data: Record<string, unknown>): string {
   const platformName = (data.platformName as string) || 'Skool Rooms'
   const recipientName = (data.teacherName as string) || (data.studentName as string) || ''
+
+  if (type === 'subdomain_changed') {
+    const oldUrl = data.oldUrl as string
+    const newUrl = data.newUrl as string
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head><meta charset="utf-8"></head>
+      <body style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h2 style="color: #1a1a1a;">${platformName}</h2>
+        ${recipientName ? `<p>Hi ${recipientName},</p>` : ''}
+        <p>Your teaching page URL has been changed.</p>
+        <p>
+          <strong>Old URL (no longer active):</strong><br>
+          <span style="color: #888; text-decoration: line-through;">${oldUrl}</span>
+        </p>
+        <p>
+          <strong>New URL:</strong><br>
+          <a href="${newUrl}" style="color: #4f46e5; font-weight: 600;">${newUrl}</a>
+        </p>
+        <p style="color: #555;">
+          Share your new link with your students. The old link no longer works.
+          You can change your subdomain again after 30 days.
+        </p>
+        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+        <p style="color: #666; font-size: 12px;">
+          If you did not make this change, please contact support immediately.
+        </p>
+      </body>
+      </html>
+    `
+  }
 
   // Simple wrapper — replace with proper templates in future
   return `

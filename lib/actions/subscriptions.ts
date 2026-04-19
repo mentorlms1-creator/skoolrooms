@@ -21,6 +21,7 @@ import {
   hasPriorPaidPlan,
 } from '@/lib/db/subscriptions'
 import { sendEmail } from '@/lib/email/sender'
+import { creditReferralAction } from '@/lib/actions/referrals'
 import type { ApiResponse } from '@/types/api'
 import type { PlanSlug } from '@/types/domain'
 import { PLANS, TIMING } from '@/constants/plans'
@@ -263,6 +264,9 @@ export async function approveSubscriptionAction(
       periodEnd: subscription.period_end,
     })
   }
+
+  // Credit referral if this teacher was referred — guarded by status != 'credited'
+  void creditReferralAction(subscription.teacher_id)
 
   // Send approval email to teacher
   await sendEmail({

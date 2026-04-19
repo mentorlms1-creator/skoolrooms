@@ -494,6 +494,59 @@ export async function getAllStudentsByTeacher(
 }
 
 // -----------------------------------------------------------------------------
+// getArchivedEnrollmentsWithoutFeedback — Archived cohort enrollments for a student
+// that have no submitted feedback. Used to show feedback prompts on dashboard.
+// -----------------------------------------------------------------------------
+export type ArchivedEnrollmentForFeedback = EnrollmentRow & {
+  cohorts: {
+    id: string
+    name: string
+    status: string
+    courses: { title: string }
+  }
+}
+
+export async function getArchivedEnrollmentsWithoutFeedback(
+  studentId: string
+): Promise<ArchivedEnrollmentForFeedback[]> {
+  const supabase = createAdminClient()
+
+  // Get all archived enrollments
+  const { data, error } = await supabase
+    .from('enrollments')
+    .select(`
+      *,
+      cohorts!inner(
+        id, name, status,
+        courses!inner(title)
+      )
+    `)
+    .eq('student_id', studentId)
+    .eq('cohorts.status', 'archived')
+    .in('status', ['active', 'withdrawn', 'revoked'])
+
+  if (error || !data) return []
+
+  // Filter out cohorts where feedback already submitted
+  const enrollments = data as ArchivedEnrollmentForFeedback[]
+  const cohortIds = enrollments.map((e) => e.cohorts.id)
+
+  if (cohortIds.length === 0) return []
+
+  const { data: feedback } = await supabase
+    .from('cohort_feedback')
+    .select('cohort_id')
+    .eq('student_id', studentId)
+    .in('cohort_id', cohortIds)
+
+  const submittedCohortIds = new Set<string>(
+    (feedback ?? []).map((f: { cohort_id: string }) => f.cohort_id)
+  )
+
+  return enrollments.filter((e) => !submittedCohortIds.has(e.cohorts.id))
+}
+
+// -----------------------------------------------------------------------------
 // getEnrollmentsByStudentForTeacher — All enrollments for a specific student
 // that belong to a specific teacher's cohorts. Used by teacher student detail page.
 // -----------------------------------------------------------------------------

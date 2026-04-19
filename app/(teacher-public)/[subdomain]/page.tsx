@@ -6,8 +6,10 @@
 import { notFound } from 'next/navigation'
 import { getTeacherBySubdomain } from '@/lib/db/teachers'
 import { getPublishedCoursesByTeacher } from '@/lib/db/courses'
+import { getPublishedTestimonialsByTeacher } from '@/lib/db/testimonials'
 import { TeacherBio } from '@/components/public/TeacherBio'
 import { CourseCard } from '@/components/public/CourseCard'
+import { TestimonialsSection } from '@/components/public/TestimonialsSection'
 import { EmptyState } from '@/components/ui/EmptyState'
 
 type PageProps = {
@@ -22,7 +24,10 @@ export default async function TeacherPublicPage({ params }: PageProps) {
     notFound()
   }
 
-  const courses = await getPublishedCoursesByTeacher(teacher.id)
+  const [courses, testimonials] = await Promise.all([
+    getPublishedCoursesByTeacher(teacher.id),
+    getPublishedTestimonialsByTeacher(teacher.id),
+  ])
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
@@ -57,6 +62,9 @@ export default async function TeacherPublicPage({ params }: PageProps) {
           />
         )}
       </section>
+
+      {/* Testimonials section (only shown if teacher has published testimonials) */}
+      <TestimonialsSection testimonials={testimonials} />
     </div>
   )
 }

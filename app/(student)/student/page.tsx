@@ -9,6 +9,7 @@
 
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { cookies } from 'next/headers'
 import {
   BookOpen,
   CalendarDays,
@@ -16,7 +17,7 @@ import {
 } from 'lucide-react'
 import { requireStudent } from '@/lib/auth/guards'
 import { getUpcomingSessionsByStudent } from '@/lib/db/class-sessions'
-import { getEnrollmentsByStudentWithTeacher } from '@/lib/db/enrollments'
+import { getEnrollmentsByStudentWithTeacher, getArchivedEnrollmentsWithoutFeedback } from '@/lib/db/enrollments'
 import { getRecentAnnouncementsByStudent } from '@/lib/db/announcements'
 import { getUpcomingAssignmentsByStudent } from '@/lib/db/assignments'
 import { getOverallAttendanceSummary } from '@/lib/db/attendance'
@@ -29,6 +30,7 @@ import {
   CardContent,
 } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { FeedbackPromptCard } from '@/components/student/FeedbackPromptCard'
 import { formatPKT } from '@/lib/time/pkt'
 import { cn } from '@/lib/utils'
 import { ROUTES } from '@/constants/routes'
@@ -65,6 +67,7 @@ export default async function StudentDashboardPage() {
     assignments,
     attendanceSummary,
     pendingFees,
+    archivedWithoutFeedback,
   ] = await Promise.all([
     getUpcomingSessionsByStudent(student.id, 20),
     getEnrollmentsByStudentWithTeacher(student.id),
@@ -72,7 +75,15 @@ export default async function StudentDashboardPage() {
     getUpcomingAssignmentsByStudent(student.id, 3),
     getOverallAttendanceSummary(student.id),
     getPendingPaymentCountByStudent(student.id),
+    getArchivedEnrollmentsWithoutFeedback(student.id),
   ])
+
+  // Filter out cohorts dismissed via cookie (server-side check)
+  const cookieStore = await cookies()
+  const pendingFeedback = archivedWithoutFeedback.filter((enr) => {
+    const dismissed = cookieStore.get(`dismissed_feedback_${enr.cohorts.id}`)
+    return !dismissed
+  })
 
   // Derived stats
   const activeEnrollments = enrollments.filter((e) => e.status === 'active')
@@ -90,6 +101,20 @@ export default async function StudentDashboardPage() {
         title={`Hello, ${firstName}!`}
         description="Here's what's coming up"
       />
+
+      {/* Feedback prompts for archived cohorts */}
+      {pendingFeedback.length > 0 && (
+        <div className="mb-6 space-y-3">
+          {pendingFeedback.map((enr) => (
+            <FeedbackPromptCard
+              key={enr.cohorts.id}
+              cohortId={enr.cohorts.id}
+              cohortName={enr.cohorts.name}
+              courseTitle={enr.cohorts.courses.title}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Bento grid */}
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">

@@ -481,3 +481,52 @@ export async function rejectMonthlyPaymentAction(
 
   return { success: true, data: null }
 }
+
+// -----------------------------------------------------------------------------
+// applyDiscountToPaymentAction — Student applies a discount code to their payment
+// Updates discount_code_id and discounted_amount_pkr on the pending payment row.
+// Called from DiscountCodeInput after successful validateDiscountAction.
+// increment_discount_use() is called at approval time, not here.
+// -----------------------------------------------------------------------------
+export async function applyDiscountToPaymentAction(
+  paymentId: string,
+  discountCodeId: string,
+  discountedAmountPkr: number
+): Promise<ApiResponse<null>> {
+  const supabase = await createClient()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) return { success: false, error: 'Not authenticated' }
+
+  const student = await getStudentByAuthId(user.id)
+  if (!student) return { success: false, error: 'Student profile not found.' }
+
+  const payment = await getPaymentById(paymentId)
+  if (!payment) return { success: false, error: 'Payment not found.' }
+
+  // Verify this payment belongs to this student via enrollment
+  const enrollment = await getEnrollmentById(payment.enrollment_id)
+  if (!enrollment || enrollment.student_id !== student.id) {
+    return { success: false, error: 'Payment not found.' }
+  }
+
+  // Only update if payment is still pending
+  if (payment.status !== PaymentStatus.PENDING_VERIFICATION) {
+    return { success: false, error: 'This payment cannot be updated.' }
+  }
+
+  const adminSupabase = createAdminClient()
+  const { error: updateError } = await adminSupabase
+    .from('student_payments')
+    .update({
+      discount_code_id: discountCodeId,
+      discounted_amount_pkr: discountedAmountPkr,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', paymentId)
+
+  if (updateError) {
+    return { success: false, error: 'Failed to apply discount.' }
+  }
+
+  return { success: true, data: null }
+}

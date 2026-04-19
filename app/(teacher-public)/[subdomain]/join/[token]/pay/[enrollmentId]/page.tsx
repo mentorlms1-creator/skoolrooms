@@ -21,6 +21,7 @@ import { Card } from '@/components/ui/card'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { formatPKT } from '@/lib/time/pkt'
 import { ScreenshotUploadForm } from '@/components/student/ScreenshotUploadForm'
+import { DiscountCodeInput } from '@/components/student/DiscountCodeInput'
 
 type PageProps = {
   params: Promise<{ subdomain: string; token: string; enrollmentId: string }>
@@ -265,13 +266,15 @@ export default async function PaymentPage({ params, searchParams }: PageProps) {
             Pay for <span className="font-medium text-foreground">{courseName}</span> ({cohort.name})
           </p>
 
-          {/* Fee amount */}
-          <div className="mt-4 flex items-center justify-between rounded-md bg-background p-4">
-            <span className="text-sm text-muted-foreground">Amount to pay</span>
-            <span className="text-2xl font-bold text-foreground">
-              {formatFeePKR(payment?.discounted_amount_pkr ?? cohort.fee_pkr)}{' '}
-              <span className="text-xs font-normal text-muted-foreground">{feeLabel}</span>
-            </span>
+          {/* Discount code input + dynamic fee amount */}
+          <div className="mt-4">
+            <DiscountCodeInput
+              cohortId={cohort.id}
+              feePkr={cohort.fee_pkr}
+              feeLabel={feeLabel}
+              enrollmentId={enrollmentId}
+              paymentId={payment?.id}
+            />
           </div>
 
           {/* Payment method details */}
