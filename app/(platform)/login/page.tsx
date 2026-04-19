@@ -54,7 +54,7 @@ export default function LoginPage() {
               <div className="space-y-1">
                 <div className="font-semibold text-foreground">I&apos;m a Student</div>
                 <p className="text-sm text-muted-foreground">
-                  Access your enrolled courses, classes, and assignments.
+                  Already enrolled? Sign in to access your courses.
                 </p>
               </div>
               <span className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-primary group-hover:gap-2 transition-all">
@@ -64,19 +64,33 @@ export default function LoginPage() {
             </Link>
           </div>
 
+          {/* New student callout */}
+          <div className="mt-6 rounded-lg border border-border bg-muted/40 p-4 text-center">
+            <p className="text-sm font-medium text-foreground">
+              New student? You don&apos;t need to sign up first.
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Open the invite link from your teacher to enroll, or{' '}
+              <Link
+                href={ROUTES.PLATFORM.explore}
+                className="font-medium text-primary hover:text-primary/90"
+              >
+                browse teachers
+              </Link>{' '}
+              to find one.
+            </p>
+          </div>
+
           {/* Footer */}
-          <div className="mt-8 flex flex-col items-center gap-2 text-sm">
+          <div className="mt-6 text-center text-sm">
             <p className="text-muted-foreground">
-              New here?{' '}
+              Want to teach on Skool Rooms?{' '}
               <Link
                 href={ROUTES.PLATFORM.signup}
                 className="font-medium text-primary hover:text-primary/90"
               >
                 Create a teacher account
               </Link>
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Students sign up automatically when enrolling via a teacher&apos;s invite link.
             </p>
           </div>
         </div>
