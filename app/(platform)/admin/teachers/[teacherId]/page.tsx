@@ -153,8 +153,14 @@ export default async function AdminTeacherDetailPage(
 
           {/* Activity Log */}
           <Card className="border-none shadow-sm ring-1 ring-foreground/5 rounded-[2rem] overflow-hidden bg-card">
-            <CardHeader className="px-8 pt-8 pb-4">
+            <CardHeader className="px-8 pt-8 pb-4 flex-row items-center justify-between">
               <CardTitle className="text-xl font-bold">Activity Log</CardTitle>
+              <a
+                href={`/admin/activity?teacherId=${teacher.id}`}
+                className="text-sm text-primary underline-offset-4 hover:underline"
+              >
+                View full log
+              </a>
             </CardHeader>
             <CardContent className="px-8 pb-8">
               {teacher.activity_log.length === 0 ? (
@@ -226,6 +232,7 @@ export default async function AdminTeacherDetailPage(
           {/* Admin Actions */}
           <TeacherDetailActions
             teacherId={teacher.id}
+            teacherEmail={teacher.email}
             currentPlan={teacher.plan}
             isSuspended={teacher.is_suspended}
           />

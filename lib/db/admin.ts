@@ -291,21 +291,29 @@ export async function logAdminActivity(input: {
 }
 
 // -----------------------------------------------------------------------------
-// getActivityLog — Filtered activity log
+// getActivityLog — Filtered, paginated activity log
 // -----------------------------------------------------------------------------
-export async function getActivityLog(
+export async function getActivityLog(filters?: {
   teacherId?: string
-): Promise<ActivityLogItem[]> {
+  actionType?: string
+  limit?: number
+  offset?: number
+}): Promise<ActivityLogItem[]> {
   const supabase = createAdminClient()
+  const limit = filters?.limit ?? 50
+  const offset = filters?.offset ?? 0
 
   let query = supabase
     .from('admin_activity_log')
     .select('*')
     .order('created_at', { ascending: false })
-    .limit(100)
+    .range(offset, offset + limit - 1)
 
-  if (teacherId) {
-    query = query.eq('teacher_id', teacherId)
+  if (filters?.teacherId) {
+    query = query.eq('teacher_id', filters.teacherId)
+  }
+  if (filters?.actionType) {
+    query = query.eq('action_type', filters.actionType)
   }
 
   const { data, error } = await query
@@ -320,6 +328,30 @@ export async function getActivityLog(
     metadata: (a.metadata ?? null) as Record<string, unknown> | null,
     created_at: a.created_at as string,
   }))
+}
+
+// -----------------------------------------------------------------------------
+// getActivityLogCount — Total count for pagination
+// -----------------------------------------------------------------------------
+export async function getActivityLogCount(filters?: {
+  teacherId?: string
+  actionType?: string
+}): Promise<number> {
+  const supabase = createAdminClient()
+
+  let query = supabase
+    .from('admin_activity_log')
+    .select('*', { count: 'exact', head: true })
+
+  if (filters?.teacherId) {
+    query = query.eq('teacher_id', filters.teacherId)
+  }
+  if (filters?.actionType) {
+    query = query.eq('action_type', filters.actionType)
+  }
+
+  const { count } = await query
+  return count ?? 0
 }
 
 // -----------------------------------------------------------------------------
