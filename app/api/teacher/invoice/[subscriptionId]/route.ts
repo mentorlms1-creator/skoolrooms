@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const { renderToBuffer } = require('@react-pdf/renderer') as {
-  renderToBuffer: (element: unknown) => Promise<Buffer>
-}
+import { renderToBuffer, type DocumentProps } from '@react-pdf/renderer'
+import type { ReactElement } from 'react'
 import { createElement } from 'react'
 import { createClient, createAdminClient } from '@/supabase/server'
 import { getTeacherByAuthId } from '@/lib/db/teachers'
@@ -60,7 +58,7 @@ export async function GET(
     issuedAt: formatPKT((subscription.approved_at as string | null) ?? (subscription.created_at as string), 'date'),
   })
 
-  const pdfBuffer = await renderToBuffer(pdfElement)
+  const pdfBuffer = await renderToBuffer(pdfElement as unknown as ReactElement<DocumentProps>)
 
   return new NextResponse(pdfBuffer as unknown as BodyInit, {
     status: 200,

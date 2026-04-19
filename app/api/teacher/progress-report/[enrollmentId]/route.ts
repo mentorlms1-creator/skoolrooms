@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const { renderToBuffer } = require('@react-pdf/renderer') as { renderToBuffer: (element: unknown) => Promise<Buffer> }
+import { renderToBuffer, type DocumentProps } from '@react-pdf/renderer'
+import type { ReactElement } from 'react'
 import { createElement } from 'react'
 import { createClient } from '@/supabase/server'
 import { createAdminClient } from '@/supabase/server'
@@ -191,7 +191,7 @@ export async function GET(
     generatedAt,
   })
 
-  const pdfBuffer = await renderToBuffer(pdfElement)
+  const pdfBuffer = await renderToBuffer(pdfElement as unknown as ReactElement<DocumentProps>)
 
   const safeStudentName = student.name.replace(/[^a-zA-Z0-9]/g, '-')
   const safeCohortName = cohort.name.replace(/[^a-zA-Z0-9]/g, '-')
