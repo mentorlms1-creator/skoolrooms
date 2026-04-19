@@ -10,7 +10,7 @@ import { platformDomain } from '@/lib/platform/domain'
 // Reserved subdomains — hard-blocked server-side
 // From ARCHITECTURE.md Section 13
 // -----------------------------------------------------------------------------
-const RESERVED_SUBDOMAINS: ReadonlySet<string> = new Set([
+export const RESERVED_SUBDOMAINS: ReadonlySet<string> = new Set([
   'www', 'students', 'admin', 'api', 'mail', 'smtp', 'ftp', 'pop', 'imap',
   'dev', 'staging', 'test', 'demo', 'app', 'dashboard', 'portal', 'help',
   'blog', 'docs', 'status', 'cdn', 'assets', 'static', 'files', 'media',
@@ -20,7 +20,21 @@ const RESERVED_SUBDOMAINS: ReadonlySet<string> = new Set([
  * Subdomain validation regex: lowercase alphanumeric + hyphens, 3-30 chars.
  * Must start and end with alphanumeric.
  */
-const SUBDOMAIN_REGEX = /^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$/
+export const SUBDOMAIN_REGEX = /^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$/
+
+/**
+ * Validates subdomain format and reserved list.
+ * Returns an error string if invalid, null if valid.
+ */
+export function validateSubdomainFormat(subdomain: string): string | null {
+  if (!SUBDOMAIN_REGEX.test(subdomain)) {
+    return 'Subdomain must be 3-30 characters, lowercase letters, numbers, and hyphens only. Must start and end with a letter or number.'
+  }
+  if (RESERVED_SUBDOMAINS.has(subdomain)) {
+    return `The subdomain "${subdomain}" is reserved and cannot be used.`
+  }
+  return null
+}
 
 // -----------------------------------------------------------------------------
 // Cloudflare API helpers

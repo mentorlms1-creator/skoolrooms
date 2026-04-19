@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -8,6 +8,12 @@ import { signUpTeacher } from '@/lib/auth/actions'
 
 export function SignupForm() {
   const [error, setError] = useState<string | null>(null)
+  const [ref, setRef] = useState<string | null>(null)
+
+  useEffect(() => {
+    const code = new URLSearchParams(window.location.search).get('ref')
+    if (code) setRef(code)
+  }, [])
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
@@ -81,6 +87,7 @@ export function SignupForm() {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      {ref && <input type="hidden" name="ref" value={ref} />}
       {error && (
         <div className="rounded-md bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {error}

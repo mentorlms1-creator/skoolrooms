@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
 import { platformUrl } from '@/lib/platform/domain'
 import { rateLimit } from '@/lib/rate-limit'
+import { convertReferralAction } from '@/lib/actions/referrals'
 import type { ApiResponse } from '@/types/api'
 
 // =============================================================================
@@ -33,6 +34,7 @@ export async function signUpTeacher(
   const name = formData.get('name') as string
   const email = formData.get('email') as string
   const password = formData.get('password') as string
+  const ref = (formData.get('ref') as string | null) || null
 
   if (!name || !email || !password) {
     return { success: false, error: 'All fields are required' }
@@ -92,6 +94,11 @@ export async function signUpTeacher(
   await supabaseAdmin
     .from('teacher_balances')
     .insert({ teacher_id: teacher.id })
+
+  // Convert referral if signup came via a referral link
+  if (ref) {
+    await convertReferralAction(ref, teacher.id)
+  }
 
   // Send verification email via Supabase Auth
   await supabaseAdmin.auth.admin.generateLink({

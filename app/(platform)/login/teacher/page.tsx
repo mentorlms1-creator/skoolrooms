@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
 import { LoginForm } from '@/components/auth/LoginForm'
+import { GoogleOAuthButton } from '@/components/auth/GoogleOAuthButton'
 import { ROUTES } from '@/constants/routes'
 
 export const metadata: Metadata = {
@@ -28,6 +29,17 @@ export default function TeacherLoginPage() {
           </p>
 
           <LoginForm action="teacher" redirectTo={ROUTES.TEACHER.dashboard} />
+
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-border" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card px-2 text-muted-foreground">or</span>
+            </div>
+          </div>
+
+          <GoogleOAuthButton />
 
           {/* Footer links */}
           <div className="mt-6 flex flex-col items-center gap-3 text-sm">
