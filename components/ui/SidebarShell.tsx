@@ -41,7 +41,6 @@ import {
   SidebarSeparator,
   SidebarTrigger,
 } from '@/components/ui/sidebar'
-import { NotificationBell } from '@/components/ui/NotificationBell'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { CommandPalette, useCommandPalette } from '@/components/ui/CommandPalette'
 
@@ -51,6 +50,10 @@ type SidebarShellProps = {
   roleBadge?: string | null
   notificationCount?: number
   notificationHref?: string
+  /** Injected by layout: renders the NotificationBell component in the header */
+  notificationSlot?: React.ReactNode
+  /** Injected by teacher layout: renders admin ViewAsBar above the shell */
+  adminBannerSlot?: React.ReactNode
   ctaLabel?: string
   ctaHref?: string
   signOutAction: () => Promise<void>
@@ -81,6 +84,8 @@ export function SidebarShell({
   roleBadge,
   notificationCount = 0,
   notificationHref,
+  notificationSlot,
+  adminBannerSlot,
   ctaLabel,
   ctaHref = '#',
   signOutAction,
@@ -101,6 +106,7 @@ export function SidebarShell({
   return (
     /* White page background — individual containers are gray */
     <div className="min-h-dvh bg-background p-2 sm:p-4 font-sans text-foreground">
+      {adminBannerSlot}
       <div className="flex min-h-[calc(100dvh-16px)] sm:min-h-[calc(100dvh-32px)] gap-3">
         <SidebarProvider>
           <Sidebar variant="floating" className="border-none">
@@ -194,12 +200,7 @@ export function SidebarShell({
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">
                        <ThemeToggle />
-                       <button className="flex h-11 w-11 items-center justify-center rounded-2xl bg-card shadow-sm ring-1 ring-foreground/5 text-muted-foreground hover:text-foreground transition-colors relative">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
-                             <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9m12 9H6m4 4h4" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                          <span className="absolute top-2.5 right-2.5 h-2 w-2 rounded-full bg-accent ring-2 ring-card" />
-                       </button>
+                       {notificationSlot ?? null}
                     </div>
                     
                     <button className="h-11 w-11 rounded-2xl overflow-hidden shadow-sm ring-2 ring-card">

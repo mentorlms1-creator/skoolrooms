@@ -18,6 +18,9 @@ import type { StudentData, StudentEnrollment } from '@/providers/StudentProvider
 import { SidebarShell } from '@/components/ui/SidebarShell'
 import { ROUTES } from '@/constants/routes'
 import { signOutStudent } from '@/lib/auth/actions'
+import { NotificationBell } from '@/components/ui/NotificationBell'
+import { getUnreadCountForUser, getNotificationsForUser } from '@/lib/db/notifications'
+import { getUnreadCountForStudent } from '@/lib/db/messages'
 
 export default async function StudentLayout({
   children,
@@ -36,8 +39,13 @@ export default async function StudentLayout({
   const student = await getStudentByAuthId(user.id)
   if (!student) redirect(ROUTES.PLATFORM.studentLogin)
 
-  // 3. Fetch enrollments with teacher info
-  const enrollments = await getEnrollmentsByStudentWithTeacher(student.id)
+  // 3. Fetch enrollments, notification data in parallel
+  const [enrollments, unreadNotifCount, notifications, unreadMsgCount] = await Promise.all([
+    getEnrollmentsByStudentWithTeacher(student.id),
+    getUnreadCountForUser(student.id, 'student'),
+    getNotificationsForUser(student.id, 'student'),
+    getUnreadCountForStudent(student.id),
+  ])
 
   // 4. Map to StudentData shape
   const studentData: StudentData = {
@@ -62,8 +70,16 @@ export default async function StudentLayout({
         <SidebarShell
           role="student"
           user={{ name: studentData.name }}
-          notificationCount={0}
-          notificationHref={ROUTES.STUDENT.payments}
+          notificationCount={unreadMsgCount}
+          notificationHref={ROUTES.STUDENT.messages}
+          notificationSlot={
+            <NotificationBell
+              initialCount={unreadNotifCount}
+              initialNotifications={notifications}
+              userId={student.id}
+              userType="student"
+            />
+          }
           signOutAction={signOutStudent}
         >
           {children}

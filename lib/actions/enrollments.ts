@@ -25,6 +25,8 @@ import { firstBillingMonth } from '@/lib/time/pkt'
 import type { ApiResponse } from '@/types/api'
 import type { EnrollmentStatus, PaymentMethod, PaymentStatus } from '@/types/domain'
 import { confirmPaymentAndCreditBalance } from './student-payments'
+import { createNotification } from '@/lib/db/notifications'
+import { ROUTES } from '@/constants/routes'
 
 // -----------------------------------------------------------------------------
 // Helpers
@@ -115,7 +117,7 @@ export async function approveEnrollmentAction(
   // Get student info for emails
   const student = await getStudentById(enrollment.student_id)
 
-  // Send enrollment_confirmed email to student
+  // Send enrollment_confirmed email to student + in-app notification
   if (student) {
     await sendEmail({
       to: student.email,
@@ -128,6 +130,14 @@ export async function approveEnrollmentAction(
         cohortName: cohort.name,
         referenceCode: enrollment.reference_code,
       },
+    })
+    void createNotification({
+      userType: 'student',
+      userId: student.id,
+      kind: 'enrollment_confirmed',
+      title: 'Enrollment Confirmed',
+      body: `Your enrollment in ${cohort.name} has been confirmed.`,
+      linkUrl: ROUTES.STUDENT.courses,
     })
   }
 
@@ -211,7 +221,7 @@ export async function rejectEnrollmentAction(
     })
   }
 
-  // Send enrollment_rejected email to student
+  // Send enrollment_rejected email to student + in-app notification
   const student = await getStudentById(enrollment.student_id)
   if (student) {
     await sendEmail({
@@ -225,6 +235,14 @@ export async function rejectEnrollmentAction(
         cohortName: cohort.name,
         reason: reason || 'No reason provided',
       },
+    })
+    void createNotification({
+      userType: 'student',
+      userId: student.id,
+      kind: 'enrollment_rejected',
+      title: 'Enrollment Not Approved',
+      body: `Your enrollment in ${cohort.name} was not approved.`,
+      linkUrl: ROUTES.STUDENT.courses,
     })
   }
 

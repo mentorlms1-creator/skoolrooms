@@ -70,6 +70,7 @@ export const ROUTES = {
       billing: '/dashboard/settings/billing',
     },
     messages: '/dashboard/messages',
+    messageThread: (threadId: string) => `/dashboard/messages/${threadId}` as const,
   },
 
   // ═══════════════════════════════════════════
@@ -82,6 +83,7 @@ export const ROUTES = {
     schedule: '/student/schedule',
     payments: '/student/payments',
     messages: '/student/messages',
+    messageThread: (threadId: string) => `/student/messages/${threadId}` as const,
     settings: '/student/settings',
     forgotPassword: '/forgot-password',
   },

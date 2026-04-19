@@ -20,7 +20,9 @@ import {
 } from '@/lib/db/announcements'
 import { getEnrollmentsByCohort } from '@/lib/db/enrollments'
 import { sendEmail } from '@/lib/email/sender'
+import { createNotification } from '@/lib/db/notifications'
 import { checkPlanLock, getPlanLockError } from '@/lib/auth/plan-guard'
+import { ROUTES } from '@/constants/routes'
 import type { ApiResponse } from '@/types/api'
 
 // -----------------------------------------------------------------------------
@@ -108,7 +110,7 @@ export async function createAnnouncementAction(
     return { success: false, error: 'Failed to create announcement. Please try again.' }
   }
 
-  // Send new_announcement email to enrolled students (non-blocking)
+  // Send new_announcement email + in-app notification to enrolled students (non-blocking)
   const enrollments = await getEnrollmentsByCohort(cohortId)
   const activeEnrollments = enrollments.filter((e) => e.status === 'active')
 
@@ -124,6 +126,14 @@ export async function createAnnouncementAction(
         cohortName: cohort.name,
         announcementBody: body.substring(0, 200),
       },
+    })
+    void createNotification({
+      userType: 'student',
+      userId: enrollment.students.id,
+      kind: 'new_announcement',
+      title: `New announcement in ${cohort.name}`,
+      body: body.substring(0, 120),
+      linkUrl: ROUTES.STUDENT.courses,
     })
   }
 

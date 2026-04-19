@@ -18,6 +18,11 @@ import type { PlanSlug } from '@/types/domain'
 import { ExpiryBanner } from '@/components/teacher/ExpiryBanner'
 import { ROUTES } from '@/constants/routes'
 import { signOut } from '@/lib/auth/actions'
+import { NotificationBell } from '@/components/ui/NotificationBell'
+import { getUnreadCountForUser, getNotificationsForUser } from '@/lib/db/notifications'
+import { getUnreadCountForTeacher } from '@/lib/db/messages'
+import { ViewAsBar } from '@/components/admin/ViewAsBar'
+import { getViewAsSession } from '@/lib/admin/view-as-session'
 
 export default async function DashboardLayout({
   children,
@@ -37,10 +42,14 @@ export default async function DashboardLayout({
 
   const teacherId = teacher.id as string
 
-  // Fetch plan details and usage for TeacherProvider
-  const [planDetails, usage] = await Promise.all([
+  // Fetch plan details, usage, notification data, and view-as session in parallel
+  const [planDetails, usage, unreadNotifCount, notifications, unreadMsgCount, viewAsSession] = await Promise.all([
     getTeacherPlanDetails(teacherId),
     getTeacherUsage(teacherId),
+    getUnreadCountForUser(teacherId, 'teacher'),
+    getNotificationsForUser(teacherId, 'teacher'),
+    getUnreadCountForTeacher(teacherId),
+    getViewAsSession(),
   ])
 
   // Build TeacherData shape for the provider
@@ -83,8 +92,26 @@ export default async function DashboardLayout({
       <SidebarShell
         role="teacher"
         user={{ name: teacherData.name }}
-        notificationCount={0}
+        notificationCount={unreadMsgCount}
         notificationHref={ROUTES.TEACHER.messages}
+        notificationSlot={
+          viewAsSession ? null : (
+            <NotificationBell
+              initialCount={unreadNotifCount}
+              initialNotifications={notifications}
+              userId={teacherId}
+              userType="teacher"
+            />
+          )
+        }
+        adminBannerSlot={
+          viewAsSession ? (
+            <ViewAsBar
+              teacherEmail={viewAsSession.teacherEmail}
+              expiresAt={viewAsSession.expiresAt}
+            />
+          ) : null
+        }
         ctaLabel="New Course"
         ctaHref={ROUTES.TEACHER.courseNew}
         signOutAction={signOut}
