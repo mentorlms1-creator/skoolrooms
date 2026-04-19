@@ -10,6 +10,7 @@ import { createAdminClient } from '@/supabase/server'
 import { getTeacherByAuthId, updateTeacher } from '@/lib/db/teachers'
 import { completeOnboardingStep } from '@/lib/actions/onboarding'
 import { revalidatePath } from 'next/cache'
+import { revalidateTag } from '@/lib/cache/tags'
 import type { ApiResponse } from '@/types/api'
 
 // -----------------------------------------------------------------------------
@@ -204,5 +205,9 @@ export async function updateProfileAction(
   }
 
   revalidatePath('/dashboard/settings')
+  // Public profile / explore listing depend on this teacher's data.
+  revalidateTag(`teacher:${teacher.id}`)
+  if (teacher.subdomain) revalidateTag(`teacher-subdomain:${teacher.subdomain}`)
+  revalidateTag('explore-list')
   return { success: true, data: null }
 }

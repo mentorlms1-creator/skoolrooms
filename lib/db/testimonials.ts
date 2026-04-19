@@ -2,6 +2,7 @@
 // lib/db/testimonials.ts — Teacher testimonials CRUD queries (service layer)
 // =============================================================================
 
+import { unstable_cache } from 'next/cache'
 import { createAdminClient } from '@/supabase/server'
 
 export type TestimonialRow = {
@@ -53,10 +54,12 @@ export async function getTestimonialsByTeacher(
 
 // -----------------------------------------------------------------------------
 // getPublishedTestimonialsByTeacher — Published testimonials for public page
-// No auth required — uses admin client (bypasses RLS) for efficiency
+// No auth required — uses admin client (bypasses RLS) for efficiency.
+// Cached with tag `teacher-testimonials:<id>` so testimonial mutations
+// can invalidate just the affected teacher's page.
 // -----------------------------------------------------------------------------
-export async function getPublishedTestimonialsByTeacher(
-  teacherId: string
+async function _getPublishedTestimonialsByTeacherImpl(
+  teacherId: string,
 ): Promise<TestimonialRow[]> {
   const supabase = createAdminClient()
 
@@ -69,6 +72,17 @@ export async function getPublishedTestimonialsByTeacher(
 
   if (error || !data) return []
   return data as TestimonialRow[]
+}
+
+export async function getPublishedTestimonialsByTeacher(
+  teacherId: string,
+): Promise<TestimonialRow[]> {
+  const fetcher = unstable_cache(
+    async (id: string) => _getPublishedTestimonialsByTeacherImpl(id),
+    ['teacher-testimonials-published', teacherId],
+    { revalidate: 3600, tags: [`teacher-testimonials:${teacherId}`] },
+  )
+  return fetcher(teacherId)
 }
 
 // -----------------------------------------------------------------------------

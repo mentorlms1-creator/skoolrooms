@@ -2,6 +2,7 @@
 // lib/db/feedback.ts — Cohort feedback CRUD queries (service layer)
 // =============================================================================
 
+import { unstable_cache } from 'next/cache'
 import { createAdminClient } from '@/supabase/server'
 
 export type CohortFeedbackRow = {
@@ -100,10 +101,10 @@ export type TeacherRatingAggregate = {
   count: number // total ratings
 }
 
-export async function getTeacherRatingsMap(
+async function _getTeacherRatingsForIdsImpl(
   teacherIds: string[],
-): Promise<Map<string, TeacherRatingAggregate>> {
-  if (teacherIds.length === 0) return new Map()
+): Promise<Array<[string, TeacherRatingAggregate]>> {
+  if (teacherIds.length === 0) return []
 
   const supabase = createAdminClient()
 
@@ -113,7 +114,7 @@ export async function getTeacherRatingsMap(
     .in('teacher_id', teacherIds)
     .is('deleted_at', null)
 
-  if (cohortError || !cohorts || cohorts.length === 0) return new Map()
+  if (cohortError || !cohorts || cohorts.length === 0) return []
 
   const cohortToTeacher = new Map<string, string>()
   for (const c of cohorts) {
@@ -127,7 +128,7 @@ export async function getTeacherRatingsMap(
     .select('cohort_id, rating')
     .in('cohort_id', cohortIds)
 
-  if (ratingError || !ratings || ratings.length === 0) return new Map()
+  if (ratingError || !ratings || ratings.length === 0) return []
 
   const sums = new Map<string, { sum: number; count: number }>()
   for (const r of ratings) {
@@ -139,13 +140,29 @@ export async function getTeacherRatingsMap(
     sums.set(teacherId, acc)
   }
 
-  const result = new Map<string, TeacherRatingAggregate>()
+  const entries: Array<[string, TeacherRatingAggregate]> = []
   for (const [teacherId, { sum, count }] of sums) {
-    result.set(teacherId, {
-      avg: Math.round((sum / count) * 10) / 10,
-      count,
-    })
+    entries.push([
+      teacherId,
+      { avg: Math.round((sum / count) * 10) / 10, count },
+    ])
   }
+  return entries
+}
 
-  return result
+// Cached entry list keyed on the sorted teacher-id set. Returning entries
+// (not Map) keeps unstable_cache happy — Maps are not JSON-serializable.
+const _cachedRatingsEntries = unstable_cache(
+  async (sortedIds: string[]) => _getTeacherRatingsForIdsImpl(sortedIds),
+  ['teacher-ratings'],
+  { revalidate: 3600, tags: ['ratings'] },
+)
+
+export async function getTeacherRatingsMap(
+  teacherIds: string[],
+): Promise<Map<string, TeacherRatingAggregate>> {
+  if (teacherIds.length === 0) return new Map()
+  const sorted = [...new Set(teacherIds)].sort()
+  const entries = await _cachedRatingsEntries(sorted)
+  return new Map(entries)
 }

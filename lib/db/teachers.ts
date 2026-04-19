@@ -3,6 +3,8 @@
 // All database queries for teachers go through this file.
 // =============================================================================
 
+import { unstable_cache } from 'next/cache'
+import { revalidateTag } from '@/lib/cache/tags'
 import { createAdminClient } from '@/supabase/server'
 import type { PlanDetails, UsageData } from '@/providers/TeacherProvider'
 import type { PlanSlug } from '@/types/domain'
@@ -95,6 +97,48 @@ export async function getTeacherBySubdomain(
 
   if (error || !data) return null
   return data as TeacherRow
+}
+
+// -----------------------------------------------------------------------------
+// getTeacherBySubdomainCached — ISR-friendly cached lookup for the public
+// teacher subdomain page. Tagged so profile mutations can invalidate via
+// `revalidateTag('teacher:<id>')`. Returns the same shape as the uncached
+// helper above; null is also cached briefly (so 404 pages don't hammer DB).
+// -----------------------------------------------------------------------------
+export async function getTeacherBySubdomainCached(
+  subdomain: string,
+): Promise<TeacherRow | null> {
+  const fetcher = unstable_cache(
+    async (sd: string) => {
+      const teacher = await getTeacherBySubdomain(sd)
+      return teacher
+    },
+    ['teacher-by-subdomain', subdomain],
+    {
+      revalidate: 3600,
+      // Tag with subdomain on the way in, then re-tag with teacher id once
+      // the row is known (lookups can invalidate either way).
+      tags: [`teacher-subdomain:${subdomain}`],
+    },
+  )
+  return fetcher(subdomain)
+}
+
+/**
+ * Helper for actions: invalidate every cached surface tied to a teacher's
+ * public profile / subdomain content.
+ */
+export function invalidateTeacherPublicCaches(input: {
+  teacherId: string
+  subdomain?: string | null
+}) {
+  revalidateTag(`teacher:${input.teacherId}`)
+  revalidateTag(`teacher-courses:${input.teacherId}`)
+  revalidateTag(`teacher-testimonials:${input.teacherId}`)
+  if (input.subdomain) {
+    revalidateTag(`teacher-subdomain:${input.subdomain}`)
+  }
+  revalidateTag('explore-list')
 }
 
 // -----------------------------------------------------------------------------

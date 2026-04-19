@@ -5,7 +5,7 @@ import { createElement } from 'react'
 import { createClient } from '@/supabase/server'
 import { createAdminClient } from '@/supabase/server'
 import { getTeacherByAuthId } from '@/lib/db/teachers'
-import { getAttendanceSummary } from '@/lib/db/attendance'
+import { getAttendanceTimelineForStudent } from '@/lib/db/attendance'
 import {
   getAssignmentsByCohort,
   getSubmissionsByStudentForCohort,
@@ -80,8 +80,13 @@ export async function GET(
   const cohort = typedEnrollment.cohorts
   const student = typedEnrollment.students
 
-  // Fetch attendance summary
-  const attendanceSummary = await getAttendanceSummary(student.id, cohort.id)
+  // Canonical attendance source (shared with student progress dialog — Lane E2)
+  const attendanceTimeline = await getAttendanceTimelineForStudent(student.id, cohort.id)
+  const nonCancelledTimeline = attendanceTimeline.filter((e) => !e.cancelled)
+  const attendanceSummary = {
+    total: nonCancelledTimeline.length,
+    attended: nonCancelledTimeline.filter((e) => e.present).length,
+  }
 
   // Fetch assignments and per-student submissions
   const assignments = await getAssignmentsByCohort(cohort.id)

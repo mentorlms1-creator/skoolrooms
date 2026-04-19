@@ -11,6 +11,7 @@ import { requireTeacher } from '@/lib/auth/guards'
 import { getCohortById } from '@/lib/db/cohorts'
 import { getCourseById } from '@/lib/db/courses'
 import { getEnrollmentsByCohort } from '@/lib/db/enrollments'
+import { getCertificatesByEnrollmentIds } from '@/lib/db/certificates'
 import { getWaitlistByCohort } from '@/lib/db/waitlist'
 import {
   getLatestPaymentsByEnrollmentIds,
@@ -25,8 +26,10 @@ import { Card } from '@/components/ui/card'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { ROUTES } from '@/constants/routes'
 import { formatPKT, firstOfMonthPKT, monthlyBillingSchedule } from '@/lib/time/pkt'
-import { StudentRowActions, type RowPayment } from './StudentRowActions'
+import { StudentRowActions, type RowPayment, type RowCertificate } from './StudentRowActions'
 import { WithdrawalRequestRow } from './WithdrawalRequestRow'
+import { BulkIssueCertificatesButton } from './BulkIssueCertificatesButton'
+import { BulkMarkCompleteButton } from './BulkMarkCompleteButton'
 import type { ModalPayment } from './EnrollmentPaymentsModal'
 
 type StudentsPageProps = {
@@ -66,13 +69,31 @@ export default async function CohortStudentsPage({ params }: StudentsPageProps) 
 
   // Separate enrollments by status
   const activeEnrollments = enrollments.filter((e) => e.status === 'active')
+  const completedEnrollments = enrollments.filter((e) => e.status === 'completed')
   const pendingEnrollments = enrollments.filter((e) => e.status === 'pending')
   const withdrawalRequests = enrollments.filter(
     (e) => e.status === 'active' && e.withdrawal_requested_at,
   )
 
   const activeEnrollmentIds = activeEnrollments.map((e) => e.id)
+  const allEnrollmentIds = [
+    ...activeEnrollmentIds,
+    ...completedEnrollments.map((e) => e.id),
+  ]
   const isMonthly = cohort.fee_type === 'monthly'
+
+  // Certificate lookup for both active and completed rows.
+  const certByEnrollment = await getCertificatesByEnrollmentIds(allEnrollmentIds)
+  const eligibleForBulkIssue = completedEnrollments.filter((e) => {
+    const cert = certByEnrollment.get(e.id)
+    return !cert || cert.revoked_at !== null
+  }).length
+
+  function rowCertFor(enrollmentId: string): RowCertificate | null {
+    const c = certByEnrollment.get(enrollmentId)
+    if (!c) return null
+    return { id: c.id, certificate_number: c.certificate_number, revoked_at: c.revoked_at }
+  }
 
   // Batch-fetch latest payment per active enrollment for refund eligibility,
   // then project a slim shape (only the fields the client needs) to avoid
@@ -200,6 +221,32 @@ export default async function CohortStudentsPage({ params }: StudentsPageProps) 
           </Card>
         )}
 
+        {/* Cohort completion toolbar */}
+        {!cohortArchived && (activeEnrollments.length > 0 || completedEnrollments.length > 0) && (
+          <Card className="p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="text-sm text-muted-foreground">
+                {completedEnrollments.length} completed
+                {completedEnrollments.length > 0 && (
+                  <span> · {completedEnrollments.length - eligibleForBulkIssue} with certificate</span>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {activeEnrollments.length > 0 && (
+                  <BulkMarkCompleteButton
+                    cohortId={cohortId}
+                    activeCount={activeEnrollments.length}
+                  />
+                )}
+                <BulkIssueCertificatesButton
+                  cohortId={cohortId}
+                  eligibleCount={eligibleForBulkIssue}
+                />
+              </div>
+            </div>
+          </Card>
+        )}
+
         {/* Active Students */}
         <Card className="p-6">
           <h2 className="mb-4 text-lg font-semibold text-foreground">
@@ -250,12 +297,14 @@ export default async function CohortStudentsPage({ params }: StudentsPageProps) 
                         <StudentRowActions
                           enrollmentId={enrollment.id}
                           studentName={enrollment.students.name}
+                          enrollmentStatus={enrollment.status}
                           payment={slimPaymentByEnrollment.get(enrollment.id) ?? null}
                           availableBalance={balance.available_balance_pkr}
                           cohortArchived={cohortArchived}
                           hasPendingWithdrawal={!!enrollment.withdrawal_requested_at}
                           cohortFeeType={cohort.fee_type}
                           allPayments={modalPaymentsByEnrollment.get(enrollment.id) ?? []}
+                          certificate={rowCertFor(enrollment.id)}
                           progress={progressByEnrollment.get(enrollment.id) ?? null}
                         />
                       </div>
@@ -332,12 +381,14 @@ export default async function CohortStudentsPage({ params }: StudentsPageProps) 
                               <StudentRowActions
                                 enrollmentId={enrollment.id}
                                 studentName={enrollment.students.name}
+                                enrollmentStatus={enrollment.status}
                                 payment={slimPaymentByEnrollment.get(enrollment.id) ?? null}
                                 availableBalance={balance.available_balance_pkr}
                                 cohortArchived={cohortArchived}
                                 hasPendingWithdrawal={!!enrollment.withdrawal_requested_at}
                                 cohortFeeType={cohort.fee_type}
                                 allPayments={modalPaymentsByEnrollment.get(enrollment.id) ?? []}
+                                certificate={rowCertFor(enrollment.id)}
                                 progress={progressByEnrollment.get(enrollment.id) ?? null}
                               />
                             </div>
@@ -351,6 +402,48 @@ export default async function CohortStudentsPage({ params }: StudentsPageProps) 
             </>
           )}
         </Card>
+
+        {/* Completed Students */}
+        {completedEnrollments.length > 0 && (
+          <Card className="p-6">
+            <h2 className="mb-4 text-lg font-semibold text-foreground">
+              Completed Students ({completedEnrollments.length})
+            </h2>
+            <div className="flex flex-col gap-3">
+              {completedEnrollments.map((enrollment) => {
+                const cert = rowCertFor(enrollment.id)
+                const certLabel = cert
+                  ? cert.revoked_at
+                    ? 'Certificate revoked'
+                    : `Certificate: ${cert.certificate_number}`
+                  : 'No certificate yet'
+                return (
+                  <div
+                    key={enrollment.id}
+                    className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border p-3 text-sm"
+                  >
+                    <div className="min-w-0">
+                      <p className="font-medium text-foreground">{enrollment.students.name}</p>
+                      <p className="text-muted-foreground">{enrollment.students.email}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">{certLabel}</p>
+                    </div>
+                    <StudentRowActions
+                      enrollmentId={enrollment.id}
+                      studentName={enrollment.students.name}
+                      enrollmentStatus={enrollment.status}
+                      payment={null}
+                      availableBalance={balance.available_balance_pkr}
+                      cohortArchived={cohortArchived}
+                      hasPendingWithdrawal={false}
+                      cohortFeeType={cohort.fee_type}
+                      certificate={cert}
+                    />
+                  </div>
+                )
+              })}
+            </div>
+          </Card>
+        )}
 
         {/* Pending Enrollments */}
         {pendingEnrollments.length > 0 && (

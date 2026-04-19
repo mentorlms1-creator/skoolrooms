@@ -15,6 +15,7 @@ import {
   getCohortAnalytics,
 } from '@/lib/db/cohorts'
 import { getCourseById } from '@/lib/db/courses'
+import { getActiveEnrollmentsByCohort } from '@/lib/db/enrollments'
 import { canUseFeature } from '@/lib/plans/features'
 import { CohortAnalyticsCard } from '@/components/teacher/CohortAnalyticsCard'
 import { PageHeader } from '@/components/ui/PageHeader'
@@ -50,6 +51,13 @@ export default async function CohortDetailPage({ params }: CohortDetailPageProps
   const enrollmentCount = await getActiveEnrollmentCount(cohortId)
   const displayStatus = computeCohortDisplayStatus(cohort, enrollmentCount)
 
+  // When the cohort is archived but still has active students, surface a
+  // soft nudge: those students are eligible to be marked complete + issued certs.
+  const archivedActiveCount =
+    cohort.status === 'archived'
+      ? (await getActiveEnrollmentsByCohort(cohortId)).length
+      : 0
+
   const canSeeRevenueAnalytics = await canUseFeature(teacher.id, 'revenue_analytics')
   const analytics = canSeeRevenueAnalytics
     ? await getCohortAnalytics(cohortId, teacher.id)
@@ -84,6 +92,21 @@ export default async function CohortDetailPage({ params }: CohortDetailPageProps
           </div>
         }
       />
+
+      {archivedActiveCount > 0 && (
+        <div className="mb-4 rounded-md border border-warning/40 bg-warning/5 p-4 text-sm text-foreground">
+          <p>
+            You have {archivedActiveCount} active{' '}
+            {archivedActiveCount === 1 ? 'student' : 'students'} in this archived cohort. Mark them complete to issue certificates.
+          </p>
+          <Link
+            href={ROUTES.TEACHER.cohortStudents(courseId, cohortId)}
+            className="mt-2 inline-block text-sm font-medium text-primary hover:underline"
+          >
+            Go to students &rarr;
+          </Link>
+        </div>
+      )}
 
       {/* Cohort info */}
       <div className="flex flex-col gap-6">

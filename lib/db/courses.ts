@@ -3,6 +3,7 @@
 // All database queries for courses go through this file.
 // =============================================================================
 
+import { unstable_cache } from 'next/cache'
 import { createAdminClient } from '@/supabase/server'
 
 // -----------------------------------------------------------------------------
@@ -103,7 +104,7 @@ export type CourseWithCurriculum = CourseRow & {
 // getPublishedCoursesByTeacherWithCurriculum — Published courses with their
 // curriculum items nested. Used by the public teacher subdomain page.
 // -----------------------------------------------------------------------------
-export async function getPublishedCoursesByTeacherWithCurriculum(
+async function _getPublishedCoursesByTeacherWithCurriculumImpl(
   teacherId: string,
 ): Promise<CourseWithCurriculum[]> {
   const supabase = createAdminClient()
@@ -128,6 +129,21 @@ export async function getPublishedCoursesByTeacherWithCurriculum(
       return { ...(rest as CourseRow), curriculum: items }
     },
   )
+}
+
+/**
+ * Cached export. Tag `teacher-courses:<id>` lets course mutations invalidate
+ * just that teacher's public profile without nuking the whole explore cache.
+ */
+export async function getPublishedCoursesByTeacherWithCurriculum(
+  teacherId: string,
+): Promise<CourseWithCurriculum[]> {
+  const fetcher = unstable_cache(
+    async (id: string) => _getPublishedCoursesByTeacherWithCurriculumImpl(id),
+    ['teacher-courses-with-curriculum', teacherId],
+    { revalidate: 3600, tags: [`teacher-courses:${teacherId}`] },
+  )
+  return fetcher(teacherId)
 }
 
 // -----------------------------------------------------------------------------

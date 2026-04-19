@@ -1,17 +1,21 @@
 'use client'
 
+import Link from 'next/link'
 import type { ActivityLogItem } from '@/lib/db/admin'
 import { formatPKT } from '@/lib/time/pkt'
 import { ROUTES } from '@/constants/routes'
-import Link from 'next/link'
 
 type ActivityLogTableProps = {
   rows: ActivityLogItem[]
   teacherMap: Record<string, { name: string; email: string }>
-  page: number
-  totalPages: number
-  totalCount: number
-  baseHref: string // e.g. "/admin/activity" or "/admin/activity?teacherId=xxx"
+  /** @deprecated Cursor pagination on the page now handles paging — these are ignored. */
+  page?: number
+  /** @deprecated */
+  totalPages?: number
+  /** @deprecated */
+  totalCount?: number
+  /** @deprecated */
+  baseHref?: string
 }
 
 const ACTION_TYPE_LABELS: Record<string, string> = {
@@ -41,17 +45,7 @@ function formatActionType(raw: string): string {
 export function ActivityLogTable({
   rows,
   teacherMap,
-  page,
-  totalPages,
-  totalCount,
-  baseHref,
 }: ActivityLogTableProps) {
-  function pageHref(p: number) {
-    const url = new URL(baseHref, 'http://x')
-    url.searchParams.set('page', String(p))
-    return url.pathname + url.search
-  }
-
   if (rows.length === 0) {
     return (
       <div className="rounded-2xl bg-muted p-8 text-center text-sm text-muted-foreground">
@@ -62,10 +56,6 @@ export function ActivityLogTable({
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">
-        {totalCount.toLocaleString()} total entries · Page {page} of {totalPages}
-      </p>
-
       {/* Mobile cards */}
       <div className="md:hidden space-y-3">
         {rows.map((row) => (
@@ -132,36 +122,6 @@ export function ActivityLogTable({
         </table>
       </div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between gap-3 pt-2">
-          <Link
-            href={pageHref(page - 1)}
-            aria-disabled={page <= 1}
-            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-              page <= 1
-                ? 'pointer-events-none opacity-40 bg-muted'
-                : 'bg-muted hover:bg-muted/80'
-            }`}
-          >
-            Previous
-          </Link>
-          <span className="text-sm text-muted-foreground">
-            {page} / {totalPages}
-          </span>
-          <Link
-            href={pageHref(page + 1)}
-            aria-disabled={page >= totalPages}
-            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-              page >= totalPages
-                ? 'pointer-events-none opacity-40 bg-muted'
-                : 'bg-muted hover:bg-muted/80'
-            }`}
-          >
-            Next
-          </Link>
-        </div>
-      )}
     </div>
   )
 }

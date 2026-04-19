@@ -130,6 +130,7 @@ export default async function TeacherStudentDetailPage(
                           <StudentRowActions
                             enrollmentId={enrollment.id}
                             studentName={student.name}
+                            enrollmentStatus={enrollment.status}
                             payment={slimPaymentByEnrollment.get(enrollment.id) ?? null}
                             availableBalance={balance.available_balance_pkr}
                             cohortArchived={enrollment.cohorts.status === 'archived'}

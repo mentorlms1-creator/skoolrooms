@@ -81,6 +81,19 @@ export default async function MetricsPage({
         )}
         {kpiMetrics.grandfatheredCount === 0 && '0 grandfathered'}
       </div>
+
+      {/* Advanced analytics link */}
+      <div className="border-t border-border pt-4">
+        <Link
+          href="/admin/metrics/advanced"
+          className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+        >
+          View advanced analytics →
+        </Link>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Net revenue retention and cohort-level teacher performance.
+        </p>
+      </div>
     </div>
   )
 }

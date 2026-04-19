@@ -4,6 +4,7 @@
 // lib/actions/courses.ts — Server actions for course CRUD
 // =============================================================================
 
+import { revalidateTag } from '@/lib/cache/tags'
 import { createClient } from '@/supabase/server'
 import { getTeacherByAuthId, hasPaymentSettings } from '@/lib/db/teachers'
 import {
@@ -199,6 +200,11 @@ export async function updateCourseAction(
     return { success: false, error: 'Failed to update course. Please try again.' }
   }
 
+  // Public profile + explore page reflect course catalog. Invalidate both.
+  revalidateTag(`teacher-courses:${teacher.id}`)
+  revalidateTag(`teacher:${teacher.id}`)
+  revalidateTag('explore-list')
+
   return { success: true, data: null }
 }
 
@@ -231,6 +237,10 @@ export async function deleteCourseAction(
   if (!result.success) {
     return { success: false, error: result.error }
   }
+
+  revalidateTag(`teacher-courses:${teacher.id}`)
+  revalidateTag(`teacher:${teacher.id}`)
+  revalidateTag('explore-list')
 
   return { success: true, data: null }
 }

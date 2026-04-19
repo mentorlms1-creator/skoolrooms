@@ -11,7 +11,10 @@ import { getStudentByAuthId, getStudentById } from '@/lib/db/students'
 import {
   getEnrollmentById,
   updateEnrollmentStatus,
+  getActiveEnrollmentsByCohort,
 } from '@/lib/db/enrollments'
+import { revokeCertificateIfAny } from '@/lib/actions/certificates'
+import { checkPlanLock, getPlanLockError } from '@/lib/auth/plan-guard'
 import {
   getPaymentsByEnrollment,
   getPaymentById,
@@ -129,6 +132,9 @@ export async function revokeEnrollmentAction(
   if (updateError || !updated) {
     return { success: false, error: 'Failed to revoke enrollment. Please try again.' }
   }
+
+  // Auto-revoke any issued certificate — keeps the audit trail consistent.
+  await revokeCertificateIfAny(enrollmentId, 'Enrollment revoked')
 
   // Send enrollment_revoked email to student
   const student = await getStudentById(enrollment.student_id)
@@ -285,6 +291,9 @@ export async function approveWithdrawalAction(
     return { success: false, error: 'Failed to approve withdrawal. Please try again.' }
   }
 
+  // Auto-revoke any issued certificate.
+  await revokeCertificateIfAny(enrollmentId, 'Enrollment withdrawn')
+
   // Send withdrawal_approved email to student
   const student = await getStudentById(enrollment.student_id)
   if (student) {
@@ -375,6 +384,91 @@ export async function rejectWithdrawalAction(
   }
 
   return { success: true, data: null }
+}
+
+// =============================================================================
+// MARK COMPLETE — Teacher promotes an active enrollment to 'completed'.
+// Required precondition for issuing a certificate (see lib/actions/certificates).
+// =============================================================================
+
+export async function markCompleteAction(
+  enrollmentId: string,
+): Promise<ApiResponse<null>> {
+  const teacher = await getAuthenticatedTeacher()
+  if (!teacher) return { success: false, error: 'Not authenticated' }
+  if (checkPlanLock(teacher)) return getPlanLockError()
+
+  const enrollment = await getEnrollmentById(enrollmentId)
+  if (!enrollment) return { success: false, error: 'Enrollment not found' }
+
+  const cohort = await getCohortById(enrollment.cohort_id)
+  if (!cohort || cohort.teacher_id !== teacher.id) {
+    return { success: false, error: 'Enrollment not found' }
+  }
+
+  if (cohort.status === 'archived') {
+    return {
+      success: false,
+      error: 'This cohort has been archived. No changes can be made.',
+      code: 'COHORT_ARCHIVED',
+    }
+  }
+
+  if (enrollment.status !== 'active') {
+    return {
+      success: false,
+      error: 'Only active enrollments can be marked complete.',
+    }
+  }
+
+  const updated = await updateEnrollmentStatus(
+    enrollmentId,
+    'completed' satisfies EnrollmentStatus,
+  )
+  if (!updated) {
+    return { success: false, error: 'Failed to update enrollment.' }
+  }
+  return { success: true, data: null }
+}
+
+export async function bulkMarkCompleteAction(
+  cohortId: string,
+): Promise<ApiResponse<{ updated: number }>> {
+  const teacher = await getAuthenticatedTeacher()
+  if (!teacher) return { success: false, error: 'Not authenticated' }
+  if (checkPlanLock(teacher)) return getPlanLockError()
+
+  const cohort = await getCohortById(cohortId)
+  if (!cohort || cohort.teacher_id !== teacher.id) {
+    return { success: false, error: 'Cohort not found' }
+  }
+
+  if (cohort.status === 'archived') {
+    return {
+      success: false,
+      error: 'This cohort has been archived. No changes can be made.',
+      code: 'COHORT_ARCHIVED',
+    }
+  }
+
+  const active = await getActiveEnrollmentsByCohort(cohortId)
+  if (active.length === 0) {
+    return { success: true, data: { updated: 0 } }
+  }
+
+  const supabaseAdmin = createAdminClient()
+  const now = new Date().toISOString()
+  const { error: updateError, count } = await supabaseAdmin
+    .from('enrollments')
+    .update({ status: 'completed', updated_at: now }, { count: 'exact' })
+    .eq('cohort_id', cohortId)
+    .eq('status', 'active')
+
+  if (updateError) {
+    return { success: false, error: 'Failed to mark students complete.' }
+  }
+
+  return { success: true, data: { updated: count ?? 0 } }
 }
 
 // =============================================================================

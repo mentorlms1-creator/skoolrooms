@@ -6,6 +6,12 @@
 
 import { createAdminClient } from '@/supabase/server'
 import type { TeacherPaymentSettingsRow } from '@/lib/db/admin'
+import {
+  buildPage,
+  decodeCursor,
+  type CursorPage,
+} from '@/lib/pagination/cursor'
+import { DEFAULT_PAGE_SIZE, clampLimit } from '@/lib/pagination/limits'
 
 // -----------------------------------------------------------------------------
 // Row types
@@ -160,6 +166,73 @@ export async function getAllPayouts(): Promise<AdminPayoutWithTeacher[]> {
 
     return { payout, teacher, livePaymentSettings: liveSettings, bankDetailsChanged }
   })
+}
+
+// -----------------------------------------------------------------------------
+// getPayoutHistoryPage — Cursor-paginated history (completed + failed only).
+// Pending payouts have their own dedicated helper above; the admin UI splits
+// them into separate sections so they paginate independently.
+// -----------------------------------------------------------------------------
+export async function getPayoutHistoryPage(input: {
+  cursor?: string | null
+  limit?: number
+} = {}): Promise<CursorPage<AdminPayoutWithTeacher>> {
+  const supabase = createAdminClient()
+  const limit = clampLimit(input.limit, DEFAULT_PAGE_SIZE)
+
+  let query = supabase
+    .from('teacher_payouts')
+    .select('*')
+    .in('status', ['completed', 'failed'])
+    .order('processed_at', { ascending: false, nullsFirst: false })
+    .order('id', { ascending: false })
+
+  const decoded = decodeCursor(input.cursor ?? null)
+  if (decoded) {
+    // History is sorted by processed_at; cursor's `t` carries that timestamp.
+    query = query.lt('processed_at', decoded.t)
+  }
+
+  const { data: payouts, error } = await query.limit(limit + 1)
+  if (error || !payouts || payouts.length === 0) {
+    return { rows: [], nextCursor: null }
+  }
+
+  const rowsRaw = payouts as AdminPayoutRow[]
+  const teacherIds = [...new Set(rowsRaw.map((p) => p.teacher_id))]
+
+  const { data: teachers } = await supabase
+    .from('teachers')
+    .select('id, name, email')
+    .in('id', teacherIds)
+
+  const teacherMap: Record<string, { id: string; name: string; email: string }> = {}
+  for (const t of (teachers ?? []) as Array<{ id: string; name: string; email: string }>) {
+    teacherMap[t.id] = t
+  }
+
+  const rows: AdminPayoutWithTeacher[] = rowsRaw.map((payout) => ({
+    payout,
+    teacher: teacherMap[payout.teacher_id] ?? {
+      id: payout.teacher_id,
+      name: 'Unknown',
+      email: '',
+    },
+    livePaymentSettings: null,
+    bankDetailsChanged: false,
+  }))
+
+  // Build the cursor manually because the sort key is processed_at, not
+  // created_at — the generic helper assumes created_at.
+  if (rows.length <= limit) return { rows, nextCursor: null }
+  const trimmed = rows.slice(0, limit)
+  const last = trimmed[trimmed.length - 1].payout
+  const nextCursor = last.processed_at
+    ? Buffer.from(
+        JSON.stringify({ t: last.processed_at, i: last.id }),
+      ).toString('base64url')
+    : null
+  return { rows: trimmed, nextCursor }
 }
 
 // -----------------------------------------------------------------------------

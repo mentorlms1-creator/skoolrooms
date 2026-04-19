@@ -16,6 +16,8 @@ import {
   Clock,
   Banknote,
   Calendar,
+  Award,
+  Download,
 } from 'lucide-react'
 import { requireStudent } from '@/lib/auth/guards'
 import {
@@ -26,6 +28,8 @@ import {
   getEnrollmentsByStudentWithTeacher,
   getActiveMonthlyEnrollmentsForOutstanding,
 } from '@/lib/db/enrollments'
+import { getCertificatesByEnrollmentIds } from '@/lib/db/certificates'
+import { ROUTES } from '@/constants/routes'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Card, CardContent } from '@/components/ui/card'
 import { StatusBadge } from '@/components/ui/StatusBadge'
@@ -146,6 +150,12 @@ export default async function StudentBillingPage() {
   // Build a summary of pending enrollments (initial enrollment awaiting verify)
   const pendingEnrollments = enrollments.filter((e) => e.status === 'pending')
 
+  // Completed enrollments + certificate lookup so we can render download CTAs.
+  const completedEnrollments = enrollments.filter((e) => e.status === 'completed')
+  const completedCerts = await getCertificatesByEnrollmentIds(
+    completedEnrollments.map((e) => e.id),
+  )
+
   return (
     <>
       <PageHeader
@@ -212,6 +222,58 @@ export default async function StudentBillingPage() {
                         ) : (
                           <span className="text-xs text-muted-foreground">
                             Contact teacher
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Certificates */}
+      {completedEnrollments.length > 0 && (
+        <div className="mb-8">
+          <h2 className="mb-4 text-lg font-semibold text-foreground">Certificates</h2>
+          <div className="space-y-3">
+            {completedEnrollments.map((enr) => {
+              const cert = completedCerts.get(enr.id)
+              const hasActiveCert = !!cert && !cert.revoked_at
+              return (
+                <Card
+                  key={enr.id}
+                  className="rounded-2xl border-none shadow-sm ring-1 ring-foreground/5 bg-card overflow-hidden"
+                >
+                  <CardContent className="px-6 py-5">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <Award className="h-4 w-4 text-primary" />
+                          <h3 className="font-semibold text-foreground truncate">
+                            {enr.cohorts.courses.title}
+                          </h3>
+                        </div>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {enr.cohorts.name} &middot; {enr.cohorts.teachers.name}
+                        </p>
+                      </div>
+                      <div className="shrink-0">
+                        {hasActiveCert ? (
+                          <a
+                            href={ROUTES.STUDENT.certificateDownload(enr.id)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+                          >
+                            <Download className="h-4 w-4" />
+                            Download certificate
+                          </a>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">
+                            Certificate not yet issued by your teacher.
                           </span>
                         )}
                       </div>

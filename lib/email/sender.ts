@@ -250,6 +250,7 @@ function buildSubject(type: EmailType, data: Record<string, unknown>): string {
     referral_converted: `${platformName} — Referral Reward`,
     admin_broadcast: (data.subject as string) || `${platformName} — Important Update`,
     subdomain_changed: `${platformName} — Your subdomain has changed`,
+    certificate_issued: `${platformName} — Your certificate for ${(data.cohortName as string) || 'your cohort'} is ready`,
   }
 
   return subjects[type] || `${platformName} — Notification`
@@ -315,6 +316,35 @@ function buildHtmlContent(type: EmailType, data: Record<string, unknown>): strin
         ${newTime ? `<p><strong>New time:</strong> ${newTime}</p>` : ''}
         ${meetLink ? `<p><strong>Join link:</strong> <a href="${meetLink}" style="color: #4f46e5;">${meetLink}</a></p>` : ''}
         ${reason ? `<p style="color: #555;"><em>${reason}</em></p>` : ''}
+        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+        <p style="color: #666; font-size: 12px;">Sent by ${platformName}</p>
+      </body>
+      </html>
+    `
+  }
+
+  if (type === 'certificate_issued') {
+    const studentName = (data.studentName as string) || ''
+    const teacherName = (data.teacherName as string) || ''
+    const courseName = (data.courseName as string) || ''
+    const cohortName = (data.cohortName as string) || ''
+    const certificateNumber = (data.certificateNumber as string) || ''
+    const studentDashboardUrl =
+      process.env.NEXT_PUBLIC_STUDENT_URL || 'https://students.skoolrooms.com'
+    const downloadUrl = `${studentDashboardUrl}/student/payments`
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head><meta charset="utf-8"></head>
+      <body style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h2 style="color: #1a1a1a;">${platformName}</h2>
+        ${studentName ? `<p>Hi ${studentName},</p>` : ''}
+        <p>${teacherName ? `Your teacher <strong>${teacherName}</strong> has issued` : 'You have been issued'} your certificate of completion${courseName ? ` for <strong>${courseName}</strong>` : ''}${cohortName ? ` (${cohortName})` : ''}.</p>
+        <p style="margin: 24px 0;">
+          <a href="${downloadUrl}" style="display: inline-block; background: #4f46e5; color: #ffffff; padding: 12px 20px; border-radius: 6px; text-decoration: none; font-weight: 600;">Download certificate</a>
+        </p>
+        <p style="color: #666; font-size: 13px;">Open your dashboard, find this cohort, and click <em>Download certificate</em>. You'll need to be logged in to your student account.</p>
+        ${certificateNumber ? `<p style="color: #666; font-size: 12px;">Certificate number: <strong>${certificateNumber}</strong></p>` : ''}
         <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
         <p style="color: #666; font-size: 12px;">Sent by ${platformName}</p>
       </body>

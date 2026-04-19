@@ -4,6 +4,12 @@
 // =============================================================================
 
 import { createAdminClient } from '@/supabase/server'
+import {
+  buildPage,
+  decodeCursor,
+  type CursorPage,
+} from '@/lib/pagination/cursor'
+import { NOTIFICATIONS_PAGE_SIZE, clampLimit } from '@/lib/pagination/limits'
 
 // -----------------------------------------------------------------------------
 // Row types
@@ -85,6 +91,37 @@ export async function getNotificationsForUser(
   }
 
   return (data ?? []) as NotificationRow[]
+}
+
+// -----------------------------------------------------------------------------
+// getNotificationsForUserPage — Cursor-paginated history view.
+// The bell-icon dropdown still uses getNotificationsForUser (limit 20); this
+// helper backs a future "show all" notifications screen.
+// -----------------------------------------------------------------------------
+export async function getNotificationsForUserPage(input: {
+  userId: string
+  userType: 'teacher' | 'student'
+  cursor?: string | null
+  limit?: number
+}): Promise<CursorPage<NotificationRow>> {
+  const supabase = createAdminClient()
+  const limit = clampLimit(input.limit, NOTIFICATIONS_PAGE_SIZE)
+
+  let query = supabase
+    .from('notifications')
+    .select('*')
+    .eq('user_id', input.userId)
+    .eq('user_type', input.userType)
+    .order('created_at', { ascending: false })
+    .order('id', { ascending: false })
+
+  const decoded = decodeCursor(input.cursor ?? null)
+  if (decoded) query = query.lt('created_at', decoded.t)
+
+  const { data, error } = await query.limit(limit + 1)
+  if (error || !data) return { rows: [], nextCursor: null }
+
+  return buildPage(data as NotificationRow[], limit)
 }
 
 // -----------------------------------------------------------------------------

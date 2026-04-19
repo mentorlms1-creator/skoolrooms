@@ -5,6 +5,12 @@
 // =============================================================================
 
 import { createAdminClient } from '@/supabase/server'
+import {
+  buildPage,
+  decodeCursor,
+  type CursorPage,
+} from '@/lib/pagination/cursor'
+import { DEFAULT_PAGE_SIZE, clampLimit } from '@/lib/pagination/limits'
 
 // -----------------------------------------------------------------------------
 // Types
@@ -352,6 +358,179 @@ export async function getActivityLogCount(filters?: {
 
   const { count } = await query
   return count ?? 0
+}
+
+// -----------------------------------------------------------------------------
+// getAdminTeachersPage — Cursor-paginated admin teacher list with filters.
+// Lane L addition. Existing `getAllTeachers` is kept for callers that have
+// not migrated yet but should be considered deprecated.
+// -----------------------------------------------------------------------------
+export type AdminTeachersPageInput = {
+  cursor?: string | null
+  limit?: number
+  search?: string | null
+  plan?: string | null
+  status?: 'active' | 'suspended' | null
+}
+
+export async function getAdminTeachersPage(
+  input: AdminTeachersPageInput = {},
+): Promise<CursorPage<AdminTeacherListItem> & { totalHint?: number }> {
+  const supabase = createAdminClient()
+  const limit = clampLimit(input.limit, DEFAULT_PAGE_SIZE)
+
+  let query = supabase
+    .from('teachers')
+    .select('id, name, email, subdomain, plan, is_suspended, created_at, updated_at')
+    .order('created_at', { ascending: false })
+    .order('id', { ascending: false })
+
+  const decoded = decodeCursor(input.cursor ?? null)
+  if (decoded) query = query.lt('created_at', decoded.t)
+
+  if (input.search && input.search.trim()) {
+    const term = input.search.trim().replace(/[%_]/g, '\\$&')
+    query = query.or(`name.ilike.%${term}%,email.ilike.%${term}%`)
+  }
+  if (input.plan) query = query.eq('plan', input.plan)
+  if (input.status === 'active') query = query.eq('is_suspended', false)
+  if (input.status === 'suspended') query = query.eq('is_suspended', true)
+
+  // Fetch one extra to detect next page.
+  const { data, error } = await query.limit(limit + 1)
+  if (error || !data) return { rows: [], nextCursor: null }
+
+  const teachers = data as Array<{
+    id: string
+    name: string
+    email: string
+    subdomain: string
+    plan: string
+    is_suspended: boolean
+    created_at: string
+    updated_at: string
+  }>
+
+  // Compute student counts for the visible page only.
+  const teacherIds = teachers.map((t) => t.id)
+  const studentCountByTeacher = new Map<string, number>()
+
+  if (teacherIds.length > 0) {
+    const { data: cohorts } = await supabase
+      .from('cohorts')
+      .select('id, teacher_id')
+      .in('teacher_id', teacherIds)
+      .is('deleted_at', null)
+
+    const cohortToTeacher = new Map<string, string>()
+    const cohortIds: string[] = []
+    for (const c of (cohorts ?? []) as Array<{ id: string; teacher_id: string }>) {
+      cohortToTeacher.set(c.id, c.teacher_id)
+      cohortIds.push(c.id)
+    }
+
+    if (cohortIds.length > 0) {
+      const { data: enrollments } = await supabase
+        .from('enrollments')
+        .select('cohort_id')
+        .in('cohort_id', cohortIds)
+        .eq('status', 'active')
+
+      for (const e of (enrollments ?? []) as Array<{ cohort_id: string }>) {
+        const tid = cohortToTeacher.get(e.cohort_id)
+        if (!tid) continue
+        studentCountByTeacher.set(tid, (studentCountByTeacher.get(tid) ?? 0) + 1)
+      }
+    }
+  }
+
+  const rows: AdminTeacherListItem[] = teachers.map((t) => ({
+    id: t.id,
+    name: t.name,
+    email: t.email,
+    subdomain: t.subdomain,
+    plan: t.plan,
+    is_suspended: t.is_suspended,
+    created_at: t.created_at,
+    updated_at: t.updated_at,
+    student_count: studentCountByTeacher.get(t.id) ?? 0,
+  }))
+
+  return buildPage(rows, limit)
+}
+
+// -----------------------------------------------------------------------------
+// getAdminTeachersHeaderStats — Cheap totals for the page header.
+// Three count queries — none of them scan the whole table into memory.
+// -----------------------------------------------------------------------------
+export async function getAdminTeachersHeaderStats(): Promise<{
+  total: number
+  active: number
+  thisMonthSignups: number
+}> {
+  const supabase = createAdminClient()
+  const now = new Date()
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+
+  const [{ count: total }, { count: active }, { count: thisMonth }] = await Promise.all([
+    supabase.from('teachers').select('*', { count: 'exact', head: true }),
+    supabase.from('teachers').select('*', { count: 'exact', head: true }).eq('is_suspended', false),
+    supabase
+      .from('teachers')
+      .select('*', { count: 'exact', head: true })
+      .gte('created_at', monthStart),
+  ])
+
+  return {
+    total: total ?? 0,
+    active: active ?? 0,
+    thisMonthSignups: thisMonth ?? 0,
+  }
+}
+
+// -----------------------------------------------------------------------------
+// getActivityLogCursor — Cursor-paginated admin activity log
+// Replacement for offset-based getActivityLog/getActivityLogCount when scale
+// makes the count query expensive. Existing helpers are kept for back-compat.
+// -----------------------------------------------------------------------------
+export type ActivityLogCursorInput = {
+  cursor?: string | null
+  limit?: number
+  teacherId?: string | null
+  actionType?: string | null
+}
+
+export async function getActivityLogCursor(
+  input: ActivityLogCursorInput = {},
+): Promise<CursorPage<ActivityLogItem>> {
+  const supabase = createAdminClient()
+  const limit = clampLimit(input.limit, DEFAULT_PAGE_SIZE)
+
+  let query = supabase
+    .from('admin_activity_log')
+    .select('id, teacher_id, action_type, performed_by, metadata, created_at')
+    .order('created_at', { ascending: false })
+    .order('id', { ascending: false })
+
+  const decoded = decodeCursor(input.cursor ?? null)
+  if (decoded) query = query.lt('created_at', decoded.t)
+
+  if (input.teacherId) query = query.eq('teacher_id', input.teacherId)
+  if (input.actionType) query = query.eq('action_type', input.actionType)
+
+  const { data, error } = await query.limit(limit + 1)
+  if (error || !data) return { rows: [], nextCursor: null }
+
+  const rows: ActivityLogItem[] = (data as ActivityLogItem[]).map((a) => ({
+    id: a.id,
+    teacher_id: a.teacher_id ?? null,
+    action_type: a.action_type,
+    performed_by: a.performed_by,
+    metadata: (a.metadata ?? null) as Record<string, unknown> | null,
+    created_at: a.created_at,
+  }))
+
+  return buildPage(rows, limit)
 }
 
 // -----------------------------------------------------------------------------

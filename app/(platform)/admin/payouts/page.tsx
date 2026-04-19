@@ -1,28 +1,44 @@
 /**
- * app/(platform)/admin/payouts/page.tsx — Admin payout queue
+ * app/(platform)/admin/payouts/page.tsx — Admin payout queue.
  *
- * Server Component. Shows pending payouts for action + history of completed/failed.
- * Actions (complete/fail) are handled by client components via Server Actions.
+ * Server Component. Pending and history are fetched as separate paginated
+ * lists; cursor-paginated history avoids dragging the entire payout table.
  */
 
 import type { Metadata } from 'next'
-import { AlertTriangle } from 'lucide-react'
-import { getAllPayouts } from '@/lib/db/payouts'
+import Link from 'next/link'
+import { AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react'
+import { getAllPendingPayouts, getPayoutHistoryPage } from '@/lib/db/payouts'
 import { formatPKT } from '@/lib/time/pkt'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { CompletePayoutButton, FailPayoutButton } from './PayoutActions'
+import { DEFAULT_PAGE_SIZE } from '@/lib/pagination/limits'
 
 export const metadata: Metadata = {
   title: 'Payouts — Skool Rooms Admin',
 }
 
-export default async function AdminPayoutsPage() {
-  const allPayouts = await getAllPayouts()
+type SearchParams = { cursor?: string }
 
-  const pending = allPayouts.filter((p) => p.payout.status === 'pending' || p.payout.status === 'processing')
-  const history = allPayouts.filter((p) => p.payout.status === 'completed' || p.payout.status === 'failed')
+export default async function AdminPayoutsPage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>
+}) {
+  const { cursor } = await searchParams
+
+  const [pending, historyPage] = await Promise.all([
+    getAllPendingPayouts(),
+    getPayoutHistoryPage({ cursor: cursor ?? null, limit: DEFAULT_PAGE_SIZE }),
+  ])
+
+  const history = historyPage.rows
+  const nextHref = historyPage.nextCursor
+    ? `/admin/payouts?cursor=${encodeURIComponent(historyPage.nextCursor)}`
+    : null
+  const prevHref = cursor ? '/admin/payouts' : null
 
   return (
     <>
@@ -76,7 +92,6 @@ export default async function AdminPayoutsPage() {
                       </span>
                     </div>
 
-                    {/* Live bank details */}
                     <div className="shrink-0 min-w-[220px]">
                       {livePaymentSettings ? (
                         <div className="rounded-xl bg-muted/30 ring-1 ring-foreground/[0.05] p-4 space-y-1">
@@ -147,32 +162,77 @@ export default async function AdminPayoutsPage() {
               <p className="text-sm text-muted-foreground">No payout history yet.</p>
             </div>
           ) : (
-            <div className="divide-y divide-border rounded-2xl ring-1 ring-foreground/5 overflow-hidden">
-              {history.map(({ payout, teacher }) => (
-                <div key={payout.id} className="flex flex-col gap-1 p-5 bg-card sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex flex-col gap-0.5">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-medium text-foreground">{teacher.name}</span>
-                      <StatusBadge status={payout.status} size="sm" />
+            <>
+              <div className="divide-y divide-border rounded-2xl ring-1 ring-foreground/5 overflow-hidden">
+                {history.map(({ payout, teacher }) => (
+                  <div key={payout.id} className="flex flex-col gap-1 p-5 bg-card sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex flex-col gap-0.5">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-medium text-foreground">{teacher.name}</span>
+                        <StatusBadge status={payout.status} size="sm" />
+                      </div>
+                      <span className="text-sm text-muted-foreground">
+                        PKR {payout.amount_pkr.toLocaleString()}
+                      </span>
+                      {payout.admin_note && (
+                        <span className="text-xs text-muted-foreground italic">{payout.admin_note}</span>
+                      )}
                     </div>
-                    <span className="text-sm text-muted-foreground">
-                      PKR {payout.amount_pkr.toLocaleString()}
-                    </span>
-                    {payout.admin_note && (
-                      <span className="text-xs text-muted-foreground italic">{payout.admin_note}</span>
-                    )}
+                    <div className="text-xs text-muted-foreground text-right shrink-0">
+                      {payout.processed_at
+                        ? formatPKT(payout.processed_at, 'datetime')
+                        : formatPKT(payout.requested_at, 'datetime')}
+                    </div>
                   </div>
-                  <div className="text-xs text-muted-foreground text-right shrink-0">
-                    {payout.processed_at
-                      ? formatPKT(payout.processed_at, 'datetime')
-                      : formatPKT(payout.requested_at, 'datetime')}
-                  </div>
+                ))}
+              </div>
+
+              {(prevHref || nextHref) && (
+                <div className="mt-4 flex items-center justify-between text-sm">
+                  <PaginationLink href={prevHref} disabled={!prevHref} direction="prev">
+                    Newer
+                  </PaginationLink>
+                  <PaginationLink href={nextHref} disabled={!nextHref} direction="next">
+                    Older
+                  </PaginationLink>
                 </div>
-              ))}
-            </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
     </>
+  )
+}
+
+function PaginationLink({
+  href,
+  disabled,
+  direction,
+  children,
+}: {
+  href: string | null
+  disabled: boolean
+  direction: 'prev' | 'next'
+  children: React.ReactNode
+}) {
+  if (disabled || !href) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-xl px-3 py-1.5 text-sm text-muted-foreground/40">
+        {direction === 'prev' && <ChevronLeft className="h-4 w-4" />}
+        {children}
+        {direction === 'next' && <ChevronRight className="h-4 w-4" />}
+      </span>
+    )
+  }
+  return (
+    <Link
+      href={href}
+      className="inline-flex items-center gap-1 rounded-xl bg-muted px-3 py-1.5 text-sm font-medium text-foreground hover:bg-muted/80"
+    >
+      {direction === 'prev' && <ChevronLeft className="h-4 w-4" />}
+      {children}
+      {direction === 'next' && <ChevronRight className="h-4 w-4" />}
+    </Link>
   )
 }

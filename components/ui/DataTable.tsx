@@ -3,8 +3,13 @@
 /**
  * components/ui/DataTable.tsx — Generic data table powered by @tanstack/react-table + shadcn Table
  *
- * Features: sorting (click headers), text filtering (search input), pagination with page size selector.
- * Keeps mobile card view contract: consumers can render a separate md:hidden card layout alongside.
+ * Two modes:
+ * - Default (client-side): sorting, text filtering, pagination handled in-browser.
+ * - serverPagination: the server slices rows; this component renders a simple
+ *   "Load more / Older / Newer" footer driven by the parent's cursor handler.
+ *
+ * Both modes preserve the mobile card view contract: consumers can render a
+ * separate md:hidden card layout alongside.
  */
 
 import { useState } from 'react'
@@ -45,6 +50,21 @@ export type { ColumnDef } from '@tanstack/react-table'
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50] as const
 
+export type ServerPagination = {
+  /** Cursor token of the next page, or null if no more rows. */
+  nextCursor: string | null
+  /** Cursor token of the previous page, or null if on the first page. */
+  prevCursor?: string | null
+  /** Called when the user clicks "Load more" / "Newer". null = first page. */
+  onPageChange: (cursor: string | null) => void
+  /** Optional total-count hint for "Showing N of ~M" UI. */
+  totalCountHint?: number
+  /** Default page-size shown in the footer copy. Defaults to 50. */
+  pageSize?: number
+  /** Disable buttons while a fetch is in flight. */
+  isLoading?: boolean
+}
+
 type DataTableProps<TData> = {
   columns: ColumnDef<TData, unknown>[]
   data: TData[]
@@ -53,6 +73,8 @@ type DataTableProps<TData> = {
   searchPlaceholder?: string
   /** Column id to use for global text filtering. If not set, uses the first column. */
   searchColumnId?: string
+  /** When set, switches DataTable into server-driven pagination mode. */
+  serverPagination?: ServerPagination
 }
 
 export function DataTable<TData>({
@@ -62,10 +84,14 @@ export function DataTable<TData>({
   searchable = false,
   searchPlaceholder = 'Search...',
   searchColumnId,
+  serverPagination,
 }: DataTableProps<TData>) {
+  void searchColumnId
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [globalFilter, setGlobalFilter] = useState('')
+
+  const isServer = !!serverPagination
 
   const table = useReactTable({
     data,
@@ -80,8 +106,13 @@ export function DataTable<TData>({
     onGlobalFilterChange: setGlobalFilter,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
+    // In server-paginated mode, do not run client-side filter/paginate models.
+    ...(isServer
+      ? {}
+      : {
+          getFilteredRowModel: getFilteredRowModel(),
+          getPaginationRowModel: getPaginationRowModel(),
+        }),
     initialState: {
       pagination: {
         pageSize: PAGE_SIZE_OPTIONS[0],
@@ -91,13 +122,18 @@ export function DataTable<TData>({
 
   const pageIndex = table.getState().pagination.pageIndex
   const pageSize = table.getState().pagination.pageSize
-  const totalRows = table.getFilteredRowModel().rows.length
-  const pageCount = table.getPageCount()
+  const totalRows = isServer
+    ? data.length
+    : table.getFilteredRowModel().rows.length
+  const pageCount = isServer ? 1 : table.getPageCount()
+
+  const showClientControls =
+    !isServer && (searchable || data.length > PAGE_SIZE_OPTIONS[0])
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Search + page size controls */}
-      {(searchable || data.length > PAGE_SIZE_OPTIONS[0]) && (
+      {/* Search + page size controls (client mode only) */}
+      {showClientControls && (
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           {searchable && (
             <div className="w-full sm:max-w-xs">
@@ -200,8 +236,8 @@ export function DataTable<TData>({
         </Table>
       </div>
 
-      {/* Pagination */}
-      {pageCount > 1 && (
+      {/* Pagination — client mode */}
+      {!isServer && pageCount > 1 && (
         <div className="flex flex-wrap items-center justify-between text-sm gap-2 px-2">
           <p className="text-muted-foreground">
             Showing {pageIndex * pageSize + 1} to{' '}
@@ -231,6 +267,57 @@ export function DataTable<TData>({
           </div>
         </div>
       )}
+
+      {/* Pagination — server-driven mode */}
+      {isServer && (
+        <ServerPaginationFooter pagination={serverPagination!} rowsShown={data.length} />
+      )}
+    </div>
+  )
+}
+
+function ServerPaginationFooter({
+  pagination,
+  rowsShown,
+}: {
+  pagination: ServerPagination
+  rowsShown: number
+}) {
+  const { nextCursor, prevCursor, onPageChange, totalCountHint, isLoading } = pagination
+  const showFooter =
+    !!nextCursor || !!prevCursor || (totalCountHint !== undefined && totalCountHint > 0)
+
+  if (!showFooter) return null
+
+  return (
+    <div className="flex flex-wrap items-center justify-between text-sm gap-2 px-2">
+      <p className="text-muted-foreground">
+        {totalCountHint !== undefined
+          ? `Showing ${rowsShown} of ~${totalCountHint.toLocaleString()}`
+          : `Showing ${rowsShown}`}
+      </p>
+      <div className="flex items-center gap-1.5">
+        <Button
+          variant="outline"
+          size="sm"
+          className="rounded-xl border-none ring-1 ring-foreground/5 hover:bg-foreground/[0.03]"
+          onClick={() => onPageChange(null)}
+          disabled={!prevCursor || isLoading}
+        >
+          <ChevronLeft className="h-4 w-4" />
+          Newer
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          className="rounded-xl border-none ring-1 ring-foreground/5 hover:bg-foreground/[0.03]"
+          onClick={() => nextCursor && onPageChange(nextCursor)}
+          disabled={!nextCursor || isLoading}
+        >
+          Older
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
     </div>
   )
 }

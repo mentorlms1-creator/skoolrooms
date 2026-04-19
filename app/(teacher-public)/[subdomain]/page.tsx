@@ -4,9 +4,14 @@
  */
 
 import { notFound } from 'next/navigation'
-import { getTeacherBySubdomain } from '@/lib/db/teachers'
+import { getTeacherBySubdomainCached } from '@/lib/db/teachers'
 import { getPublishedCoursesByTeacherWithCurriculum } from '@/lib/db/courses'
 import { getPublishedTestimonialsByTeacher } from '@/lib/db/testimonials'
+
+// ISR: rebuild the public profile at most once per hour. Inner data-layer
+// helpers are wrapped in unstable_cache with per-teacher tags so profile,
+// course, or testimonial mutations invalidate within seconds.
+export const revalidate = 3600
 import { TeacherBio } from '@/components/public/TeacherBio'
 import { CourseCard } from '@/components/public/CourseCard'
 import { TestimonialsSection } from '@/components/public/TestimonialsSection'
@@ -19,7 +24,7 @@ type PageProps = {
 export default async function TeacherPublicPage({ params }: PageProps) {
   const { subdomain } = await params
 
-  const teacher = await getTeacherBySubdomain(subdomain)
+  const teacher = await getTeacherBySubdomainCached(subdomain)
   if (!teacher) {
     notFound()
   }

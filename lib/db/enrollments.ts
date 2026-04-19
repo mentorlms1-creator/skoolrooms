@@ -5,6 +5,12 @@
 
 import { createAdminClient } from '@/supabase/server'
 import type { EnrollmentStatus } from '@/types/domain'
+import {
+  buildPage,
+  decodeCursor,
+  type CursorPage,
+} from '@/lib/pagination/cursor'
+import { DEFAULT_PAGE_SIZE, clampLimit } from '@/lib/pagination/limits'
 
 // -----------------------------------------------------------------------------
 // Row types (mirrors the enrollments table from 001_initial_schema.sql)
@@ -494,6 +500,137 @@ export async function getAllStudentsByTeacher(
 }
 
 // -----------------------------------------------------------------------------
+// listEnrollmentsByCohortPaginated — Cursor-paginated cohort enrollments.
+// Anchor-specific to Lane L. Existing getEnrollmentsByCohort is unchanged.
+// -----------------------------------------------------------------------------
+export async function listEnrollmentsByCohortPaginated(input: {
+  cohortId: string
+  cursor?: string | null
+  limit?: number
+  status?: string | null
+}): Promise<CursorPage<EnrollmentWithStudent>> {
+  const supabase = createAdminClient()
+  const limit = clampLimit(input.limit, DEFAULT_PAGE_SIZE)
+
+  let query = supabase
+    .from('enrollments')
+    .select(`
+      *,
+      students!inner(id, name, email, phone)
+    `)
+    .eq('cohort_id', input.cohortId)
+    .order('created_at', { ascending: false })
+    .order('id', { ascending: false })
+
+  if (input.status) query = query.eq('status', input.status)
+
+  const decoded = decodeCursor(input.cursor ?? null)
+  if (decoded) query = query.lt('created_at', decoded.t)
+
+  const { data, error } = await query.limit(limit + 1)
+  if (error || !data) return { rows: [], nextCursor: null }
+
+  return buildPage(data as EnrollmentWithStudent[], limit)
+}
+
+// -----------------------------------------------------------------------------
+// getStudentsByTeacherPage — Cursor-paginated teacher's "All Students" view.
+// -----------------------------------------------------------------------------
+export async function getStudentsByTeacherPage(input: {
+  teacherId: string
+  cursor?: string | null
+  limit?: number
+  q?: string | null
+  status?: string | null
+}): Promise<CursorPage<EnrollmentWithStudentAndCohort>> {
+  const supabase = createAdminClient()
+  const limit = clampLimit(input.limit, DEFAULT_PAGE_SIZE)
+
+  let query = supabase
+    .from('enrollments')
+    .select(`
+      *,
+      students!inner(id, name, email, phone),
+      cohorts!inner(
+        id, name, fee_pkr, fee_type, status,
+        courses!inner(id, title)
+      )
+    `)
+    .eq('cohorts.teacher_id', input.teacherId)
+    .order('created_at', { ascending: false })
+    .order('id', { ascending: false })
+
+  if (input.status) query = query.eq('status', input.status)
+  if (input.q && input.q.trim()) {
+    const term = input.q.trim().replace(/[%_]/g, '\\$&')
+    query = query.or(
+      `name.ilike.%${term}%,email.ilike.%${term}%`,
+      { foreignTable: 'students' },
+    )
+  }
+
+  const decoded = decodeCursor(input.cursor ?? null)
+  if (decoded) query = query.lt('created_at', decoded.t)
+
+  const { data, error } = await query.limit(limit + 1)
+  if (error || !data) return { rows: [], nextCursor: null }
+
+  return buildPage(data as EnrollmentWithStudentAndCohort[], limit)
+}
+
+// -----------------------------------------------------------------------------
+// getStudentStatsByTeacher — Cheap aggregates for the All-Students header.
+// Three count queries; avoids pulling every enrollment row to compute totals.
+// -----------------------------------------------------------------------------
+export async function getStudentStatsByTeacher(teacherId: string): Promise<{
+  uniqueStudents: number
+  active: number
+  pending: number
+}> {
+  const supabase = createAdminClient()
+
+  const { data: cohorts } = await supabase
+    .from('cohorts')
+    .select('id')
+    .eq('teacher_id', teacherId)
+    .is('deleted_at', null)
+
+  const cohortIds = (cohorts ?? []).map((c) => c.id as string)
+  if (cohortIds.length === 0) {
+    return { uniqueStudents: 0, active: 0, pending: 0 }
+  }
+
+  const [{ count: active }, { count: pending }, { data: distinctRows }] =
+    await Promise.all([
+      supabase
+        .from('enrollments')
+        .select('*', { count: 'exact', head: true })
+        .in('cohort_id', cohortIds)
+        .in('status', ['active', 'enrolled']),
+      supabase
+        .from('enrollments')
+        .select('*', { count: 'exact', head: true })
+        .in('cohort_id', cohortIds)
+        .eq('status', 'pending'),
+      supabase
+        .from('enrollments')
+        .select('student_id')
+        .in('cohort_id', cohortIds),
+    ])
+
+  const distinct = new Set<string>()
+  for (const row of (distinctRows ?? []) as Array<{ student_id: string }>) {
+    distinct.add(row.student_id)
+  }
+
+  return {
+    uniqueStudents: distinct.size,
+    active: active ?? 0,
+    pending: pending ?? 0,
+  }
+}
+
+// -----------------------------------------------------------------------------
 // getArchivedEnrollmentsWithoutFeedback — Archived cohort enrollments for a student
 // that have no submitted feedback. Used to show feedback prompts on dashboard.
 // -----------------------------------------------------------------------------
@@ -544,6 +681,49 @@ export async function getArchivedEnrollmentsWithoutFeedback(
   )
 
   return enrollments.filter((e) => !submittedCohortIds.has(e.cohorts.id))
+}
+
+// -----------------------------------------------------------------------------
+// getCompletedEnrollmentsByCohort — Enrollments in a cohort with status='completed'
+// Used by certificate bulk-issue + completion banners.
+// -----------------------------------------------------------------------------
+export async function getCompletedEnrollmentsByCohort(
+  cohortId: string,
+): Promise<EnrollmentWithStudent[]> {
+  const supabase = createAdminClient()
+
+  const { data, error } = await supabase
+    .from('enrollments')
+    .select(`
+      *,
+      students!inner(id, name, email, phone)
+    `)
+    .eq('cohort_id', cohortId)
+    .eq('status', 'completed')
+    .order('updated_at', { ascending: false })
+
+  if (error || !data) return []
+  return data as EnrollmentWithStudent[]
+}
+
+// -----------------------------------------------------------------------------
+// getActiveEnrollmentsByCohort — Active enrollments in a cohort. Used by
+// bulk-mark-complete to flip everyone in one click.
+// -----------------------------------------------------------------------------
+export async function getActiveEnrollmentsByCohort(
+  cohortId: string,
+): Promise<EnrollmentWithStudent[]> {
+  const supabase = createAdminClient()
+  const { data, error } = await supabase
+    .from('enrollments')
+    .select(`
+      *,
+      students!inner(id, name, email, phone)
+    `)
+    .eq('cohort_id', cohortId)
+    .eq('status', 'active')
+  if (error || !data) return []
+  return data as EnrollmentWithStudent[]
 }
 
 // -----------------------------------------------------------------------------

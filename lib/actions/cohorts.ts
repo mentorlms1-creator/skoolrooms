@@ -4,6 +4,7 @@
 // lib/actions/cohorts.ts — Server actions for cohort CRUD
 // =============================================================================
 
+import { revalidateTag } from '@/lib/cache/tags'
 import { createClient, createAdminClient } from '@/supabase/server'
 import { getTeacherByAuthId } from '@/lib/db/teachers'
 import {
@@ -200,6 +201,11 @@ export async function createCohortAction(
 
   // Mark onboarding step complete
   await completeOnboardingStep('cohort_created')
+
+  // New cohort affects the teacher's explore card (e.g. "open cohorts" badge).
+  revalidateTag(`teacher-courses:${teacher.id}`)
+  revalidateTag(`teacher:${teacher.id}`)
+  revalidateTag('explore-list')
 
   return {
     success: true,
@@ -530,6 +536,11 @@ export async function archiveCohortAction(
     .update({ status: 'expired' })
     .eq('cohort_id', cohortId)
     .eq('status', 'waiting')
+
+  // Public profile / explore card change when a cohort archives.
+  revalidateTag(`teacher-courses:${teacher.id}`)
+  revalidateTag(`teacher:${teacher.id}`)
+  revalidateTag('explore-list')
 
   return { success: true, data: null }
 }

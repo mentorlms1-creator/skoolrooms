@@ -16,6 +16,7 @@ import {
 } from '@/lib/db/feedback'
 import { createAdminClient } from '@/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { revalidateTag } from '@/lib/cache/tags'
 import type { ApiResponse } from '@/types/api'
 
 async function getAuthenticatedStudent() {
@@ -85,6 +86,10 @@ export async function submitFeedbackAction(
   }
 
   revalidatePath('/student')
+  // Cohort feedback feeds the explore-page rating badge for the teacher.
+  revalidateTag('ratings')
+  revalidateTag(`ratings:${cohort.teacher_id}`)
+  revalidateTag('explore-list')
 
   return { success: true, data: null }
 }

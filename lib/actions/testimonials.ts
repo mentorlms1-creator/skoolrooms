@@ -15,6 +15,7 @@ import {
 } from '@/lib/db/testimonials'
 import { createAdminClient } from '@/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { revalidateTag } from '@/lib/cache/tags'
 import type { ApiResponse } from '@/types/api'
 
 async function getAuthenticatedTeacher() {
@@ -70,6 +71,8 @@ export async function createTestimonialAction(
   if (!testimonial) return { success: false, error: 'Failed to create testimonial.' }
 
   revalidatePath('/dashboard/settings/testimonials')
+  revalidateTag(`teacher-testimonials:${teacher.id}`)
+  revalidateTag(`teacher:${teacher.id}`)
 
   return { success: true, data: { id: testimonial.id } }
 }
@@ -109,6 +112,8 @@ export async function updateTestimonialAction(
   if (!updated) return { success: false, error: 'Failed to update testimonial.' }
 
   revalidatePath('/dashboard/settings/testimonials')
+  revalidateTag(`teacher-testimonials:${teacher.id}`)
+  revalidateTag(`teacher:${teacher.id}`)
 
   return { success: true, data: null }
 }
@@ -129,6 +134,8 @@ export async function deleteTestimonialAction(
   if (!success) return { success: false, error: 'Failed to delete testimonial.' }
 
   revalidatePath('/dashboard/settings/testimonials')
+  revalidateTag(`teacher-testimonials:${teacher.id}`)
+  revalidateTag(`teacher:${teacher.id}`)
 
   return { success: true, data: null }
 }
@@ -165,6 +172,8 @@ export async function reorderTestimonialsAction(
   ])
 
   revalidatePath('/dashboard/settings/testimonials')
+  revalidateTag(`teacher-testimonials:${teacher.id}`)
+  revalidateTag(`teacher:${teacher.id}`)
 
   return { success: true, data: null }
 }

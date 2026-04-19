@@ -1,12 +1,17 @@
 'use client'
 
 /**
- * components/public/ExploreFilters.tsx — Client-side filter controls for explore page
- * Filters teacher list by subject, level, fee range, city.
- * City filter syncs to ?city= URL param via router.replace (no history spam).
+ * components/public/ExploreFilters.tsx — Client-side filter controls for explore page.
+ *
+ * Filters subject/level/fee/openOnly run in-memory on the current loaded set
+ * (cheap, since the server already paginated to ~24 rows). City and cursor
+ * are URL-driven so the page can be deep-linked / shared.
+ *
+ * Infinite scroll: when the sentinel scrolls into view, push the next cursor
+ * into `?cursor=` and let the Server Component fetch + render the next batch.
  */
 
-import { useState, useMemo } from 'react'
+import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Label } from '@/components/ui/label'
 import {
@@ -25,6 +30,8 @@ type ExploreFiltersProps = {
   allLevels: string[]
   allCities: string[]
   initialCity?: string
+  initialCursor?: string | null
+  nextCursor?: string | null
   ratings: Record<string, { avg: number; count: number }>
   platformDomain: string
 }
@@ -35,11 +42,14 @@ export function ExploreFilters({
   allLevels,
   allCities,
   initialCity = '',
+  initialCursor = null,
+  nextCursor = null,
   ratings,
   platformDomain,
 }: ExploreFiltersProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const [isPending, startTransition] = useTransition()
 
   const [subject, setSubject] = useState('')
   const [level, setLevel] = useState('')
@@ -47,66 +57,95 @@ export function ExploreFilters({
   const [openOnly, setOpenOnly] = useState(false)
   const [city, setCity] = useState(initialCity)
 
-  const updateCityParam = (next: string) => {
-    setCity(next)
+  const sentinelRef = useRef<HTMLDivElement | null>(null)
+  const lastTriggeredCursor = useRef<string | null>(initialCursor)
+
+  // Update URL helper. Filter changes always reset the cursor.
+  const updateUrl = (next: { city?: string; cursor?: string | null }) => {
     const params = new URLSearchParams(searchParams.toString())
-    if (next) {
-      params.set('city', next)
-    } else {
-      params.delete('city')
+    if ('city' in next) {
+      if (next.city) params.set('city', next.city)
+      else params.delete('city')
+    }
+    if ('cursor' in next) {
+      if (next.cursor) params.set('cursor', next.cursor)
+      else params.delete('cursor')
     }
     const qs = params.toString()
-    router.replace(qs ? `/explore?${qs}` : '/explore', { scroll: false })
+    startTransition(() => {
+      router.replace(qs ? `/explore?${qs}` : '/explore', { scroll: false })
+    })
   }
+
+  const updateCityParam = (nextCity: string) => {
+    setCity(nextCity)
+    updateUrl({ city: nextCity, cursor: null })
+  }
+
+  // Infinite scroll: observe the sentinel; when visible, advance the cursor.
+  useEffect(() => {
+    if (!nextCursor) return
+    const node = sentinelRef.current
+    if (!node) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (
+            entry.isIntersecting &&
+            !isPending &&
+            lastTriggeredCursor.current !== nextCursor
+          ) {
+            lastTriggeredCursor.current = nextCursor
+            updateUrl({ cursor: nextCursor })
+          }
+        }
+      },
+      { rootMargin: '200px' },
+    )
+
+    observer.observe(node)
+    return () => observer.disconnect()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nextCursor, isPending])
 
   const filtered = useMemo(() => {
     return teachers.filter((teacher) => {
-      // City filter (case-insensitive exact match)
       if (city) {
         const wanted = city.trim().toLowerCase()
         if (!teacher.city || teacher.city.trim().toLowerCase() !== wanted) {
           return false
         }
       }
-
-      // Subject filter
       if (subject) {
         const hasSubject = teacher.subject_tags.some(
           (tag) => tag.toLowerCase() === subject.toLowerCase(),
         )
         if (!hasSubject) return false
       }
-
-      // Level filter
       if (level) {
         const hasLevel = teacher.teaching_levels.some(
           (lvl) => lvl.toLowerCase() === level.toLowerCase(),
         )
         if (!hasLevel) return false
       }
-
-      // Fee filter
       if (maxFee) {
         const maxFeeNum = parseInt(maxFee, 10)
         if (!isNaN(maxFeeNum) && teacher.starting_fee_pkr > maxFeeNum) {
           return false
         }
       }
-
-      // Open cohorts filter
-      if (openOnly && !teacher.has_open_cohorts) {
-        return false
-      }
-
+      if (openOnly && !teacher.has_open_cohorts) return false
       return true
     })
   }, [teachers, subject, level, maxFee, openOnly, city])
+
+  const hasActiveFilters = subject || level || maxFee || openOnly || city
 
   return (
     <div>
       {/* Filter controls */}
       <div className="mb-8 flex flex-wrap items-end gap-4 rounded-lg border border-border bg-card p-4">
-        {/* City filter */}
         <div className="space-y-1.5">
           <Label htmlFor="filter-city">City</Label>
           <Select
@@ -127,7 +166,6 @@ export function ExploreFilters({
           </Select>
         </div>
 
-        {/* Subject filter */}
         <div className="space-y-1.5">
           <Label htmlFor="filter-subject">Subject</Label>
           <Select
@@ -148,7 +186,6 @@ export function ExploreFilters({
           </Select>
         </div>
 
-        {/* Level filter */}
         <div className="space-y-1.5">
           <Label htmlFor="filter-level">Level</Label>
           <Select
@@ -169,7 +206,6 @@ export function ExploreFilters({
           </Select>
         </div>
 
-        {/* Max fee filter */}
         <div className="flex flex-col gap-1.5">
           <label htmlFor="filter-max-fee" className="text-sm font-medium text-foreground">
             Max Fee (PKR)
@@ -185,7 +221,6 @@ export function ExploreFilters({
           />
         </div>
 
-        {/* Open cohorts toggle */}
         <div className="flex items-center gap-2 pb-1">
           <input
             type="checkbox"
@@ -199,8 +234,7 @@ export function ExploreFilters({
           </label>
         </div>
 
-        {/* Clear button */}
-        {(subject || level || maxFee || openOnly || city) && (
+        {hasActiveFilters && (
           <button
             type="button"
             onClick={() => {
@@ -219,7 +253,7 @@ export function ExploreFilters({
 
       {/* Results count */}
       <p className="mb-4 text-sm text-muted-foreground">
-        {filtered.length} {filtered.length === 1 ? 'teacher' : 'teachers'} found
+        {filtered.length} {filtered.length === 1 ? 'teacher' : 'teachers'} loaded
       </p>
 
       {/* Teacher grid */}
@@ -242,6 +276,20 @@ export function ExploreFilters({
           ))}
         </div>
       )}
+
+      {/* Infinite-scroll sentinel + status */}
+      {nextCursor ? (
+        <div
+          ref={sentinelRef}
+          className="mt-8 flex h-12 items-center justify-center text-sm text-muted-foreground"
+        >
+          {isPending ? 'Loading more teachers…' : 'Scroll for more'}
+        </div>
+      ) : teachers.length > 0 ? (
+        <p className="mt-8 text-center text-sm text-muted-foreground">
+          You've reached the end.
+        </p>
+      ) : null}
     </div>
   )
 }

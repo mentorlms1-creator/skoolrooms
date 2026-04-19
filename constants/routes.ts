@@ -88,6 +88,8 @@ export const ROUTES = {
     messageThread: (threadId: string) => `/student/messages/${threadId}` as const,
     settings: '/student/settings',
     forgotPassword: '/forgot-password',
+    certificateDownload: (enrollmentId: string) =>
+      `/api/student/certificate/${enrollmentId}` as const,
   },
 
   // ═══════════════════════════════════════════
@@ -96,15 +98,23 @@ export const ROUTES = {
   ADMIN: {
     dashboard: '/admin',
     teachers: '/admin/teachers',
+    teachersWithCursor: (cursor: string) =>
+      `/admin/teachers?cursor=${encodeURIComponent(cursor)}` as const,
     teacherDetail: (id: string) => `/admin/teachers/${id}` as const,
+    activity: '/admin/activity',
     payments: '/admin/payments',
     payouts: '/admin/payouts',
+    payoutsHistory: (cursor?: string) =>
+      cursor
+        ? (`/admin/payouts?cursor=${encodeURIComponent(cursor)}` as const)
+        : ('/admin/payouts' as const),
     plans: '/admin/plans',
     planDetail: (planId: string) => `/admin/plans/${planId}` as const,
     settings: '/admin/settings',
     operations: '/admin/operations',
     analytics: '/admin/analytics',
     earnings: '/admin/earnings',
+    metricsAdvanced: '/admin/metrics/advanced',
   },
 
   // ═══════════════════════════════════════════

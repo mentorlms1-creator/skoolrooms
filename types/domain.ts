@@ -77,6 +77,9 @@ export const EmailType = {
 
   // Account changes
   SUBDOMAIN_CHANGED: 'subdomain_changed',
+
+  // Certificates
+  CERTIFICATE_ISSUED: 'certificate_issued',
 } as const
 
 export type EmailType = (typeof EmailType)[keyof typeof EmailType]
@@ -148,6 +151,7 @@ export type CohortStatus = (typeof CohortStatus)[keyof typeof CohortStatus]
 export const EnrollmentStatus = {
   PENDING: 'pending',
   ACTIVE: 'active',
+  COMPLETED: 'completed',
   REJECTED: 'rejected',
   WITHDRAWN: 'withdrawn',
   REVOKED: 'revoked',

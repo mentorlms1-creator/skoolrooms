@@ -10,6 +10,7 @@ import { createAdminClient } from '@/supabase/server'
 import { logAdminActivity, updatePlatformSetting } from '@/lib/db/admin'
 import { createPlanSnapshot } from '@/lib/db/subscriptions'
 import { revalidatePath } from 'next/cache'
+import { revalidateTag } from '@/lib/cache/tags'
 import type { ApiResponse } from '@/types/api'
 
 // -----------------------------------------------------------------------------
@@ -268,6 +269,9 @@ export async function suspendTeacherAction(
 
   revalidatePath(`/admin/teachers/${teacherId}`)
   revalidatePath('/admin/teachers')
+  // Suspended teachers must drop off the public explore page immediately.
+  revalidateTag(`teacher:${teacherId}`)
+  revalidateTag('explore-list')
   return { success: true, data: null }
 }
 
@@ -301,6 +305,8 @@ export async function reactivateTeacherAction(
 
   revalidatePath(`/admin/teachers/${teacherId}`)
   revalidatePath('/admin/teachers')
+  revalidateTag(`teacher:${teacherId}`)
+  revalidateTag('explore-list')
   return { success: true, data: null }
 }
 

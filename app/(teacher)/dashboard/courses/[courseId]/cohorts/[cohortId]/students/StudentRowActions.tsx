@@ -1,7 +1,20 @@
 'use client'
 
-import { useState } from 'react'
-import { MoreHorizontal, Receipt, BadgeMinus, Eye, List, Activity } from 'lucide-react'
+import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
+import {
+  MoreHorizontal,
+  Receipt,
+  BadgeMinus,
+  Eye,
+  List,
+  Activity,
+  Award,
+  CheckCircle,
+  Download,
+  XCircle,
+} from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,11 +27,15 @@ import { Button } from '@/components/ui/button'
 import { RevokeDialog } from './RevokeDialog'
 import { RefundDialog } from './RefundDialog'
 import { EnrollmentPaymentsModal, type ModalPayment } from './EnrollmentPaymentsModal'
+import { CertificateRevokeDialog } from './CertificateRevokeDialog'
 import {
   StudentProgressDialog,
   type ProgressSubmissionStats,
   type ProgressTimelineEntry,
 } from './StudentProgressDialog'
+import { markCompleteAction } from '@/lib/actions/enrollment-management'
+import { issueCertificateAction } from '@/lib/actions/certificates'
+import { ROUTES } from '@/constants/routes'
 
 export type RowPayment = {
   id: string
@@ -31,15 +48,23 @@ export type RowPayment = {
   screenshot_url: string | null
 }
 
+export type RowCertificate = {
+  id: string
+  certificate_number: string
+  revoked_at: string | null
+}
+
 type StudentRowActionsProps = {
   enrollmentId: string
   studentName: string
+  enrollmentStatus: string
   payment: RowPayment | null
   availableBalance: number
   cohortArchived: boolean
   hasPendingWithdrawal: boolean
   cohortFeeType?: string
   allPayments?: ModalPayment[]
+  certificate?: RowCertificate | null
   progress?: {
     cohortName: string
     timeline: ProgressTimelineEntry[]
@@ -50,18 +75,23 @@ type StudentRowActionsProps = {
 export function StudentRowActions({
   enrollmentId,
   studentName,
+  enrollmentStatus,
   payment,
   availableBalance,
   cohortArchived,
   hasPendingWithdrawal,
   cohortFeeType,
   allPayments,
+  certificate,
   progress,
 }: StudentRowActionsProps) {
+  const router = useRouter()
   const [revokeOpen, setRevokeOpen] = useState(false)
   const [refundOpen, setRefundOpen] = useState(false)
   const [paymentsOpen, setPaymentsOpen] = useState(false)
   const [progressOpen, setProgressOpen] = useState(false)
+  const [certRevokeOpen, setCertRevokeOpen] = useState(false)
+  const [isPending, startTransition] = useTransition()
 
   const alreadyRefunded = !!payment?.refunded_at
   const screenshotUrl = payment?.screenshot_url
@@ -73,6 +103,33 @@ export function StudentRowActions({
       : 'Remove from cohort'
 
   const isMonthly = cohortFeeType === 'monthly'
+  const isActive = enrollmentStatus === 'active'
+  const isCompleted = enrollmentStatus === 'completed'
+  const hasActiveCert = !!certificate && !certificate.revoked_at
+
+  function handleMarkComplete() {
+    startTransition(async () => {
+      const result = await markCompleteAction(enrollmentId)
+      if (result.success) {
+        toast.success(`${studentName} marked complete.`)
+        router.refresh()
+      } else {
+        toast.error(result.error)
+      }
+    })
+  }
+
+  function handleIssueCertificate() {
+    startTransition(async () => {
+      const result = await issueCertificateAction(enrollmentId)
+      if (result.success) {
+        toast.success(`Certificate issued: ${result.data.certificateNumber}`)
+        router.refresh()
+      } else {
+        toast.error(result.error)
+      }
+    })
+  }
 
   return (
     <>
@@ -106,6 +163,43 @@ export function StudentRowActions({
                 <Eye className="mr-2 h-4 w-4" />
                 View payment proof
               </a>
+            </DropdownMenuItem>
+          )}
+
+          {isActive && !cohortArchived && (
+            <DropdownMenuItem onSelect={handleMarkComplete} disabled={isPending}>
+              <CheckCircle className="mr-2 h-4 w-4" />
+              Mark complete
+            </DropdownMenuItem>
+          )}
+
+          {isCompleted && !hasActiveCert && (
+            <DropdownMenuItem onSelect={handleIssueCertificate} disabled={isPending}>
+              <Award className="mr-2 h-4 w-4" />
+              Issue certificate
+            </DropdownMenuItem>
+          )}
+
+          {hasActiveCert && (
+            <DropdownMenuItem asChild>
+              <a
+                href={ROUTES.STUDENT.certificateDownload(enrollmentId)}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Download certificate
+              </a>
+            </DropdownMenuItem>
+          )}
+
+          {hasActiveCert && (
+            <DropdownMenuItem
+              onSelect={() => setCertRevokeOpen(true)}
+              className="text-destructive focus:text-destructive"
+            >
+              <XCircle className="mr-2 h-4 w-4" />
+              Revoke certificate
             </DropdownMenuItem>
           )}
 
@@ -166,6 +260,15 @@ export function StudentRowActions({
           cohortName={progress.cohortName}
           timeline={progress.timeline}
           stats={progress.stats}
+        />
+      )}
+
+      {certificate && (
+        <CertificateRevokeDialog
+          certificateId={certificate.id}
+          studentName={studentName}
+          open={certRevokeOpen}
+          onOpenChange={setCertRevokeOpen}
         />
       )}
     </>

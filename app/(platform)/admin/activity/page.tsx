@@ -1,10 +1,10 @@
+import Link from 'next/link'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { requireAdmin } from '@/lib/auth/guards'
-import { getActivityLog, getActivityLogCount } from '@/lib/db/admin'
+import { getActivityLogCursor } from '@/lib/db/admin'
 import { createAdminClient } from '@/supabase/server'
 import { ActivityLogTable } from '@/components/admin/ActivityLogTable'
-import Link from 'next/link'
-
-const PAGE_SIZE = 50
+import { DEFAULT_PAGE_SIZE } from '@/lib/pagination/limits'
 
 const KNOWN_ACTION_TYPES = [
   'change_plan',
@@ -29,7 +29,7 @@ const KNOWN_ACTION_TYPES = [
 type SearchParams = {
   teacherId?: string
   actionType?: string
-  page?: string
+  cursor?: string
 }
 
 export default async function ActivityLogPage({
@@ -39,25 +39,18 @@ export default async function ActivityLogPage({
 }) {
   await requireAdmin()
 
-  const { teacherId, actionType, page: pageStr } = await searchParams
-  const page = Math.max(1, Number(pageStr ?? '1'))
-  const offset = (page - 1) * PAGE_SIZE
+  const { teacherId, actionType, cursor } = await searchParams
 
-  const filters = {
-    teacherId: teacherId || undefined,
-    actionType: actionType || undefined,
-  }
+  const page = await getActivityLogCursor({
+    cursor: cursor ?? null,
+    limit: DEFAULT_PAGE_SIZE,
+    teacherId: teacherId || null,
+    actionType: actionType || null,
+  })
 
-  const [rows, totalCount] = await Promise.all([
-    getActivityLog({ ...filters, limit: PAGE_SIZE, offset }),
-    getActivityLogCount(filters),
-  ])
-
-  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
-
-  // Resolve teacher names for rows that have a teacher_id
+  // Resolve teacher names for the visible page only.
   const supabase = createAdminClient()
-  const teacherIds = [...new Set(rows.filter((r) => r.teacher_id).map((r) => r.teacher_id!))]
+  const teacherIds = [...new Set(page.rows.filter((r) => r.teacher_id).map((r) => r.teacher_id!))]
   const teacherMap: Record<string, { name: string; email: string }> = {}
 
   if (teacherIds.length > 0) {
@@ -73,11 +66,20 @@ export default async function ActivityLogPage({
     }
   }
 
-  // Build current filter URL base (without page param)
   const filterParams = new URLSearchParams()
   if (teacherId) filterParams.set('teacherId', teacherId)
   if (actionType) filterParams.set('actionType', actionType)
-  const baseHref = `/admin/activity${filterParams.toString() ? `?${filterParams}` : ''}`
+  const filterQs = filterParams.toString()
+  const baseHref = `/admin/activity${filterQs ? `?${filterQs}` : ''}`
+
+  const nextHref = page.nextCursor
+    ? `/admin/activity?${new URLSearchParams({
+        ...(teacherId ? { teacherId } : {}),
+        ...(actionType ? { actionType } : {}),
+        cursor: page.nextCursor,
+      }).toString()}`
+    : null
+  const prevHref = cursor ? baseHref : null
 
   return (
     <div className="space-y-8 p-8">
@@ -88,7 +90,6 @@ export default async function ActivityLogPage({
         </p>
       </div>
 
-      {/* Filters */}
       <form method="GET" className="flex flex-wrap gap-3">
         {teacherId && <input type="hidden" name="teacherId" value={teacherId} />}
         <select
@@ -124,14 +125,48 @@ export default async function ActivityLogPage({
         )}
       </form>
 
-      <ActivityLogTable
-        rows={rows}
-        teacherMap={teacherMap}
-        page={page}
-        totalPages={totalPages}
-        totalCount={totalCount}
-        baseHref={baseHref}
-      />
+      <ActivityLogTable rows={page.rows} teacherMap={teacherMap} />
+
+      <div className="flex items-center justify-between gap-3 pt-2">
+        <CursorLink href={prevHref} disabled={!prevHref} direction="prev">
+          Newer
+        </CursorLink>
+        <CursorLink href={nextHref} disabled={!nextHref} direction="next">
+          Older
+        </CursorLink>
+      </div>
     </div>
+  )
+}
+
+function CursorLink({
+  href,
+  disabled,
+  direction,
+  children,
+}: {
+  href: string | null
+  disabled: boolean
+  direction: 'prev' | 'next'
+  children: React.ReactNode
+}) {
+  if (disabled || !href) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm text-muted-foreground/40">
+        {direction === 'prev' && <ChevronLeft className="h-4 w-4" />}
+        {children}
+        {direction === 'next' && <ChevronRight className="h-4 w-4" />}
+      </span>
+    )
+  }
+  return (
+    <Link
+      href={href}
+      className="inline-flex items-center gap-1 rounded-lg bg-muted px-3 py-1.5 text-sm font-medium hover:bg-muted/80"
+    >
+      {direction === 'prev' && <ChevronLeft className="h-4 w-4" />}
+      {children}
+      {direction === 'next' && <ChevronRight className="h-4 w-4" />}
+    </Link>
   )
 }

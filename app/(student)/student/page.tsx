@@ -14,10 +14,13 @@ import {
   BookOpen,
   CalendarDays,
   CreditCard,
+  Award,
+  Download,
 } from 'lucide-react'
 import { requireStudent } from '@/lib/auth/guards'
 import { getUpcomingSessionsByStudent } from '@/lib/db/class-sessions'
 import { getEnrollmentsByStudentWithTeacher, getArchivedEnrollmentsWithoutFeedback } from '@/lib/db/enrollments'
+import { getRecentlyIssuedCertificatesForStudent } from '@/lib/db/certificates'
 import { getRecentAnnouncementsByStudent } from '@/lib/db/announcements'
 import { getUpcomingAssignmentsByStudent } from '@/lib/db/assignments'
 import { getOverallAttendanceSummary } from '@/lib/db/attendance'
@@ -69,6 +72,7 @@ export default async function StudentDashboardPage() {
     attendanceSummary,
     pendingFees,
     archivedWithoutFeedback,
+    recentCertificates,
   ] = await Promise.all([
     getUpcomingSessionsByStudent(student.id, 20),
     getEnrollmentsByStudentWithTeacher(student.id),
@@ -77,12 +81,17 @@ export default async function StudentDashboardPage() {
     getOverallAttendanceSummary(student.id),
     getPendingPaymentCountByStudent(student.id),
     getArchivedEnrollmentsWithoutFeedback(student.id),
+    getRecentlyIssuedCertificatesForStudent(student.id, 30),
   ])
 
   // Filter out cohorts dismissed via cookie (server-side check)
   const cookieStore = await cookies()
   const pendingFeedback = archivedWithoutFeedback.filter((enr) => {
     const dismissed = cookieStore.get(`dismissed_feedback_${enr.cohorts.id}`)
+    return !dismissed
+  })
+  const visibleCertificates = recentCertificates.filter((cert) => {
+    const dismissed = cookieStore.get(`dismissed_cert_${cert.id}`)
     return !dismissed
   })
 
@@ -96,6 +105,39 @@ export default async function StudentDashboardPage() {
         title={`Hello, ${firstName}!`}
         description="Here's what's coming up"
       />
+
+      {/* New certificate CTA */}
+      {visibleCertificates.length > 0 && (
+        <div className="mb-6 space-y-3">
+          {visibleCertificates.map((cert) => (
+            <div
+              key={cert.id}
+              className="flex flex-col gap-3 rounded-xl border border-border bg-primary/5 p-4 sm:flex-row sm:items-center sm:justify-between"
+            >
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                  <Award className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="font-semibold text-foreground">
+                    Your certificate for {cert.cohort.name} is ready
+                  </p>
+                  <p className="text-sm text-muted-foreground">{cert.course.title}</p>
+                </div>
+              </div>
+              <Link
+                href={ROUTES.STUDENT.certificateDownload(cert.enrollment.id)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex shrink-0 items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+              >
+                <Download className="h-4 w-4" />
+                Download
+              </Link>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Feedback prompts for archived cohorts */}
       {pendingFeedback.length > 0 && (
