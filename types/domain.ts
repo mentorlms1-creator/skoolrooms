@@ -70,6 +70,9 @@ export const EmailType = {
   NEW_ENROLLMENT_NOTIFICATION: 'new_enrollment_notification',
   NEW_MESSAGE: 'new_message',
   REFERRAL_CONVERTED: 'referral_converted',
+
+  // Admin broadcast
+  ADMIN_BROADCAST: 'admin_broadcast',
 } as const
 
 export type EmailType = (typeof EmailType)[keyof typeof EmailType]

@@ -14,6 +14,7 @@ import { getTeacherByAuthId } from '@/lib/db/teachers'
 import { getTeacherBalance, hasActivePayout, createPayoutRequest } from '@/lib/db/balances'
 import { getTeacherPaymentSettings } from '@/lib/db/admin'
 import { getMinPayoutAmount } from '@/lib/platform/settings'
+import { sendEmail } from '@/lib/email/sender'
 import { revalidatePath } from 'next/cache'
 import type { ApiResponse } from '@/types/api'
 
@@ -96,22 +97,43 @@ export async function requestPayoutAction(
     }
   }
 
-  // 6. Build bank details snapshot
-  const bankSnapshot: Record<string, unknown> = {
-    bank_name: paymentSettings.payout_bank_name,
-    account_title: paymentSettings.payout_account_title,
-    iban: paymentSettings.payout_iban,
-    jazzcash_number: paymentSettings.jazzcash_number,
-    easypaisa_number: paymentSettings.easypaisa_number,
-  }
-
-  // 7. Create the payout request
-  const payout = await createPayoutRequest(teacher.id, amount, bankSnapshot)
+  // 6. Create the payout request (no snapshot at request time — written on admin Complete)
+  const payout = await createPayoutRequest(teacher.id, amount)
   if (!payout) {
     return {
       success: false,
       error: 'Failed to create payout request. Please try again.',
     }
+  }
+
+  // 7. Send confirmation to teacher + action-required alert to admin
+  await sendEmail({
+    to: teacher.email,
+    type: 'payout_requested',
+    recipientId: teacher.id,
+    recipientType: 'teacher',
+    data: {
+      teacherName: teacher.name,
+      amountPkr: amount,
+      payoutId: payout.id,
+    },
+  })
+
+  // Admin email: notify platform admin of pending payout
+  const adminEmail = process.env.ADMIN_EMAIL
+  if (adminEmail) {
+    await sendEmail({
+      to: adminEmail,
+      type: 'payout_pending_action',
+      recipientId: teacher.id,
+      recipientType: 'teacher',
+      data: {
+        teacherName: teacher.name,
+        teacherEmail: teacher.email,
+        amountPkr: amount,
+        payoutId: payout.id,
+      },
+    })
   }
 
   revalidatePath('/dashboard/earnings')

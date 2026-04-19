@@ -247,6 +247,7 @@ function buildSubject(type: EmailType, data: Record<string, unknown>): string {
     new_enrollment_notification: `${platformName} — New Enrollment`,
     new_message: `${platformName} — New Message`,
     referral_converted: `${platformName} — Referral Reward`,
+    admin_broadcast: (data.subject as string) || `${platformName} — Important Update`,
   }
 
   return subjects[type] || `${platformName} — Notification`

@@ -130,11 +130,12 @@ export async function hasActivePayout(
 // -----------------------------------------------------------------------------
 // createPayoutRequest — Insert a new payout row + update balance atomically
 // Returns the new payout row or null on failure.
+// bank_details_snapshot_json is intentionally null at request time —
+// it is written only when admin clicks Complete (reads LIVE settings then).
 // -----------------------------------------------------------------------------
 export async function createPayoutRequest(
   teacherId: string,
   amountPkr: number,
-  bankDetailsSnapshot: Record<string, unknown>
 ): Promise<TeacherPayoutRow | null> {
   const supabase = createAdminClient()
 
@@ -144,7 +145,7 @@ export async function createPayoutRequest(
     .insert({
       teacher_id: teacherId,
       amount_pkr: amountPkr,
-      bank_details_snapshot_json: bankDetailsSnapshot,
+      bank_details_snapshot_json: null,
       status: 'pending',
       requested_at: new Date().toISOString(),
     })

@@ -1,71 +1,71 @@
 /**
- * app/(platform)/admin/operations/page.tsx — Operations overview
+ * app/(platform)/admin/earnings/page.tsx — Platform earnings overview
  *
- * Server Component. Displays active cohorts, total students, pending payment queue count.
+ * Server Component. Displays gross collected, platform cuts, payouts processed,
+ * net revenue, and teachers with outstanding debit.
  */
 
 import type { Metadata } from 'next'
-import {
-  BookOpen,
-  GraduationCap,
-  CreditCard,
-  AlertCircle,
-} from 'lucide-react'
-import { getOperationsStats } from '@/lib/db/admin'
-import { getTeachersWithOutstandingDebit } from '@/lib/db/payouts'
+import { DollarSign, TrendingUp, ArrowUpRight, AlertCircle } from 'lucide-react'
+import { getAdminEarningsSummary, getTeachersWithOutstandingDebit } from '@/lib/db/payouts'
 import { PageHeader } from '@/components/ui/PageHeader'
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
-import { ClearDebitButton } from './ClearDebitButton'
 
 export const metadata: Metadata = {
-  title: 'Operations — Skool Rooms Admin',
+  title: 'Earnings — Skool Rooms Admin',
 }
 
-export default async function AdminOperationsPage() {
-  const [stats, debtors] = await Promise.all([
-    getOperationsStats(),
+export default async function AdminEarningsPage() {
+  const [summary, debtors] = await Promise.all([
+    getAdminEarningsSummary(),
     getTeachersWithOutstandingDebit(),
   ])
 
   return (
     <>
-      <PageHeader title="Operations" />
+      <PageHeader
+        title="Earnings"
+        description="Platform-wide revenue and payout summary"
+      />
 
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 mb-6">
-        <StatCard
-          label="Active Cohorts"
-          value={String(stats.totalActiveCohorts)}
-          subtitle="Currently running cohorts across all teachers"
-          icon={BookOpen}
+      {/* Stat cards */}
+      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-6">
+        <EarningsCard
+          label="Gross Collected"
+          value={`PKR ${summary.grossCollectedPkr.toLocaleString()}`}
+          subtitle="Total from all confirmed student payments"
+          icon={DollarSign}
           iconColor="text-primary"
           iconBg="bg-primary/10"
         />
-        <StatCard
-          label="Total Students"
-          value={String(stats.totalStudents)}
-          subtitle="All registered students on the platform"
-          icon={GraduationCap}
+        <EarningsCard
+          label="Platform Cuts"
+          value={`PKR ${summary.totalPlatformCutsPkr.toLocaleString()}`}
+          subtitle="Sum of all platform_cut_pkr on confirmed payments"
+          icon={TrendingUp}
           iconColor="text-accent"
           iconBg="bg-accent/10"
         />
-        <StatCard
-          label="Pending Payments"
-          value={String(stats.pendingPaymentCount)}
-          subtitle="Payments awaiting verification"
-          icon={CreditCard}
+        <EarningsCard
+          label="Payouts Processed"
+          value={`PKR ${summary.totalPayoutsProcessedPkr.toLocaleString()}`}
+          subtitle="Total paid out to teachers (completed payouts)"
+          icon={ArrowUpRight}
+          iconColor="text-success"
+          iconBg="bg-success/10"
+        />
+        <EarningsCard
+          label="Net Revenue"
+          value={`PKR ${summary.netRevenuePkr.toLocaleString()}`}
+          subtitle="Total platform cuts earned on confirmed payments"
+          icon={TrendingUp}
           iconColor="text-foreground"
           iconBg="bg-muted"
         />
       </div>
 
-      {/* Outstanding Debits */}
+      {/* Outstanding debits table */}
       <Card className="border-none shadow-sm ring-1 ring-foreground/5 rounded-[2rem] overflow-hidden bg-card">
         <CardHeader className="px-8 pt-8 pb-4">
           <CardTitle className="text-xl font-bold flex items-center gap-2">
@@ -78,31 +78,28 @@ export default async function AdminOperationsPage() {
             )}
           </CardTitle>
           <CardDescription className="text-sm font-medium mt-1">
-            Teachers with a pending debit from platform-absorbed refunds. Auto-recovered from future payments.
+            Teachers with outstanding_debit_pkr &gt; 0 (platform absorbed a refund on their behalf)
           </CardDescription>
         </CardHeader>
         <CardContent className="px-8 pb-8">
           {debtors.length === 0 ? (
             <div className="rounded-2xl bg-muted/30 ring-1 ring-foreground/[0.03] p-6 text-center">
-              <p className="text-sm text-muted-foreground">No outstanding debits. All clear.</p>
+              <p className="text-sm text-muted-foreground">No outstanding debits. All teachers are clear.</p>
             </div>
           ) : (
             <div className="divide-y divide-border rounded-2xl ring-1 ring-foreground/5 overflow-hidden">
               {debtors.map((teacher) => (
-                <div key={teacher.id} className="flex items-center justify-between p-5 bg-card">
+                <div
+                  key={teacher.id}
+                  className="flex items-center justify-between p-5 bg-card"
+                >
                   <div className="flex flex-col gap-0.5">
                     <span className="font-medium text-foreground">{teacher.name}</span>
                     <span className="text-sm text-muted-foreground">{teacher.email}</span>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="font-bold text-destructive">
-                      PKR {teacher.outstanding_debit_pkr.toLocaleString()}
-                    </span>
-                    <ClearDebitButton
-                      teacherId={teacher.id}
-                      debitPkr={teacher.outstanding_debit_pkr}
-                    />
-                  </div>
+                  <span className="font-bold text-destructive">
+                    PKR {teacher.outstanding_debit_pkr.toLocaleString()}
+                  </span>
                 </div>
               ))}
             </div>
@@ -113,7 +110,7 @@ export default async function AdminOperationsPage() {
   )
 }
 
-interface StatCardProps {
+interface EarningsCardProps {
   label: string
   value: string
   subtitle: string
@@ -122,35 +119,21 @@ interface StatCardProps {
   iconColor: string
 }
 
-function StatCard({
-  label,
-  value,
-  subtitle,
-  icon: Icon,
-  iconBg,
-  iconColor,
-}: StatCardProps) {
+function EarningsCard({ label, value, subtitle, icon: Icon, iconBg, iconColor }: EarningsCardProps) {
   return (
     <Card className="border-none shadow-sm ring-1 ring-foreground/5 rounded-[2rem] overflow-hidden bg-card h-full">
       <CardContent className="px-7 pt-7 pb-6 flex flex-col items-start gap-4 h-full">
-        <div
-          className={cn(
-            'flex h-11 w-11 items-center justify-center rounded-2xl shrink-0',
-            iconBg
-          )}
-        >
+        <div className={cn('flex h-11 w-11 items-center justify-center rounded-2xl shrink-0', iconBg)}>
           <Icon className={cn('h-5 w-5', iconColor)} strokeWidth={2} />
         </div>
-
         <div className="flex flex-col gap-1 flex-1 justify-center">
-          <span className="text-4xl font-extrabold tracking-tight text-foreground leading-none">
+          <span className="text-2xl font-extrabold tracking-tight text-foreground leading-none">
             {value}
           </span>
           <p className="text-[11px] font-semibold text-muted-foreground/50 uppercase tracking-[0.08em]">
             {label}
           </p>
         </div>
-
         <p className="text-xs font-medium text-muted-foreground/60">{subtitle}</p>
       </CardContent>
     </Card>

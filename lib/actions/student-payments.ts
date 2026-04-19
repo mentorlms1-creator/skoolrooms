@@ -75,11 +75,55 @@ export async function confirmPaymentAndCreditBalance(
 
   if (teacherPayoutAmountPkr > 0) {
     const supabaseAdmin = createAdminClient()
+
+    // Read debit before credit to detect if debit recovery happens
+    const { data: balanceBefore } = await supabaseAdmin
+      .from('teacher_balances')
+      .select('outstanding_debit_pkr')
+      .eq('teacher_id', teacher.id)
+      .single()
+
+    const debitBefore = (balanceBefore as { outstanding_debit_pkr: number } | null)
+      ?.outstanding_debit_pkr ?? 0
+
     await supabaseAdmin.rpc('credit_teacher_balance', {
       p_teacher_id: teacher.id,
       p_amount: teacherPayoutAmountPkr,
       p_deduct_outstanding: true,
     })
+
+    // If debit was > 0 before, check if it hit 0 now → send refund_debit_recovered
+    if (debitBefore > 0) {
+      const { data: balanceAfter } = await supabaseAdmin
+        .from('teacher_balances')
+        .select('outstanding_debit_pkr')
+        .eq('teacher_id', teacher.id)
+        .single()
+
+      const debitAfter = (balanceAfter as { outstanding_debit_pkr: number } | null)
+        ?.outstanding_debit_pkr ?? debitBefore
+
+      if (debitAfter === 0) {
+        const { data: teacherRow } = await supabaseAdmin
+          .from('teachers')
+          .select('email, name')
+          .eq('id', teacher.id)
+          .single()
+
+        if (teacherRow) {
+          await sendEmail({
+            to: (teacherRow as { email: string; name: string }).email,
+            type: 'refund_debit_recovered',
+            recipientId: teacher.id,
+            recipientType: 'teacher',
+            data: {
+              teacherName: (teacherRow as { name: string }).name,
+              recoveredAmountPkr: debitBefore,
+            },
+          })
+        }
+      }
+    }
   }
 
   return { success: true }
