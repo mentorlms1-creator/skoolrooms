@@ -20,6 +20,7 @@ import {
 } from '@/lib/db/student-payments'
 import { rateLimit } from '@/lib/rate-limit'
 import { PaymentStatus, PaymentMethod } from '@/types/domain'
+import { firstBillingMonth } from '@/lib/time/pkt'
 import type { ApiResponse, EnrollOutput } from '@/types/api'
 
 // -----------------------------------------------------------------------------
@@ -270,6 +271,10 @@ export async function POST(
   // Create student_payments row
   // platform_cut_pkr and teacher_payout_amount_pkr are 0 at enrollment time —
   // they are calculated at APPROVAL time, not enrollment time
+  const paymentMonth = cohort.fee_type === 'monthly' && cohort.billing_day != null
+    ? firstBillingMonth(cohort.start_date, cohort.billing_day)
+    : undefined
+
   const payment = await createPayment({
     enrollmentId: enrollment.id,
     amountPkr: cohort.fee_pkr,
@@ -280,6 +285,7 @@ export async function POST(
     referenceCode,
     idempotencyKey,
     status: PaymentStatus.PENDING_VERIFICATION,
+    paymentMonth,
   })
 
   if (!payment) {

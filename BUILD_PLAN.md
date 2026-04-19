@@ -468,6 +468,114 @@ Everything below this week is shared infrastructure that every other week depend
 
 ---
 
+## Phase 1.5 — Post-Audit Corrections
+
+**Goal:** Close gaps surfaced after building the teacher student-management UI. Each item is small enough to ship independently. Build in the order listed (Item 2 unlocks Item 3).
+
+> **Why this exists:** The post-Phase-1 audit found that the monthly-payment loop is only half-built (schema + cron present, but no per-month payment rows ever created), the refund/revoke flows are decoupled in the UI in a way that lets teachers forget the second step, and `cohorts.fee_type` can be flipped after enrollments exist with no guard. These are corrections to existing Phase 1 features, not new scope.
+
+---
+
+### Item 1 — Revoke + Refund coupling (small, ~30 min)
+
+> **Read in ARCHITECTURE.md before starting:**
+> - §7 Refund Rules (line 2073–2114) — in-app vs offline, deduct `teacher_payout_amount_pkr`
+
+**Problem:** When a teacher removes a student from a cohort, the dropdown does not prompt for a refund. Two separate clicks needed; teachers commonly forget the second one.
+
+- [ ] Install `shadcn checkbox` (`npx shadcn@latest add checkbox`) OR re-use existing `Switch` primitive
+- [ ] Add `payment: RowPayment | null` and `availableBalance: number` props to `RevokeDialog.tsx`
+- [ ] Compute `refundEligible` inside RevokeDialog using the same rule as RefundDialog (active + not refunded + not manual + `availableBalance >= teacher_payout_amount_pkr`)
+- [ ] Render an opt-in checkbox *"Also refund Rs. X to the student (in-app, deducts from your available balance)"* — only shown when `refundEligible`
+- [ ] On confirm, call `revokeEnrollmentAction` first; if successful AND checkbox checked, chain a call to `recordRefundAction` with `refund_mode='in_app'` and `refund_note='Refunded as part of removal'`
+- [ ] If refund fails after revoke succeeds, surface a clear partial-success toast: "Removed, but refund failed — try again from the dropdown"
+- [ ] Update `StudentRowActions.tsx` to pass `payment` + `availableBalance` through to `RevokeDialog`
+- [ ] Standalone Refund stays in the dropdown for the keep-them-enrolled case
+
+**Testable:** Active student with confirmed in-app-eligible payment → click Remove → checkbox visible → check it → submit → enrollment becomes `revoked` AND payment becomes `refunded` AND balance is decremented. Same student with manual payment → checkbox hidden. Same student after a payout consumed their balance → checkbox hidden.
+
+---
+
+### Item 2 — Monthly payment loop (medium, ~5–6 hours)
+
+> **Read in ARCHITECTURE.md before starting:**
+> - §3 `student_payments` table (line 752–820) — `payment_month` column semantics
+> - §5 Cron Routes — `fee-reminders` (line 1851)
+> - §7 Flow B — Screenshot (line 1898–1930) — initial payment flow that this extends
+> - §13 Timing Rules — billing_day cap (line 3136–3155)
+
+**Problem:** Schema has `student_payments.payment_month` and a `fee-reminders` cron, but **no code ever sets `payment_month`** (initial enrollment passes `null`) and **nothing creates a payment row for month 2, 3, …**. Monthly cohorts effectively run as one-time today, with the cron sending duplicate reminders forever because its idempotency check (`eq('payment_month', billingMonth)`) never matches.
+
+#### 2a — Set `payment_month` on the initial enrollment payment
+- [ ] `lib/time/pkt.ts` — add `firstBillingMonth(cohortStartDate, billingDay): string` (returns `YYYY-MM-01`). For monthly cohorts: if today ≥ start_date, use current month; if before start_date, use the cohort's start month
+- [ ] `app/api/student/enroll/route.ts` — when creating the enrollment payment, if `cohort.fee_type === 'monthly'` set `paymentMonth = firstBillingMonth(cohort.start_date, cohort.billing_day)`; otherwise leave `null`
+- [ ] `lib/actions/enrollments.ts` `manualEnrollAction` — same change for cash enrollments
+- [ ] `lib/actions/enrollments.ts` `createAndEnrollAction` — same (it wraps `manualEnrollAction`)
+
+#### 2b — DB helpers for outstanding months
+- [ ] `lib/db/student-payments.ts` — add `getPaymentsByEnrollmentAllMonths(enrollmentId)` returning ordered-by-`payment_month` array (alias-style — may just be a sort variant of existing `getPaymentsByEnrollment`)
+- [ ] `lib/time/pkt.ts` — add `monthlyBillingSchedule(start_date, end_date, billing_day): string[]` returning every billing month between start and end as `YYYY-MM-01` strings
+- [ ] `lib/db/student-payments.ts` — add `getOutstandingMonths(enrollment, cohort): { month: string; dueDate: string; status: 'overdue'|'due'|'upcoming' }[]` that diffs `monthlyBillingSchedule` against existing confirmed/pending payments
+
+#### 2c — Server action: create next month's payment record
+- [ ] `lib/actions/student-payments.ts` — add `createNextMonthPaymentAction(enrollmentId, paymentMonth)`:
+  - Auth: requires student session, enrollment owned by student
+  - Cohort guard: must be `fee_type='monthly'` and not archived
+  - Month guard: `paymentMonth` must be in `monthlyBillingSchedule(cohort)` AND no existing payment row for that `(enrollment_id, payment_month)` pair (use UNIQUE INDEX or pre-check)
+  - Creates `student_payments` row: `status='pending_verification'`, `screenshot_url=null`, `payment_month=paymentMonth`, `amount_pkr=cohort.fee_pkr`, `discounted_amount_pkr=cohort.fee_pkr`, `platform_cut_pkr=0`, `teacher_payout_amount_pkr=0`, `payment_method='screenshot'`, fresh `reference_code`, fresh `idempotency_key`
+  - Returns `{ paymentId }` so the caller can navigate to the upload page
+
+#### 2d — Student-facing "Pay this month" UI
+- [ ] `app/(student)/student/payments/page.tsx` — render outstanding-months section per active monthly enrollment, listing each due month with due date, amount, status badge, and a "Pay now" button. Status: `overdue` (past billing_day, no payment), `due` (within 3 days of billing_day), `upcoming` (future)
+- [ ] "Pay now" button calls `createNextMonthPaymentAction`, then navigates to the payment screenshot page for that specific payment
+- [ ] Refactor `app/(teacher-public)/[subdomain]/join/[token]/pay/[enrollmentId]/page.tsx` to accept an optional `?paymentId=` query param. Without `paymentId` → behave as today (latest payment). With `paymentId` → show that specific payment's status + upload form. Update `submitScreenshotAction` to take `paymentId` (or to find the right pending payment when only one exists)
+- [ ] Surface "1 month due" / "2 months overdue" pill on student dashboard for each enrollment
+
+#### 2e — Migration: add `(enrollment_id, payment_month)` partial unique index
+- [ ] `supabase/migrations/008_payment_month_unique.sql` — `CREATE UNIQUE INDEX student_payments_unique_month_per_enrollment ON student_payments(enrollment_id, payment_month) WHERE payment_month IS NOT NULL AND status IN ('pending_verification', 'confirmed');` — prevents double-creation of payment rows for the same enrollment/month
+
+#### 2f — Wire fee-reminders cron correctly
+- [ ] `app/api/cron/fee-reminders/route.ts` — already does the right query; verify it still works once payment_month is populated. Add a test scenario: enrollment with confirmed March payment → cron in February (3 days before billing_day) should NOT email if billingMonth is the next billing cycle they've already paid
+
+**Testable:** Student enrolls in monthly cohort starting March, billing_day 5 → initial payment auto-tagged March. April 2: student visits payment portal → sees "April fee — Rs. 5,000 — Due Apr 5 — [Pay now]". Clicks Pay → uploads screenshot → teacher approves → balance credits net amount → status badge flips. Cron run on April 2 (3 days before May billing) does NOT email a reminder for March (already paid) or April (paid above) but DOES email for May.
+
+---
+
+### Item 3 — Per-payment teacher view (depends on Item 2, ~3 hours)
+
+> **Read in ARCHITECTURE.md before starting:**
+> - §7 Refund Rules (line 2073–2114) — refund applies per payment, not per enrollment
+
+**Problem:** Once monthly cohorts produce multiple payment rows per enrollment, the current cohort students table (one Refund button per row) can only refund the latest payment. Teacher needs to see each month's screenshot + status, and pick which month to refund.
+
+- [ ] New `EnrollmentPaymentsModal.tsx` (Client Component) — Dialog showing all payments for a given enrollment in a small table: month, status, amount, paid date, "View screenshot", per-row "Record refund" button
+- [ ] Re-use existing `RefundDialog.tsx` — already keyed by `enrollmentId` + a single `payment`. Open from the per-row Refund button with the selected payment
+- [ ] Teacher cohort students table — replace single dropdown's "Record refund" with "View payments" → opens `EnrollmentPaymentsModal`. The standalone Refund flow on the dropdown becomes a shortcut to refund the latest payment only
+- [ ] Add per-student "Months paid: X / Y" cell to the active students table (X = confirmed payments, Y = elapsed billing months from `monthlyBillingSchedule`). Only shown for monthly cohorts
+- [ ] Update `recordRefundAction` to accept `paymentId` instead of just `enrollmentId`. Backwards-compatible: if no `paymentId`, fall back to latest confirmed payment (current behavior)
+- [ ] Per-student detail page `app/(teacher)/dashboard/students/[studentId]/page.tsx` — for monthly enrollments, expand the enrollment card to list paid/outstanding months inline
+
+**Testable:** Monthly cohort with student who paid March + April but missed May → teacher cohort students view shows "2 / 3 paid" → click View payments → modal lists 3 rows, May = overdue. Refund button on April row → refunds only April; March stays confirmed.
+
+---
+
+### Item 4 — Cohort fee_type edit guard (small, ~30 min)
+
+> **Read in ARCHITECTURE.md before starting:**
+> - §3 `cohorts` table (line 656–700)
+> - §14 Edge Cases — for the "policy on changing pricing mid-cohort" decision
+
+**Problem:** `lib/actions/cohorts.ts:271` lets a teacher flip `fee_type` from `one_time` to `monthly` (or vice versa) at any time, even when active enrollments have confirmed payments. This breaks billing semantics: a student who paid one-time would suddenly be expected to pay monthly, or a student paying monthly would have their billing schedule disappear.
+
+- [ ] `lib/db/enrollments.ts` — add `countActiveConfirmedEnrollments(cohortId): Promise<number>` (joins enrollments → student_payments where status='active' AND any payment is confirmed)
+- [ ] `lib/actions/cohorts.ts` `updateCohortAction` — if `formData` includes `fee_type` AND it differs from current cohort's value AND `countActiveConfirmedEnrollments(cohortId) > 0`: return `{ success: false, error: 'Cannot change fee type — N students already have confirmed payments. Archive this cohort and create a new one with the desired fee type.', code: 'FEE_TYPE_LOCKED' }`
+- [ ] `app/(teacher)/dashboard/courses/[courseId]/cohorts/[cohortId]/edit/form.tsx` — fetch the active-enrollment count via Server Component prop. If count > 0, disable the fee_type select with a small note: "Locked — students have already paid. Archive this cohort to start a new one."
+- [ ] Same guard for `billing_day` change when fee_type was already monthly (changing the day mid-cycle would break the cron's idempotency window)
+
+**Testable:** Empty cohort → fee_type editable. Cohort with 1 confirmed payment → fee_type select greyed out with explanation. Direct API call bypassing UI returns `FEE_TYPE_LOCKED` 400.
+
+---
+
 ## Phase 2: Full Feature Set (Month 2–3)
 
 **Goal:** Integrate payment gateway, reduce manual work, add retention features, automate revenue.

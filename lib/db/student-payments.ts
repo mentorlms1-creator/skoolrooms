@@ -136,11 +136,91 @@ export async function getLatestPaymentsByEnrollmentIds(
 }
 
 // -----------------------------------------------------------------------------
+// getPaymentByEnrollmentAndMonth — Most recent payment for a given
+// enrollment + payment_month, or null. Used by createNextMonthPaymentAction
+// for idempotency.
+// -----------------------------------------------------------------------------
+export async function getPaymentByEnrollmentAndMonth(
+  enrollmentId: string,
+  paymentMonth: string,
+): Promise<StudentPaymentRow | null> {
+  const supabase = createAdminClient()
+  const { data, error } = await supabase
+    .from('student_payments')
+    .select('*')
+    .eq('enrollment_id', enrollmentId)
+    .eq('payment_month', paymentMonth)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  if (error || !data) return null
+  return data as StudentPaymentRow
+}
+
+// -----------------------------------------------------------------------------
+// getAllPaymentsByEnrollment — All payments for an enrollment ordered by
+// payment_month asc (then created_at asc as tiebreaker). NULL payment_months
+// sort first. Used by the teacher per-payment view.
+// -----------------------------------------------------------------------------
+export async function getAllPaymentsByEnrollment(
+  enrollmentId: string,
+): Promise<StudentPaymentRow[]> {
+  const supabase = createAdminClient()
+  const { data, error } = await supabase
+    .from('student_payments')
+    .select('*')
+    .eq('enrollment_id', enrollmentId)
+    .order('payment_month', { ascending: true, nullsFirst: true })
+    .order('created_at', { ascending: true })
+  if (error || !data) return []
+  return data as StudentPaymentRow[]
+}
+
+// -----------------------------------------------------------------------------
+// getAllPaymentsByEnrollmentIds — All payments for a batch of enrollments.
+// Single query, results grouped into a Map keyed by enrollment_id.
+// Used by the cohort students page for monthly cohorts (conditional fetch).
+// -----------------------------------------------------------------------------
+export async function getAllPaymentsByEnrollmentIds(
+  enrollmentIds: string[],
+): Promise<Map<string, StudentPaymentRow[]>> {
+  if (enrollmentIds.length === 0) return new Map()
+
+  const supabase = createAdminClient()
+  const { data, error } = await supabase
+    .from('student_payments')
+    .select('*')
+    .in('enrollment_id', enrollmentIds)
+    .order('payment_month', { ascending: true, nullsFirst: true })
+    .order('created_at', { ascending: true })
+
+  if (error || !data) return new Map()
+
+  const map = new Map<string, StudentPaymentRow[]>()
+  for (const row of data as StudentPaymentRow[]) {
+    const existing = map.get(row.enrollment_id)
+    if (existing) {
+      existing.push(row)
+    } else {
+      map.set(row.enrollment_id, [row])
+    }
+  }
+  return map
+}
+
+// Sentinel returned when a unique-violation (23505) is caught on INSERT,
+// meaning another concurrent request already created the row.
+export const PAYMENT_ALREADY_EXISTS = 'PAYMENT_ALREADY_EXISTS' as const
+export type CreatePaymentResult = StudentPaymentRow | null | typeof PAYMENT_ALREADY_EXISTS
+
+// -----------------------------------------------------------------------------
 // createPayment — Insert a new student payment record
+// Returns PAYMENT_ALREADY_EXISTS if a unique-constraint violation is caught
+// (concurrent concurrent duplicate insert), null on other errors.
 // -----------------------------------------------------------------------------
 export async function createPayment(
   input: CreateStudentPaymentInput
-): Promise<StudentPaymentRow | null> {
+): Promise<CreatePaymentResult> {
   const supabase = createAdminClient()
 
   const { data, error } = await supabase
@@ -160,7 +240,16 @@ export async function createPayment(
     .select('*')
     .single()
 
-  if (error || !data) return null
+  if (error) {
+    // Postgres unique-violation: another concurrent request beat us to it
+    if (error.code === '23505') {
+      return PAYMENT_ALREADY_EXISTS
+    }
+    console.error('[createPayment] Unexpected DB error:', error.message, error.code)
+    return null
+  }
+
+  if (!data) return null
   return data as StudentPaymentRow
 }
 

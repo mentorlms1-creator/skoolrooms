@@ -17,12 +17,14 @@ type ScreenshotUploadFormProps = {
   enrollmentId: string
   referenceCode: string
   existingScreenshotUrl: string | null
+  paymentId?: string
 }
 
 export function ScreenshotUploadForm({
   enrollmentId,
   referenceCode,
   existingScreenshotUrl,
+  paymentId,
 }: ScreenshotUploadFormProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -44,7 +46,7 @@ export function ScreenshotUploadForm({
     }
 
     startTransition(async () => {
-      const result = await submitScreenshotAction(enrollmentId, screenshotUrl)
+      const result = await submitScreenshotAction(enrollmentId, screenshotUrl, paymentId)
 
       if (!result.success) {
         setError(result.error)

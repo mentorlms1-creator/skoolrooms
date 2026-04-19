@@ -74,6 +74,31 @@ export type EnrollmentWithCohortCourseTeacher = EnrollmentRow & {
   }
 }
 
+// Enrollment joined with the cohort fields needed to compute outstanding
+// monthly fees (invite_token + billing_day). Used by the student payments page.
+export type EnrollmentForOutstanding = EnrollmentRow & {
+  cohorts: {
+    id: string
+    name: string
+    start_date: string
+    end_date: string
+    fee_type: string
+    fee_pkr: number
+    billing_day: number | null
+    status: string
+    invite_token: string
+    courses: {
+      id: string
+      title: string
+    }
+    teachers: {
+      id: string
+      name: string
+      subdomain: string | null
+    }
+  }
+}
+
 // Enrollment joined with student info (for teacher-facing views)
 export type EnrollmentWithStudent = EnrollmentRow & {
   students: {
@@ -242,6 +267,36 @@ export async function getEnrollmentsByStudentWithTeacher(
 }
 
 // -----------------------------------------------------------------------------
+// getActiveMonthlyEnrollmentsForOutstanding — Active enrollments for a student
+// in monthly cohorts, joined with the cohort fields needed to compute
+// outstanding months + the teacher's subdomain so we can build the payment
+// page URL. Used by the student payments page outstanding-fees section.
+// -----------------------------------------------------------------------------
+export async function getActiveMonthlyEnrollmentsForOutstanding(
+  studentId: string,
+): Promise<EnrollmentForOutstanding[]> {
+  const supabase = createAdminClient()
+
+  const { data, error } = await supabase
+    .from('enrollments')
+    .select(`
+      *,
+      cohorts!inner(
+        id, name, start_date, end_date, fee_type, fee_pkr, billing_day, status, invite_token,
+        courses!inner(id, title),
+        teachers!inner(id, name, subdomain)
+      )
+    `)
+    .eq('student_id', studentId)
+    .eq('status', 'active')
+    .eq('cohorts.fee_type', 'monthly')
+    .neq('cohorts.status', 'archived')
+
+  if (error || !data) return []
+  return data as EnrollmentForOutstanding[]
+}
+
+// -----------------------------------------------------------------------------
 // getEnrollmentsByCohort — All enrollments for a cohort, joined with
 // student info, newest first
 // -----------------------------------------------------------------------------
@@ -261,6 +316,34 @@ export async function getEnrollmentsByCohort(
 
   if (error || !data) return []
   return data as EnrollmentWithStudent[]
+}
+
+// -----------------------------------------------------------------------------
+// countActiveConfirmedEnrollments — Count distinct active enrollments in a
+// cohort that have at least one confirmed payment. Used by the cohort edit
+// guard to lock fee_type / billing_day changes when students are mid-cycle.
+// -----------------------------------------------------------------------------
+export async function countActiveConfirmedEnrollments(
+  cohortId: string
+): Promise<number> {
+  const supabase = createAdminClient()
+
+  // Inner-join to confirmed payments — Postgres returns one row per
+  // (enrollment, payment) pair. Use a Set to count distinct enrollments.
+  const { data, error } = await supabase
+    .from('enrollments')
+    .select('id, student_payments!inner(id)')
+    .eq('cohort_id', cohortId)
+    .eq('status', 'active')
+    .eq('student_payments.status', 'confirmed')
+
+  if (error || !data) return 0
+
+  const distinctIds = new Set<string>()
+  for (const row of data as Array<{ id: string }>) {
+    distinctIds.add(row.id)
+  }
+  return distinctIds.size
 }
 
 // -----------------------------------------------------------------------------

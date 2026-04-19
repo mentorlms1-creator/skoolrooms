@@ -70,6 +70,7 @@ export function RefundDialog({
       const formData = new FormData()
       formData.set('refund_mode', mode)
       formData.set('refund_note', note.trim())
+      if (payment?.id) formData.set('paymentId', payment.id)
       const result = await recordRefundAction(enrollmentId, formData)
 
       if (!result.success) {

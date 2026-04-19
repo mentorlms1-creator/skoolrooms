@@ -15,6 +15,7 @@ import {
   getWaitlistCount,
 } from '@/lib/db/cohorts'
 import type { CreateCohortInput } from '@/lib/db/cohorts'
+import { countActiveConfirmedEnrollments } from '@/lib/db/enrollments'
 import { getCourseById } from '@/lib/db/courses'
 import { getLimit } from '@/lib/plans/limits'
 import { checkPlanLock, getPlanLockError } from '@/lib/auth/plan-guard'
@@ -299,6 +300,40 @@ export async function updateCohortAction(
       }
     }
     updates.billing_day = billingDay
+  }
+
+  // Lock fee_type / billing_day when active enrollments have confirmed payments.
+  // Switching mid-stream would break billing semantics for students already
+  // committed under the original terms (and break the cron's payment_month
+  // idempotency window for billing_day changes). The asymmetry — fee_type
+  // locks unconditionally but billing_day only locks when fee_type was
+  // already monthly — is intentional: billing_day is meaningless for one_time
+  // cohorts so changing it there has no real effect on billing.
+  const feeTypeChanging =
+    updates.fee_type !== undefined && updates.fee_type !== cohort.fee_type
+  const billingDayChanging =
+    updates.billing_day !== undefined &&
+    updates.billing_day !== cohort.billing_day &&
+    cohort.fee_type === 'monthly'
+
+  if (feeTypeChanging || billingDayChanging) {
+    const lockedCount = await countActiveConfirmedEnrollments(cohortId)
+    if (lockedCount > 0) {
+      const subject = lockedCount === 1 ? 'student has' : `${lockedCount} students have`
+      const subjectPrefix = lockedCount === 1 ? `${lockedCount} ${subject}` : subject
+      if (feeTypeChanging) {
+        return {
+          success: false,
+          error: `Cannot change fee type — ${subjectPrefix} confirmed payments. Archive this cohort and create a new one to switch.`,
+          code: 'FEE_TYPE_LOCKED',
+        }
+      }
+      return {
+        success: false,
+        error: `Cannot change billing day — ${subjectPrefix} confirmed payments. Archive this cohort and create a new one to change billing day.`,
+        code: 'BILLING_DAY_LOCKED',
+      }
+    }
   }
 
   // Validate billing_day is present for monthly fee type (current or updated)

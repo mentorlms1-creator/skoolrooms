@@ -14,6 +14,7 @@ import {
 } from '@/lib/db/enrollments'
 import {
   getPaymentsByEnrollment,
+  getPaymentById,
   updatePaymentStatus,
 } from '@/lib/db/student-payments'
 import { getCohortById } from '@/lib/db/cohorts'
@@ -401,6 +402,7 @@ export async function recordRefundAction(
 
   const refundMode = (formData.get('refund_mode') as string | null)?.trim() ?? ''
   const refundNote = (formData.get('refund_note') as string | null)?.trim() ?? ''
+  const explicitPaymentId = (formData.get('paymentId') as string | null)?.trim() ?? ''
 
   if (!refundMode || !['in_app', 'offline'].includes(refundMode)) {
     return { success: false, error: 'Invalid refund mode.' }
@@ -418,11 +420,23 @@ export async function recordRefundAction(
     return { success: false, error: 'Enrollment not found' }
   }
 
-  // Get the confirmed payment for this enrollment
-  const payments = await getPaymentsByEnrollment(enrollment.id)
-  const payment = payments.find((p) => p.status === 'confirmed')
-  if (!payment) {
-    return { success: false, error: 'No confirmed payment found for this enrollment.' }
+  // If a specific paymentId was provided (per-month refund), use it directly.
+  // Otherwise fall back to the latest confirmed payment (legacy shortcut).
+  let payment
+  if (explicitPaymentId) {
+    payment = await getPaymentById(explicitPaymentId)
+    if (!payment || payment.enrollment_id !== enrollment.id) {
+      return { success: false, error: 'Payment not found for this enrollment.' }
+    }
+    if (payment.status !== 'confirmed') {
+      return { success: false, error: 'Only confirmed payments can be refunded.' }
+    }
+  } else {
+    const payments = await getPaymentsByEnrollment(enrollment.id)
+    payment = payments.find((p) => p.status === 'confirmed')
+    if (!payment) {
+      return { success: false, error: 'No confirmed payment found for this enrollment.' }
+    }
   }
 
   // Already refunded guard

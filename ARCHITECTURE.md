@@ -348,7 +348,9 @@
         ├── 004_functions.sql             # enroll_student_atomic, credit_teacher_balance
         ├── 005_seed_data.sql             # Plans, features, platform_settings
         ├── 006_enrollment_unique.sql     # Unique constraint on enrollments
-        └── 007_subscription_rejection_reason.sql  # Rejection reason field
+        ├── 007_subscription_rejection_reason.sql  # Rejection reason field
+        ├── 008_payment_month_unique.sql  # Partial unique (enrollment_id, payment_month) for monthly loop
+        └── 009_backfill_payment_month.sql # Backfill payment_month on pre-existing confirmed monthly payments
 ```
 
 ---
@@ -803,7 +805,7 @@ archived → active   NOT allowed. Once archived, cohort is permanently read-onl
 | discounted_amount_pkr | int | NOT NULL | Actual amount charged |
 | platform_cut_pkr | int | NOT NULL | Recorded permanently at payment time |
 | teacher_payout_amount_pkr | int | NOT NULL | Recorded permanently at payment time |
-| payment_month | date | nullable | Monthly cohorts only |
+| payment_month | date | nullable | Monthly cohorts only. Stored as `YYYY-MM-01` (first of month). Set on creation: initial enrollment payment uses `firstBillingMonth(cohort.start_date, cohort.billing_day)`; each subsequent month is created by `createNextMonthPaymentAction`. Null for one-time cohorts and manual enrollments. Drives the `fee-reminders` cron idempotency check and the teacher per-payment view ordering. |
 | payment_method | text | NOT NULL | `gateway` \| `screenshot` \| `manual` |
 | gateway_transaction_id | text | nullable | |
 | idempotency_key | text | UNIQUE | UUID generated before checkout |
@@ -819,6 +821,8 @@ archived → active   NOT allowed. Once archived, cohort is permanently read-onl
 | platform_absorbed_refund | bool | default false | |
 | created_at | timestamptz | default now() | |
 | updated_at | timestamptz | default now() | |
+
+> **Partial unique index on `(enrollment_id, payment_month)`** (migration `008_payment_month_unique.sql`): enforced when `payment_month IS NOT NULL AND status IN ('pending_verification', 'confirmed')`. Prevents two pending / confirmed rows for the same enrollment + month from coexisting, which would break the monthly loop's idempotency. Rejected payments are excluded from the constraint so a student can re-upload after rejection. `createPayment` catches the unique-violation (Postgres `23505`) and returns a `PAYMENT_ALREADY_EXISTS` sentinel; `createNextMonthPaymentAction` re-reads the existing row and returns its id (idempotent).
 
 #### `teacher_subscriptions`
 | Column | Type | Constraints | Notes |
@@ -2032,6 +2036,72 @@ sendEmail(student, 'enrollment_confirmed')
 
 > **Manual enrollment earnings rule:** Manual/cash payments do NOT credit `teacher_balances` because the money went directly to the teacher, not through the platform. These payments appear in the teacher's payment history for record-keeping but are excluded from: available_balance, payout calculations, and platform cut metrics. The teacher's "Earnings" dashboard only shows gateway-processed and screenshot-verified payments — i.e., money that flowed through the platform.
 
+### Flow B — Monthly Recurring Payment (Existing Enrollment)
+
+> **Scope:** only runs for active enrollments in cohorts where `fee_type = 'monthly'`. The initial payment is still created by `/api/student/enroll` (§Flow B Screenshot); this flow covers every month after that.
+
+```
+Student visits /student/payments
+  ↓
+Page computes outstanding months per active monthly enrollment:
+  schedule = monthlyBillingSchedule(cohort.start_date, cohort.end_date)
+  settled  = months where a payment row exists with status ∈ {confirmed, pending_verification}
+  outstanding = schedule − settled
+  status per month: overdue (due < today PKT) | due (within 7 days) | upcoming (> 7 days out)
+  ↓
+Student clicks "Pay now" on an outstanding row
+  ↓
+createNextMonthPaymentAction(enrollmentId, paymentMonth)
+  ↓
+Guards:
+  - auth: student owns the enrollment
+  - cohort.fee_type === 'monthly' AND cohort.status !== 'archived'
+  - paymentMonth ∈ monthlyBillingSchedule(cohort)
+  ↓
+Idempotency — check getPaymentByEnrollmentAndMonth(enrollmentId, paymentMonth):
+  - existing confirmed           → error: "This month is already paid."
+  - existing pending_verification → return { paymentId: existing.id } (no insert)
+  - existing rejected            → reset to pending_verification, clear screenshot_url + rejection_reason, return that id
+  - none                         → INSERT student_payments (status: pending_verification,
+                                    screenshot_url: null, payment_method: 'screenshot',
+                                    payment_month: paymentMonth, platform_cut_pkr: 0,
+                                    teacher_payout_amount_pkr: 0, fresh reference_code,
+                                    idempotency_key: `monthly-${enrollmentId}-${paymentMonth}`)
+                                    — catches 23505 (concurrent insert) via PAYMENT_ALREADY_EXISTS
+                                      and returns the winning row's id
+  ↓
+Student is redirected to /join/[token]/pay/[enrollmentId]?paymentId=<id>
+  ↓
+Student uploads screenshot → submitScreenshotAction(enrollmentId, screenshotUrl, paymentId)
+  ↓
+When paymentId is passed, the action targets that specific row (it does NOT require
+enrollment.status === 'pending' — the enrollment is already 'active' for a monthly re-upload).
+  ↓
+Teacher opens EnrollmentPaymentsModal (per-enrollment payment history)
+  ↓
+Teacher clicks Approve on the month's row
+  ↓
+approveMonthlyPaymentAction(paymentId)
+  ↓
+Guards: teacher owns cohort, payment.status === 'pending_verification', screenshot_url set,
+        payment_method !== 'manual'
+  ↓
+confirmPaymentAndCreditBalance() — shared core with initial enrollment approval:
+  platform_cut_pkr = discounted × (plan.transaction_cut_percent / 100)
+  teacher_payout_amount_pkr = discounted − platform_cut_pkr
+  UPDATE student_payments status='confirmed', verified_at=now(), cut fields set
+  credit_teacher_balance(teacherId, teacher_payout_amount_pkr, deduct_outstanding=true)
+  ↓
+sendEmail(student, 'enrollment_confirmed', { paymentMonth })
+  ↓
+On Reject: rejectMonthlyPaymentAction(paymentId, reason)
+  UPDATE student_payments status='rejected', rejection_reason
+  sendEmail(student, 'enrollment_rejected', { paymentMonth, reason })
+  → Student can re-upload via the same outstanding-month row (reset path above)
+```
+
+> **Why payment_month is set at creation, not at approval:** the `fee-reminders` cron's idempotency check is `payment_month = current billing month AND status IN ('confirmed', 'pending_verification')`. If we only set `payment_month` at approval, a student who uploaded a screenshot on Apr 2 but isn't approved until Apr 6 would receive an Apr 5 reminder asking them to pay again. Setting it at creation closes this window.
+
 ### Payout Flow
 
 ```
@@ -2100,6 +2170,8 @@ teacher_balances NOT changed (platform never had the money)
 
 > **Refund amount = `teacher_payout_amount_pkr`** (the amount credited to teacher's balance, NOT the full `amount_pkr`). Teacher was credited Rs. 2,700 on a Rs. 3,000 payment (10% cut) → refund deducts Rs. 2,700 from available_balance. The Rs. 300 platform cut is also refunded to maintain clean accounting. Check: `available_balance >= teacher_payout_amount_pkr`.
 
+> **Refund target is a specific payment, not the enrollment.** Monthly cohorts produce one payment row per month, each with its own `teacher_payout_amount_pkr`. `recordRefundAction` accepts an optional `paymentId` form field — when set, that exact payment is refunded (used by the per-payment modal). When omitted, the action falls back to the latest `status='confirmed'` payment for the enrollment (legacy shortcut for one-time cohorts and the standalone dropdown action). A `.gte('available_balance_pkr', refundAmount)` guard on the balance update blocks races when two refunds are attempted at once.
+
 ```
 Teacher clicks 'Refund' on payment record (only shown if available_balance >= teacher_payout_amount_pkr)
   ↓
@@ -2108,10 +2180,20 @@ Confirm refund amount (shows: "Refund Rs. 2,700 to student")
 UPDATE student_payments status = 'refunded', refunded_at = now()
   ↓
 UPDATE teacher_balances available_balance -= teacher_payout_amount_pkr
+  (atomic: .gte() guard on available_balance_pkr — fails if insufficient, surfaces "use offline" error)
   ↓
 sendEmail(student, 'enrollment_refunded')
 sendEmail(admin, 'refund_recorded')
 ```
+
+**Revoke + refund coupling (removing a student from a cohort):**
+
+> When a teacher clicks "Remove student", the `RevokeDialog` renders a single opt-in checkbox offering to also refund the most recent confirmed payment. The checkbox is ONLY shown when the refund is in-app eligible (`status='confirmed'` AND not refunded AND `payment_method !== 'manual'` AND `available_balance >= teacher_payout_amount_pkr` AND `teacher_payout_amount_pkr > 0`). The dialog chains two server actions sequentially:
+>
+> 1. `revokeEnrollmentAction(enrollmentId, { reason })` — always runs
+> 2. `recordRefundAction(enrollmentId, { refund_mode: 'in_app', refund_note: 'Refunded as part of removal' })` — only if checkbox checked
+>
+> If step 2 fails after step 1 succeeded, the dialog surfaces a partial-success toast: *"[Student] was removed, but refund failed: [reason]. Try again from the Record refund option."* The standalone "Record refund" option stays on the dropdown for the keep-them-enrolled case and for refunding specific past months on monthly enrollments.
 
 ### Outstanding Debit — When Platform Absorbs a Refund
 
@@ -2646,6 +2728,67 @@ submissions/{assignmentId}/...  → category: submissions
 // If N errors occur within any 10-minute window → email admin immediately
 // All gateway errors logged to admin_activity_log with action_type: 'gateway_error'
 ```
+
+---
+
+### 9.11 Monthly Payment Loop
+
+Monthly cohorts (`cohorts.fee_type = 'monthly'`) produce one `student_payments` row per billing month. The initial enrollment row is created by `/api/student/enroll` with `payment_month = firstBillingMonth(cohort.start_date, cohort.billing_day)`; every subsequent month is created on demand by `createNextMonthPaymentAction` when the student initiates payment for that month.
+
+**Helpers in `lib/time/pkt.ts`:**
+
+```typescript
+firstOfMonthPKT(date: Date): string
+// Returns 'YYYY-MM-01' for `date` evaluated in PKT. Used anywhere we need
+// "this month" in Pakistani context (avoids UTC midnight rolling a PKT-evening
+// request back into the previous month).
+
+firstBillingMonth(cohortStartDate: string, billingDay: number): string
+// First payment_month for a brand-new enrollment:
+//   max(cohort.start_date month, today in PKT month) as 'YYYY-MM-01'.
+// Pre-start enrollments tag the cohort's start month; mid-cycle enrollments
+// tag the current month forward (no back-billing).
+
+monthlyBillingSchedule(startDate: string, endDate: string): string[]
+// Every billing month between cohort start and end, inclusive on both ends,
+// one entry per calendar month as 'YYYY-MM-01'. Drives both the student
+// outstanding-months UI and the createNextMonthPaymentAction schedule guard.
+
+dueDateForMonth(paymentMonth: string, billingDay: number): string
+// 'YYYY-MM-DD' due date for a given month, used to label Overdue/Due/Upcoming.
+```
+
+**Outstanding months — student portal computation (`/student/payments`):**
+
+```
+schedule     = monthlyBillingSchedule(cohort.start_date, cohort.end_date)
+settled      = { p.payment_month : p in enrollment.payments AND p.status ∈ {confirmed, pending_verification} }
+outstanding  = schedule − settled
+
+For each month in outstanding:
+  dueDate = dueDateForMonth(month, cohort.billing_day)
+  status =
+    dueDate < todayPKT                     → 'overdue'
+    dueDate > todayPKT AND > 7 days away   → 'upcoming'
+    otherwise                              → 'due'   (within 7 days, or due today)
+  Sort: overdue first, then dueDate asc
+```
+
+**Idempotency guarantees:**
+
+1. Partial unique index on `(enrollment_id, payment_month)` restricted to `status IN ('pending_verification', 'confirmed')` (migration `008`) — a student can re-upload after rejection, but cannot have two in-flight rows for the same month.
+2. `createNextMonthPaymentAction` checks `getPaymentByEnrollmentAndMonth` before inserting:
+   - existing confirmed → reject
+   - existing pending → return its id (no insert)
+   - existing rejected → reset the same row to pending (clear `screenshot_url` + `rejection_reason`), reuse its id
+3. If a concurrent insert wins the race, `createPayment` catches Postgres `23505` and returns a `PAYMENT_ALREADY_EXISTS` sentinel; the action re-reads the winning row and returns its id.
+4. `idempotency_key` is deterministic: `monthly-${enrollmentId}-${paymentMonth}` — doubles as a secondary guard.
+
+**Cron alignment (`/api/cron/fee-reminders`):**
+
+The cron computes the target billing month via `firstOfMonthPKT(today + 3 days)` and, for each active enrollment whose cohort's `billing_day` is 3 days out, skips if `student_payments` has any row with that `payment_month` in `{'confirmed', 'pending_verification'}`. Because every payment row is tagged with `payment_month` at creation time, the cron never sends a reminder for a month the student has already paid or is currently awaiting verification for.
+
+**Migration `009_backfill_payment_month.sql`** backfills existing confirmed payments on monthly cohorts (pre-loop data) with `payment_month = date_trunc('month', cohort.start_date)` so the cron stops misfiring on legacy enrollments.
 
 ---
 
@@ -3298,6 +3441,10 @@ blog, docs, status, cdn, assets, static, files, media
 | Gateway down when student tries to enroll | Show user-friendly error. No enrollment or payment row created. idempotencyKey is discarded — new one generated on retry. |
 | Screenshot payment submitted for archived cohort | Block at API level: check cohort.status != 'archived' before processing any payment. |
 | Teacher submits subscription screenshot twice | Admin sees both in queue. Second approval attempt returns error: "Subscription already active for this period." |
+| Teacher flips cohort `fee_type` after enrollments have paid | BLOCK via `updateCohortAction` guard: `countActiveConfirmedEnrollments(cohortId) > 0` + `fee_type` differs from current → return `{ success: false, code: 'FEE_TYPE_LOCKED' }` with message "Cannot change fee type — N student(s) have confirmed payments. Archive this cohort and create a new one to switch." UI disables the fee_type select with the same explanation. Rationale: switching one-time ↔ monthly mid-cohort would invalidate the billing schedule for students already committed under the original terms. |
+| Teacher changes `billing_day` after monthly enrollments have paid | Same guard as fee_type, but only when `cohort.fee_type === 'monthly'` (billing_day is meaningless for one_time cohorts). Changing the day mid-cycle would break the `fee-reminders` cron's `payment_month` idempotency window. |
+| Student uploads a second screenshot for a month already paid | Blocked before R2 upload: `createNextMonthPaymentAction` returns "This month is already paid." when an existing `confirmed` row is found. Rejected rows are reset, not duplicated. |
+| Student retries "Pay now" after a network glitch | `createNextMonthPaymentAction` is idempotent — returns the existing pending row's id if one exists. Student lands on the same payment page, no duplicate row created. Concurrent double-submits are caught by the partial unique index + `PAYMENT_ALREADY_EXISTS` sentinel. |
 
 ### Enrollment Edge Cases
 
@@ -3311,6 +3458,7 @@ blog, docs, status, cdn, assets, static, files, media
 | Pending enrollment at cohort archive | Nightly archive cron auto-rejects screenshot-pending enrollments. Send rejection email to each affected student. |
 | Gateway-paid enrollment in cohort that auto-archives | If gateway payment confirmed but cohort has since auto-archived: set `student_payments.status = 'pending_refund_review'`. Flagged in admin Operations panel. Admin issues refund via gateway and notifies student manually. |
 | Cohort with 0 max_students set | This means unlimited. Never block enrollment for null max_students. |
+| Teacher revokes a student mid-cohort without refunding | `RevokeDialog` renders an opt-in "Also refund Rs. X" checkbox whenever the enrollment's most recent payment is in-app refund eligible. Teacher must consciously tick it — default is unchecked. If left unchecked, revoke proceeds alone and the standalone "Record refund" dropdown option remains available afterward. Chained action order is revoke → refund; if the refund step fails after revoke succeeded, the dialog surfaces a partial-success toast instructing the teacher to retry the refund from the dropdown. |
 
 ### Content Edge Cases
 

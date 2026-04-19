@@ -24,6 +24,7 @@ import { ScreenshotUploadForm } from '@/components/student/ScreenshotUploadForm'
 
 type PageProps = {
   params: Promise<{ subdomain: string; token: string; enrollmentId: string }>
+  searchParams: Promise<{ paymentId?: string }>
 }
 
 /**
@@ -34,8 +35,9 @@ function formatFeePKR(amount: number): string {
   return `Rs. ${amount.toLocaleString('en-PK')}`
 }
 
-export default async function PaymentPage({ params }: PageProps) {
+export default async function PaymentPage({ params, searchParams }: PageProps) {
   const { enrollmentId } = await params
+  const { paymentId: paymentIdParam } = await searchParams
 
   // --- Auth check: student must be logged in ---
   const supabase = await createClient()
@@ -65,7 +67,9 @@ export default async function PaymentPage({ params }: PageProps) {
 
   // --- Fetch payment records ---
   const payments = await getPaymentsByEnrollment(enrollmentId)
-  const payment = payments[0] ?? null
+  const payment = paymentIdParam
+    ? (payments.find((p) => p.id === paymentIdParam) ?? null)
+    : (payments[0] ?? null)
 
   // --- Fetch cohort info ---
   const cohort = await getCohortById(enrollment.cohort_id)
@@ -200,6 +204,7 @@ export default async function PaymentPage({ params }: PageProps) {
                 enrollmentId={enrollmentId}
                 referenceCode={enrollment.reference_code}
                 existingScreenshotUrl={null}
+                paymentId={payment?.id}
               />
             </div>
           </div>
@@ -286,6 +291,7 @@ export default async function PaymentPage({ params }: PageProps) {
               enrollmentId={enrollmentId}
               referenceCode={enrollment.reference_code}
               existingScreenshotUrl={payment?.screenshot_url ?? null}
+              paymentId={payment?.id}
             />
           </div>
         </div>

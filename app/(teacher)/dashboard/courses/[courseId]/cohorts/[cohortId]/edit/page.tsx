@@ -9,6 +9,7 @@ import { notFound } from 'next/navigation'
 import { requireTeacher } from '@/lib/auth/guards'
 import { getCohortById } from '@/lib/db/cohorts'
 import { getCourseById } from '@/lib/db/courses'
+import { countActiveConfirmedEnrollments } from '@/lib/db/enrollments'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Card } from '@/components/ui/card'
 import { ROUTES } from '@/constants/routes'
@@ -40,6 +41,9 @@ export default async function EditCohortPage({ params }: EditCohortPageProps) {
     notFound()
   }
 
+  // Lock fee_type / billing_day if any active enrollment has confirmed payments
+  const confirmedEnrollmentCount = await countActiveConfirmedEnrollments(cohortId)
+
   return (
     <>
       <PageHeader
@@ -62,6 +66,7 @@ export default async function EditCohortPage({ params }: EditCohortPageProps) {
           defaultWaitlistEnabled={cohort.waitlist_enabled}
           defaultPendingCanSeeSchedule={cohort.pending_can_see_schedule}
           defaultPendingCanSeeAnnouncements={cohort.pending_can_see_announcements}
+          confirmedEnrollmentCount={confirmedEnrollmentCount}
         />
       </Card>
     </>

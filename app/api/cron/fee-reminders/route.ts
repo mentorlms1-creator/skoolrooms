@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/supabase/server'
 import { sendEmail } from '@/lib/email/sender'
+import { firstOfMonthPKT } from '@/lib/time/pkt'
 import { TIMING } from '@/constants/plans'
 
 /**
@@ -109,8 +110,8 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    // Calculate the current billing month (YYYY-MM-01 format for the target date)
-    const billingMonth = `${targetDate.getFullYear()}-${String(targetDate.getMonth() + 1).padStart(2, '0')}-01`
+    // Calculate the current billing month in PKT to avoid UTC midnight drift
+    const billingMonth = firstOfMonthPKT(targetDate)
 
     // Multi-teacher batching: group by student email
     type StudentReminder = {

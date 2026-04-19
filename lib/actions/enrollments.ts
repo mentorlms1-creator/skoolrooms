@@ -21,8 +21,10 @@ import { getCohortById } from '@/lib/db/cohorts'
 import { getStudentById, getStudentByEmail, createStudent } from '@/lib/db/students'
 import { sendEmail } from '@/lib/email/sender'
 import { checkPlanLock, getPlanLockError } from '@/lib/auth/plan-guard'
+import { firstBillingMonth } from '@/lib/time/pkt'
 import type { ApiResponse } from '@/types/api'
 import type { EnrollmentStatus, PaymentMethod, PaymentStatus } from '@/types/domain'
+import { confirmPaymentAndCreditBalance } from './student-payments'
 
 // -----------------------------------------------------------------------------
 // Helpers
@@ -41,25 +43,6 @@ async function getAuthenticatedTeacher() {
 
   const teacher = await getTeacherByAuthId(user.id)
   return teacher
-}
-
-/**
- * Fetches the teacher's plan transaction_cut_percent from the plans table.
- * Returns the cut percent (e.g. 5.00 for 5%) or null if not found.
- */
-async function getTeacherTransactionCutPercent(
-  teacherPlanSlug: string
-): Promise<number | null> {
-  const supabase = createAdminClient()
-
-  const { data: plan, error } = await supabase
-    .from('plans')
-    .select('transaction_cut_percent')
-    .eq('slug', teacherPlanSlug)
-    .single()
-
-  if (error || !plan) return null
-  return Number(plan.transaction_cut_percent)
 }
 
 // -----------------------------------------------------------------------------
@@ -116,28 +99,9 @@ export async function approveEnrollmentAction(
     return { success: false, error: 'Payment record not found for this enrollment.' }
   }
 
-  // Get teacher's plan to calculate platform cut
-  const cutPercent = await getTeacherTransactionCutPercent(teacher.plan)
-  if (cutPercent === null) {
-    return { success: false, error: 'Failed to determine plan details. Please try again.' }
-  }
-
-  const platformCutPkr = Math.round(
-    payment.discounted_amount_pkr * (cutPercent / 100)
-  )
-  const teacherPayoutAmountPkr = payment.discounted_amount_pkr - platformCutPkr
-
-  // Update payment: confirmed with platform cut, payout amounts, and verified_at
-  const updatedPayment = await updatePaymentStatus(payment.id, 'confirmed' satisfies PaymentStatus, {
-    verified_at: new Date().toISOString(),
-    platform_cut_pkr: platformCutPkr,
-    teacher_payout_amount_pkr: teacherPayoutAmountPkr,
-  })
-  if (!updatedPayment) {
-    return { success: false, error: 'Failed to update payment. Please try again.' }
-  }
-
-  const supabaseAdmin = createAdminClient()
+  // Confirm payment + credit teacher balance via shared helper
+  const confirmResult = await confirmPaymentAndCreditBalance(payment, teacher, cohort)
+  if (!confirmResult.success) return confirmResult
 
   // Update enrollment status to active
   const updatedEnrollment = await updateEnrollmentStatus(
@@ -146,15 +110,6 @@ export async function approveEnrollmentAction(
   )
   if (!updatedEnrollment) {
     return { success: false, error: 'Failed to activate enrollment. Please try again.' }
-  }
-
-  // Credit teacher balance via Supabase RPC (screenshot payments credit balance)
-  if (teacherPayoutAmountPkr > 0) {
-    await supabaseAdmin.rpc('credit_teacher_balance', {
-      p_teacher_id: teacher.id,
-      p_amount: teacherPayoutAmountPkr,
-      p_deduct_outstanding: true,
-    })
   }
 
   // Get student info for emails
@@ -425,6 +380,10 @@ export async function manualEnrollAction(
 
   // Create payment with manual method — platform_cut_pkr=0, teacher_payout=0
   // Cash went directly to teacher outside the platform
+  const paymentMonth = cohort.fee_type === 'monthly' && cohort.billing_day != null
+    ? firstBillingMonth(cohort.start_date, cohort.billing_day)
+    : undefined
+
   await createPayment({
     enrollmentId,
     amountPkr,
@@ -435,6 +394,7 @@ export async function manualEnrollAction(
     referenceCode,
     status: 'confirmed' satisfies PaymentStatus,
     idempotencyKey: `manual-${enrollmentId}-${Date.now()}`,
+    paymentMonth,
   })
 
   // Do NOT credit teacher_balances — cash went directly to teacher

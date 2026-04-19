@@ -38,7 +38,12 @@ type EditCohortFormProps = {
   defaultWaitlistEnabled: boolean
   defaultPendingCanSeeSchedule: boolean
   defaultPendingCanSeeAnnouncements: boolean
+  /** Number of active enrollments with confirmed payments (incl. manually-marked-paid).
+   *  > 0 locks fee_type and billing_day. */
+  confirmedEnrollmentCount: number
 }
+
+const studentsHave = (n: number) => `${n} student${n === 1 ? ' has' : 's have'}`
 
 const FEE_TYPE_OPTIONS = [
   { value: 'one_time', label: 'One-time' },
@@ -59,10 +64,13 @@ export function EditCohortForm({
   defaultWaitlistEnabled,
   defaultPendingCanSeeSchedule,
   defaultPendingCanSeeAnnouncements,
+  confirmedEnrollmentCount,
 }: EditCohortFormProps) {
   const router = useRouter()
   const { confirm } = useUIContext()
   const [isPending, startTransition] = useTransition()
+  const isLocked = confirmedEnrollmentCount > 0
+  const lockNote = `Locked because ${studentsHave(confirmedEnrollmentCount)} already paid. To change, archive this cohort and start a new one.`
 
   const [name, setName] = useState(defaultName)
   const [startDate, setStartDate] = useState(defaultStartDate)
@@ -174,7 +182,7 @@ export function EditCohortForm({
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="fee-type">Fee Type</Label>
-          <Select value={feeType} onValueChange={setFeeType}>
+          <Select value={feeType} onValueChange={setFeeType} disabled={isLocked}>
             <SelectTrigger id="fee-type" className="w-full">
               <SelectValue />
             </SelectTrigger>
@@ -186,6 +194,7 @@ export function EditCohortForm({
               ))}
             </SelectContent>
           </Select>
+          {isLocked && <p className="text-xs text-muted-foreground">{lockNote}</p>}
         </div>
         <div className="space-y-2">
           <Label htmlFor="fee-pkr">Fee (PKR)</Label>
@@ -213,7 +222,9 @@ export function EditCohortForm({
             value={billingDay}
             onChange={(e) => setBillingDay(e.target.value)}
             required
+            disabled={isLocked}
           />
+          {isLocked && <p className="text-xs text-muted-foreground">{lockNote}</p>}
         </div>
       )}
 

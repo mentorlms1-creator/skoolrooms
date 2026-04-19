@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { MoreHorizontal, Receipt, BadgeMinus, Eye } from 'lucide-react'
+import { MoreHorizontal, Receipt, BadgeMinus, Eye, List } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,6 +13,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { RevokeDialog } from './RevokeDialog'
 import { RefundDialog } from './RefundDialog'
+import { EnrollmentPaymentsModal, type ModalPayment } from './EnrollmentPaymentsModal'
 
 export type RowPayment = {
   id: string
@@ -32,6 +33,8 @@ type StudentRowActionsProps = {
   availableBalance: number
   cohortArchived: boolean
   hasPendingWithdrawal: boolean
+  cohortFeeType?: string
+  allPayments?: ModalPayment[]
 }
 
 export function StudentRowActions({
@@ -41,9 +44,12 @@ export function StudentRowActions({
   availableBalance,
   cohortArchived,
   hasPendingWithdrawal,
+  cohortFeeType,
+  allPayments,
 }: StudentRowActionsProps) {
   const [revokeOpen, setRevokeOpen] = useState(false)
   const [refundOpen, setRefundOpen] = useState(false)
+  const [paymentsOpen, setPaymentsOpen] = useState(false)
 
   const alreadyRefunded = !!payment?.refunded_at
   const screenshotUrl = payment?.screenshot_url
@@ -53,6 +59,8 @@ export function StudentRowActions({
     : cohortArchived
       ? 'Cohort archived'
       : 'Remove from cohort'
+
+  const isMonthly = cohortFeeType === 'monthly'
 
   return (
     <>
@@ -65,6 +73,13 @@ export function StudentRowActions({
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>{studentName}</DropdownMenuLabel>
           <DropdownMenuSeparator />
+
+          {isMonthly && (
+            <DropdownMenuItem onSelect={() => setPaymentsOpen(true)}>
+              <List className="mr-2 h-4 w-4" />
+              View payments
+            </DropdownMenuItem>
+          )}
 
           {screenshotUrl && (
             <DropdownMenuItem asChild>
@@ -99,6 +114,8 @@ export function StudentRowActions({
         studentName={studentName}
         open={revokeOpen}
         onOpenChange={setRevokeOpen}
+        payment={payment}
+        availableBalance={availableBalance}
       />
 
       <RefundDialog
@@ -109,6 +126,18 @@ export function StudentRowActions({
         payment={payment}
         availableBalance={availableBalance}
       />
+
+      {isMonthly && (
+        <EnrollmentPaymentsModal
+          enrollmentId={enrollmentId}
+          studentName={studentName}
+          cohortFeeType={cohortFeeType ?? 'one_time'}
+          payments={allPayments ?? []}
+          availableBalance={availableBalance}
+          open={paymentsOpen}
+          onOpenChange={setPaymentsOpen}
+        />
+      )}
     </>
   )
 }
