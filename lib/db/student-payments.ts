@@ -107,6 +107,35 @@ export async function getPaymentsByEnrollment(
 }
 
 // -----------------------------------------------------------------------------
+// getLatestPaymentsByEnrollmentIds — Latest payment per enrollment for a list
+// of enrollment IDs. Used to surface refund eligibility on the cohort students
+// table without N+1 fetches. Returns a Map keyed by enrollment_id.
+// -----------------------------------------------------------------------------
+export async function getLatestPaymentsByEnrollmentIds(
+  enrollmentIds: string[]
+): Promise<Map<string, StudentPaymentRow>> {
+  if (enrollmentIds.length === 0) return new Map()
+
+  const supabase = createAdminClient()
+
+  const { data, error } = await supabase
+    .from('student_payments')
+    .select('*')
+    .in('enrollment_id', enrollmentIds)
+    .order('created_at', { ascending: false })
+
+  if (error || !data) return new Map()
+
+  const map = new Map<string, StudentPaymentRow>()
+  for (const row of data as StudentPaymentRow[]) {
+    if (!map.has(row.enrollment_id)) {
+      map.set(row.enrollment_id, row)
+    }
+  }
+  return map
+}
+
+// -----------------------------------------------------------------------------
 // createPayment — Insert a new student payment record
 // -----------------------------------------------------------------------------
 export async function createPayment(

@@ -92,6 +92,15 @@ export async function revokeEnrollmentAction(
     return { success: false, error: 'Enrollment not found' }
   }
 
+  // Archived cohort guard (CLAUDE.md rule #21 — content-write blocked on archived)
+  if (cohort.status === 'archived') {
+    return {
+      success: false,
+      error: 'This cohort has been archived. No changes can be made.',
+      code: 'COHORT_ARCHIVED',
+    }
+  }
+
   // Enrollment must be active to revoke
   if (enrollment.status !== 'active') {
     return {

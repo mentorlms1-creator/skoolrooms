@@ -97,6 +97,7 @@ export type EnrollmentWithStudentAndCohort = EnrollmentRow & {
     name: string
     fee_pkr: number
     fee_type: string
+    status: string
     courses: {
       id: string
       title: string
@@ -398,7 +399,7 @@ export async function getAllStudentsByTeacher(
       *,
       students!inner(id, name, email, phone),
       cohorts!inner(
-        id, name, fee_pkr, fee_type,
+        id, name, fee_pkr, fee_type, status,
         courses!inner(id, title)
       )
     `)
@@ -425,7 +426,7 @@ export async function getEnrollmentsByStudentForTeacher(
       *,
       students!inner(id, name, email, phone),
       cohorts!inner(
-        id, name, fee_pkr, fee_type,
+        id, name, fee_pkr, fee_type, status,
         courses!inner(id, title)
       )
     `)

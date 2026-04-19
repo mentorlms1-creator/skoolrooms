@@ -1,8 +1,9 @@
 /**
  * app/(teacher)/dashboard/courses/[courseId]/cohorts/[cohortId]/students/page.tsx
  *
- * Server Component. Displays enrolled students and waitlist management panel.
- * Teacher can view enrolled students, pending enrollments, and waitlist entries.
+ * Server Component. Displays enrolled students, pending enrollments, withdrawal
+ * requests, and the waitlist. Provides per-row actions (refund, remove) plus
+ * approve/reject for pending withdrawals.
  */
 
 import { notFound } from 'next/navigation'
@@ -11,11 +12,15 @@ import { getCohortById } from '@/lib/db/cohorts'
 import { getCourseById } from '@/lib/db/courses'
 import { getEnrollmentsByCohort } from '@/lib/db/enrollments'
 import { getWaitlistByCohort } from '@/lib/db/waitlist'
+import { getLatestPaymentsByEnrollmentIds } from '@/lib/db/student-payments'
+import { getTeacherBalance } from '@/lib/db/balances'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Card } from '@/components/ui/card'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { ROUTES } from '@/constants/routes'
 import { formatPKT } from '@/lib/time/pkt'
+import { StudentRowActions, type RowPayment } from './StudentRowActions'
+import { WithdrawalRequestRow } from './WithdrawalRequestRow'
 
 type StudentsPageProps = {
   params: Promise<{ courseId: string; cohortId: string }>
@@ -38,14 +43,40 @@ export default async function CohortStudentsPage({ params }: StudentsPageProps) 
     notFound()
   }
 
-  const [enrollments, waitlistEntries] = await Promise.all([
+  const [enrollments, waitlistEntries, balance] = await Promise.all([
     getEnrollmentsByCohort(cohortId),
     getWaitlistByCohort(cohortId),
+    getTeacherBalance(teacher.id),
   ])
 
   // Separate enrollments by status
   const activeEnrollments = enrollments.filter((e) => e.status === 'active')
   const pendingEnrollments = enrollments.filter((e) => e.status === 'pending')
+  const withdrawalRequests = enrollments.filter(
+    (e) => e.status === 'active' && e.withdrawal_requested_at,
+  )
+
+  // Batch-fetch latest payment per active enrollment for refund eligibility,
+  // then project a slim shape (only the fields the client needs) to avoid
+  // shipping every payment column over the Server→Client boundary.
+  const fullPayments = await getLatestPaymentsByEnrollmentIds(
+    activeEnrollments.map((e) => e.id),
+  )
+  const slimPaymentByEnrollment = new Map<string, RowPayment>()
+  for (const [enrollmentId, p] of fullPayments) {
+    slimPaymentByEnrollment.set(enrollmentId, {
+      id: p.id,
+      amount_pkr: p.amount_pkr,
+      teacher_payout_amount_pkr: p.teacher_payout_amount_pkr,
+      platform_cut_pkr: p.platform_cut_pkr,
+      payment_method: p.payment_method,
+      refunded_at: p.refunded_at,
+      status: p.status,
+      screenshot_url: p.screenshot_url,
+    })
+  }
+
+  const cohortArchived = cohort.status === 'archived'
 
   return (
     <>
@@ -56,6 +87,27 @@ export default async function CohortStudentsPage({ params }: StudentsPageProps) 
       />
 
       <div className="flex flex-col gap-6">
+        {/* Withdrawal Requests */}
+        {withdrawalRequests.length > 0 && (
+          <Card className="p-6">
+            <h2 className="mb-4 text-lg font-semibold text-foreground">
+              Withdrawal Requests ({withdrawalRequests.length})
+            </h2>
+            <div className="flex flex-col gap-3">
+              {withdrawalRequests.map((enrollment) => (
+                <WithdrawalRequestRow
+                  key={enrollment.id}
+                  enrollmentId={enrollment.id}
+                  studentName={enrollment.students.name}
+                  studentEmail={enrollment.students.email}
+                  withdrawalReason={enrollment.withdrawal_reason}
+                  requestedAt={enrollment.withdrawal_requested_at as string}
+                />
+              ))}
+            </div>
+          </Card>
+        )}
+
         {/* Active Students */}
         <Card className="p-6">
           <h2 className="mb-4 text-lg font-semibold text-foreground">
@@ -70,9 +122,21 @@ export default async function CohortStudentsPage({ params }: StudentsPageProps) 
               <div className="md:hidden flex flex-col gap-3">
                 {activeEnrollments.map((enrollment) => (
                   <div key={enrollment.id} className="rounded-md border border-border p-3 text-sm">
-                    <p className="font-medium text-foreground">{enrollment.students.name}</p>
-                    <p className="text-muted-foreground">{enrollment.students.email}</p>
-                    <p className="text-muted-foreground">{enrollment.students.phone}</p>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="font-medium text-foreground">{enrollment.students.name}</p>
+                        <p className="text-muted-foreground">{enrollment.students.email}</p>
+                        <p className="text-muted-foreground">{enrollment.students.phone}</p>
+                      </div>
+                      <StudentRowActions
+                        enrollmentId={enrollment.id}
+                        studentName={enrollment.students.name}
+                        payment={slimPaymentByEnrollment.get(enrollment.id) ?? null}
+                        availableBalance={balance.available_balance_pkr}
+                        cohortArchived={cohortArchived}
+                        hasPendingWithdrawal={!!enrollment.withdrawal_requested_at}
+                      />
+                    </div>
                     <div className="mt-2 flex items-center justify-between">
                       <span className="text-muted-foreground">{formatPKT(enrollment.created_at, 'date')}</span>
                       <StatusBadge status={enrollment.status} size="sm" />
@@ -90,6 +154,7 @@ export default async function CohortStudentsPage({ params }: StudentsPageProps) 
                       <th className="pb-2 font-medium text-muted-foreground">Phone</th>
                       <th className="pb-2 font-medium text-muted-foreground">Enrolled</th>
                       <th className="pb-2 font-medium text-muted-foreground">Status</th>
+                      <th className="pb-2 font-medium text-muted-foreground text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -105,6 +170,16 @@ export default async function CohortStudentsPage({ params }: StudentsPageProps) 
                         </td>
                         <td className="py-3">
                           <StatusBadge status={enrollment.status} size="sm" />
+                        </td>
+                        <td className="py-3 text-right">
+                          <StudentRowActions
+                            enrollmentId={enrollment.id}
+                            studentName={enrollment.students.name}
+                            payment={slimPaymentByEnrollment.get(enrollment.id) ?? null}
+                            availableBalance={balance.available_balance_pkr}
+                            cohortArchived={cohortArchived}
+                            hasPendingWithdrawal={!!enrollment.withdrawal_requested_at}
+                          />
                         </td>
                       </tr>
                     ))}

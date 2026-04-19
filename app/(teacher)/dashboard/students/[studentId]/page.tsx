@@ -12,6 +12,8 @@ import { User, Mail, Phone, Calendar, BookOpen, CreditCard } from 'lucide-react'
 import { requireTeacher } from '@/lib/auth/guards'
 import { getStudentById } from '@/lib/db/students'
 import { getEnrollmentsByStudentForTeacher } from '@/lib/db/enrollments'
+import { getLatestPaymentsByEnrollmentIds } from '@/lib/db/student-payments'
+import { getTeacherBalance } from '@/lib/db/balances'
 import { PageHeader } from '@/components/ui/PageHeader'
 import {
   Card,
@@ -22,6 +24,10 @@ import {
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { ROUTES } from '@/constants/routes'
 import { formatPKT } from '@/lib/time/pkt'
+import {
+  StudentRowActions,
+  type RowPayment,
+} from '../../courses/[courseId]/cohorts/[cohortId]/students/StudentRowActions'
 
 export const metadata: Metadata = {
   title: 'Student Detail \u2014 Skool Rooms',
@@ -45,6 +51,29 @@ export default async function TeacherStudentDetailPage(
     notFound()
   }
 
+  // Fetch balance + latest payment per active enrollment for refund eligibility.
+  // Project a slim shape to avoid shipping every payment column to the client.
+  const activeEnrollmentIds = enrollments
+    .filter((e) => e.status === 'active')
+    .map((e) => e.id)
+  const [balance, fullPayments] = await Promise.all([
+    getTeacherBalance(teacher.id),
+    getLatestPaymentsByEnrollmentIds(activeEnrollmentIds),
+  ])
+  const slimPaymentByEnrollment = new Map<string, RowPayment>()
+  for (const [enrollmentId, p] of fullPayments) {
+    slimPaymentByEnrollment.set(enrollmentId, {
+      id: p.id,
+      amount_pkr: p.amount_pkr,
+      teacher_payout_amount_pkr: p.teacher_payout_amount_pkr,
+      platform_cut_pkr: p.platform_cut_pkr,
+      payment_method: p.payment_method,
+      refunded_at: p.refunded_at,
+      status: p.status,
+      screenshot_url: p.screenshot_url,
+    })
+  }
+
   return (
     <>
       <PageHeader
@@ -66,24 +95,38 @@ export default async function TeacherStudentDetailPage(
             <CardContent className="px-8 pb-8">
               <div className="space-y-3">
                 {enrollments.map((enrollment) => (
-                  <Link
+                  <div
                     key={enrollment.id}
-                    href={ROUTES.TEACHER.cohortStudents(
-                      enrollment.cohorts.courses.id,
-                      enrollment.cohorts.id
-                    )}
-                    className="block rounded-2xl bg-container ring-1 ring-foreground/[0.03] p-4 transition-colors hover:bg-foreground/[0.02]"
+                    className="rounded-2xl bg-container ring-1 ring-foreground/[0.03] p-4"
                   >
                     <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div className="min-w-0">
+                      <Link
+                        href={ROUTES.TEACHER.cohortStudents(
+                          enrollment.cohorts.courses.id,
+                          enrollment.cohorts.id
+                        )}
+                        className="min-w-0 flex-1 transition-opacity hover:opacity-80"
+                      >
                         <p className="text-[15px] font-bold text-foreground">
                           {enrollment.cohorts.courses.title}
                         </p>
                         <p className="mt-0.5 text-sm text-muted-foreground">
                           {enrollment.cohorts.name}
                         </p>
+                      </Link>
+                      <div className="flex items-center gap-2">
+                        <StatusBadge status={enrollment.status} size="sm" />
+                        {enrollment.status === 'active' && (
+                          <StudentRowActions
+                            enrollmentId={enrollment.id}
+                            studentName={student.name}
+                            payment={slimPaymentByEnrollment.get(enrollment.id) ?? null}
+                            availableBalance={balance.available_balance_pkr}
+                            cohortArchived={enrollment.cohorts.status === 'archived'}
+                            hasPendingWithdrawal={!!enrollment.withdrawal_requested_at}
+                          />
+                        )}
                       </div>
-                      <StatusBadge status={enrollment.status} size="sm" />
                     </div>
                     <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
                       <span className="flex items-center gap-1">
@@ -96,7 +139,7 @@ export default async function TeacherStudentDetailPage(
                         <span className="capitalize">({enrollment.cohorts.fee_type})</span>
                       </span>
                     </div>
-                  </Link>
+                  </div>
                 ))}
               </div>
             </CardContent>
