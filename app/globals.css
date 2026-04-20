@@ -125,22 +125,18 @@
 }
 
 /* ---------------------------------------------------------------------------
-   View Transitions — smooth cross-fade between pages. Works via React's
-   ViewTransition wrapper in layouts; Next.js triggers startViewTransition()
-   on every soft navigation. Respects prefers-reduced-motion.
+   View Transitions — snappy cross-fade between pages. Nav is ~45ms; any
+   transition longer than ~100ms is pure visual delay. We keep a very short
+   cross-fade (just enough to hide the final paint) rather than a noticeable
+   fade, and skip the old snapshot's fade-out entirely so the outgoing page
+   doesn't linger. Respects prefers-reduced-motion.
 --------------------------------------------------------------------------- */
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation-duration: 180ms;
-  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-}
-
 ::view-transition-old(root) {
-  animation-name: st-fade-out;
+  animation: none;
 }
 
 ::view-transition-new(root) {
-  animation-name: st-fade-in;
+  animation: st-fade-in 90ms linear both;
 }
 
 @keyframes st-fade-in {
@@ -148,15 +144,9 @@
   to   { opacity: 1; }
 }
 
-@keyframes st-fade-out {
-  from { opacity: 1; }
-  to   { opacity: 0; }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  ::view-transition-old(root),
   ::view-transition-new(root) {
-    animation-duration: 0ms;
+    animation: none;
   }
 }
 
