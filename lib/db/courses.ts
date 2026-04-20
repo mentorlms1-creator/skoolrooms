@@ -5,6 +5,7 @@
 
 import { unstable_cache } from 'next/cache'
 import { createAdminClient } from '@/supabase/server'
+import { revalidateTeacherUsage } from '@/lib/db/teachers'
 
 // -----------------------------------------------------------------------------
 // Row types (mirrors the courses table from 001_initial_schema.sql)
@@ -172,6 +173,9 @@ export async function createCourse(
     .single()
 
   if (error || !data) return null
+  // Newly-created course is draft so usage count is unchanged, but invalidate
+  // anyway — cheap, and keeps us safe if status default ever changes.
+  revalidateTeacherUsage(teacherId)
   return data as CourseRow
 }
 
@@ -193,6 +197,9 @@ export async function updateCourse(
     .single()
 
   if (error || !data) return null
+  if ('status' in updates) {
+    revalidateTeacherUsage((data as CourseRow).teacher_id)
+  }
   return data as CourseRow
 }
 
@@ -225,8 +232,8 @@ export async function softDeleteCourse(
     }
   }
 
-  // Safe to soft-delete
-  const { error: deleteError } = await supabase
+  // Safe to soft-delete — capture teacher_id for cache invalidation.
+  const { data: deleted, error: deleteError } = await supabase
     .from('courses')
     .update({
       deleted_at: new Date().toISOString(),
@@ -234,11 +241,14 @@ export async function softDeleteCourse(
     })
     .eq('id', courseId)
     .is('deleted_at', null)
+    .select('teacher_id')
+    .single()
 
   if (deleteError) {
     return { success: false, error: 'Failed to delete course' }
   }
 
+  if (deleted) revalidateTeacherUsage((deleted as { teacher_id: string }).teacher_id)
   return { success: true }
 }
 

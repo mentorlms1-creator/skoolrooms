@@ -4,6 +4,7 @@
 // =============================================================================
 
 import { createAdminClient } from '@/supabase/server'
+import { revalidateTeacherUsage } from '@/lib/db/teachers'
 import type { CohortStatus, FeeType } from '@/types/domain'
 
 // -----------------------------------------------------------------------------
@@ -174,6 +175,7 @@ export async function createCohort(
     .single()
 
   if (error || !data) return null
+  revalidateTeacherUsage(input.teacherId)
   return data as CohortRow
 }
 
@@ -197,6 +199,7 @@ export async function updateCohort(
     .single()
 
   if (error || !data) return null
+  if ('status' in updates) revalidateTeacherUsage(teacherId)
   return data as CohortRow
 }
 
@@ -227,6 +230,7 @@ export async function archiveCohort(
     .single()
 
   if (error || !data) return null
+  revalidateTeacherUsage(teacherId)
   return data as CohortRow
 }
 

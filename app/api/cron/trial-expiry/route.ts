@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/supabase/server'
 import { sendEmail } from '@/lib/email/sender'
+import { revalidateTeacherPlan } from '@/lib/db/teachers'
 
 /**
  * GET /api/cron/trial-expiry — Daily cron job
@@ -63,6 +64,8 @@ export async function GET(request: NextRequest) {
         )
         continue
       }
+
+      revalidateTeacherPlan(teacher.id as string)
 
       // Send downgrade notification
       await sendEmail({

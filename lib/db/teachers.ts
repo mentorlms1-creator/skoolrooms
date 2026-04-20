@@ -146,6 +146,7 @@ export function invalidateTeacherPublicCaches(input: {
 
 // -----------------------------------------------------------------------------
 // updateTeacher — Partial update with automatic updated_at
+// Invalidates the plan-details cache if the update touches `plan`.
 // -----------------------------------------------------------------------------
 export async function updateTeacher(
   teacherId: string,
@@ -161,17 +162,22 @@ export async function updateTeacher(
     .single()
 
   if (error || !data) return null
+  if ('plan' in updates) revalidateTag(`teacher-plan:${teacherId}`)
   return data as TeacherRow
 }
 
 // -----------------------------------------------------------------------------
 // getTeacherPlanDetails — Build PlanDetails shape for TeacherProvider
 // Fetches the plan row by slug, then all plan_features for that plan.
-// Wrapped in React cache() so layout + page share a single lookup per request.
+//
+// Two-layer caching:
+//   1. unstable_cache (cross-request, 5 min TTL, tag `teacher-plan:{id}`)
+//      Invalidate via `revalidateTeacherPlan(teacherId)` at mutation sites.
+//   2. React cache() wrap so layout + page dedupe within one request.
 // -----------------------------------------------------------------------------
-export const getTeacherPlanDetails = cache(async (
-  teacherId: string
-): Promise<PlanDetails | null> => {
+async function fetchTeacherPlanDetails(
+  teacherId: string,
+): Promise<PlanDetails | null> {
   const supabase = createAdminClient()
 
   // Step 1: Get teacher's plan slug
@@ -226,7 +232,29 @@ export const getTeacherPlanDetails = cache(async (
     limits,
     features: featuresMap,
   }
+}
+
+export const getTeacherPlanDetails = cache(async (
+  teacherId: string,
+): Promise<PlanDetails | null> => {
+  const fetcher = unstable_cache(
+    (id: string) => fetchTeacherPlanDetails(id),
+    ['teacher-plan-details', teacherId],
+    {
+      revalidate: 300,
+      tags: [`teacher-plan:${teacherId}`],
+    },
+  )
+  return fetcher(teacherId)
 })
+
+/**
+ * Invalidate the cached plan details for a teacher. Call after any mutation
+ * that changes their plan slug, expiry, or trial window.
+ */
+export function revalidateTeacherPlan(teacherId: string): void {
+  revalidateTag(`teacher-plan:${teacherId}`)
+}
 
 // -----------------------------------------------------------------------------
 // getTeacherPlanSnapshot — Returns the snapshot row for a teacher (or null).
@@ -293,14 +321,15 @@ export async function getTeacherPlanSnapshot(
 // -----------------------------------------------------------------------------
 // getTeacherUsage — Build UsageData shape for TeacherProvider
 // Counts published courses, active enrollments, and active cohorts.
-// Wrapped in React cache() so layout + page share a single lookup per request.
+//
+// Two-layer caching:
+//   1. unstable_cache (60s TTL, tag `teacher-usage:{id}`) — stale counts at
+//      most 60s between invalidations; fine for a sidebar limit meter.
+//   2. React cache() wrap for layout+page dedup within one request.
 // -----------------------------------------------------------------------------
-export const getTeacherUsage = cache(async (
-  teacherId: string
-): Promise<UsageData> => {
+async function fetchTeacherUsage(teacherId: string): Promise<UsageData> {
   const supabase = createAdminClient()
 
-  // Count published courses (status='published', not soft-deleted)
   const { count: courseCount } = await supabase
     .from('courses')
     .select('*', { count: 'exact', head: true })
@@ -308,7 +337,6 @@ export const getTeacherUsage = cache(async (
     .eq('status', 'published')
     .is('deleted_at', null)
 
-  // Count active cohorts (status='active', not soft-deleted)
   const { count: cohortCount } = await supabase
     .from('cohorts')
     .select('*', { count: 'exact', head: true })
@@ -316,8 +344,6 @@ export const getTeacherUsage = cache(async (
     .eq('status', 'active')
     .is('deleted_at', null)
 
-  // Count active enrollments in this teacher's cohorts
-  // First get all cohort IDs for this teacher, then count active enrollments
   const { data: cohortIds } = await supabase
     .from('cohorts')
     .select('id')
@@ -342,7 +368,31 @@ export const getTeacherUsage = cache(async (
     cohortsActive: cohortCount ?? 0,
     storageMb: 0, // TODO: Calculate from R2 storage usage once implemented
   }
+}
+
+export const getTeacherUsage = cache(async (
+  teacherId: string,
+): Promise<UsageData> => {
+  const fetcher = unstable_cache(
+    (id: string) => fetchTeacherUsage(id),
+    ['teacher-usage', teacherId],
+    {
+      revalidate: 60,
+      tags: [`teacher-usage:${teacherId}`],
+    },
+  )
+  return fetcher(teacherId)
 })
+
+/**
+ * Invalidate the cached usage counts for a teacher. Call after any mutation
+ * that changes their published course count, active cohort count, or active
+ * enrollment count (course create/publish/delete, cohort create/activate/
+ * archive, enrollment create/cancel).
+ */
+export function revalidateTeacherUsage(teacherId: string): void {
+  revalidateTag(`teacher-usage:${teacherId}`)
+}
 
 // -----------------------------------------------------------------------------
 // hasPaymentSettings — Check if teacher has at least one payment method set

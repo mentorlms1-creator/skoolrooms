@@ -9,6 +9,7 @@ import { requireAdmin } from '@/lib/auth/guards'
 import { createAdminClient } from '@/supabase/server'
 import { logAdminActivity, updatePlatformSetting } from '@/lib/db/admin'
 import { createPlanSnapshot } from '@/lib/db/subscriptions'
+import { revalidateTeacherPlan } from '@/lib/db/teachers'
 import { revalidatePath } from 'next/cache'
 import { revalidateTag } from '@/lib/cache/tags'
 import type { ApiResponse } from '@/types/api'
@@ -114,6 +115,7 @@ export async function changePlanAction(
     metadata: { old_plan: oldPlan, new_plan: newPlan },
   })
 
+  revalidateTeacherPlan(teacherId)
   revalidatePath(`/admin/teachers/${teacherId}`)
   revalidatePath('/admin/teachers')
   return { success: true, data: null }

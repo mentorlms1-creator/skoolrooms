@@ -4,6 +4,7 @@
 // =============================================================================
 
 import { createAdminClient } from '@/supabase/server'
+import { revalidateTeacherUsage } from '@/lib/db/teachers'
 import type { EnrollmentStatus } from '@/types/domain'
 import {
   buildPage,
@@ -397,6 +398,7 @@ export async function createEnrollment(
     .single()
 
   if (error || !data) return null
+  await invalidateTeacherUsageByCohort(supabase, input.cohortId)
   return data as EnrollmentRow
 }
 
@@ -420,7 +422,25 @@ export async function updateEnrollmentStatus(
     .single()
 
   if (error || !data) return null
+  await invalidateTeacherUsageByCohort(supabase, (data as EnrollmentRow).cohort_id)
   return data as EnrollmentRow
+}
+
+// -----------------------------------------------------------------------------
+// invalidateTeacherUsageByCohort — Internal helper. Looks up the teacher
+// that owns the cohort and invalidates their usage cache. Quiet-fails if the
+// lookup fails (invalidation is best-effort; 60s TTL is the backstop).
+// -----------------------------------------------------------------------------
+async function invalidateTeacherUsageByCohort(
+  supabase: ReturnType<typeof createAdminClient>,
+  cohortId: string,
+): Promise<void> {
+  const { data } = await supabase
+    .from('cohorts')
+    .select('teacher_id')
+    .eq('id', cohortId)
+    .single()
+  if (data) revalidateTeacherUsage((data as { teacher_id: string }).teacher_id)
 }
 
 // -----------------------------------------------------------------------------
