@@ -112,61 +112,67 @@ export async function sendMessageAction(
     return { success: false, error: 'Failed to send message. Please try again.' }
   }
 
-  // Resolve thread URL for notifications
   const threadUrl =
     recipientType === 'teacher'
       ? ROUTES.TEACHER.messageThread(threadId)
       : ROUTES.STUDENT.messageThread(threadId)
 
-  // Create in-app notification for recipient
-  void createNotification({
-    userType: recipientType,
-    userId: recipientId,
-    kind: 'new_message',
-    title: `New message from ${senderName}`,
-    body: body.substring(0, 120),
-    linkUrl: threadUrl,
+  // Fire-and-forget notification + email. Neither blocks the send response —
+  // the client gets control back as soon as the message row is committed.
+  void notifyRecipient({
+    recipientType,
+    recipientId,
+    senderName,
+    messagePreview: body.substring(0, 120),
+    threadUrl,
   })
 
-  // Fetch recipient email for email notification
-  const supabase = createAdminClient()
-  let recipientEmail: string | null = null
-  let recipientName: string | null = null
+  return { success: true, data: { messageId: message.id } }
+}
 
-  if (recipientType === 'teacher') {
-    const { data: teacher } = await supabase
-      .from('teachers')
-      .select('email, name')
-      .eq('id', recipientId)
-      .single()
-    recipientEmail = (teacher as { email: string; name: string } | null)?.email ?? null
-    recipientName = (teacher as { email: string; name: string } | null)?.name ?? null
-  } else {
-    const { data: student } = await supabase
-      .from('students')
-      .select('email, name')
-      .eq('id', recipientId)
-      .single()
-    recipientEmail = (student as { email: string; name: string } | null)?.email ?? null
-    recipientName = (student as { email: string; name: string } | null)?.name ?? null
-  }
+async function notifyRecipient(input: {
+  recipientType: 'teacher' | 'student'
+  recipientId: string
+  senderName: string
+  messagePreview: string
+  threadUrl: string
+}): Promise<void> {
+  try {
+    await createNotification({
+      userType: input.recipientType,
+      userId: input.recipientId,
+      kind: 'new_message',
+      title: `New message from ${input.senderName}`,
+      body: input.messagePreview,
+      linkUrl: input.threadUrl,
+    })
 
-  if (recipientEmail && recipientName) {
-    void sendEmail({
-      to: recipientEmail,
+    const supabase = createAdminClient()
+    const table = input.recipientType === 'teacher' ? 'teachers' : 'students'
+    const { data } = await supabase
+      .from(table)
+      .select('email, name')
+      .eq('id', input.recipientId)
+      .single()
+
+    const row = data as { email: string; name: string } | null
+    if (!row?.email || !row.name) return
+
+    await sendEmail({
+      to: row.email,
       type: 'new_message',
-      recipientId,
-      recipientType,
+      recipientId: input.recipientId,
+      recipientType: input.recipientType,
       data: {
-        ...(recipientType === 'teacher' ? { teacherName: recipientName } : { studentName: recipientName }),
-        senderName,
-        messagePreview: body.substring(0, 120),
-        threadUrl,
+        ...(input.recipientType === 'teacher' ? { teacherName: row.name } : { studentName: row.name }),
+        senderName: input.senderName,
+        messagePreview: input.messagePreview,
+        threadUrl: input.threadUrl,
       },
     })
+  } catch (err) {
+    console.error('[notifyRecipient]', err)
   }
-
-  return { success: true, data: { messageId: message.id } }
 }
 
 // -----------------------------------------------------------------------------
