@@ -4,6 +4,7 @@
 // lib/actions/messages.ts — Server actions for direct_messages
 // =============================================================================
 
+import { revalidatePath } from 'next/cache'
 import { createClient, createAdminClient } from '@/supabase/server'
 import { getTeacherByAuthId } from '@/lib/db/teachers'
 import { getStudentByAuthId } from '@/lib/db/students'
@@ -212,12 +213,16 @@ export async function markThreadReadAction(
   const teacher = await getAuthenticatedTeacher()
   if (teacher) {
     await markThreadRead(threadId, teacher.id as string, 'teacher')
+    // Bust the layout cache so the sidebar message badge + thread list
+    // unread_count re-fetch on router.refresh().
+    revalidatePath('/dashboard', 'layout')
     return { success: true, data: undefined }
   }
 
   const student = await getAuthenticatedStudent()
   if (student) {
     await markThreadRead(threadId, student.id as string, 'student')
+    revalidatePath('/student', 'layout')
     return { success: true, data: undefined }
   }
 

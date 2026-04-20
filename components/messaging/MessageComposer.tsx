@@ -2,6 +2,10 @@
 
 // =============================================================================
 // components/messaging/MessageComposer.tsx — Message input + send
+// Optimistic: the textarea clears and the message appears in the thread the
+// instant submit fires (onOptimisticSend). The server action runs in the
+// background; onSendConfirmed swaps the temp for the real row, onSendFailed
+// rolls it back.
 // =============================================================================
 
 import { useRef, useState, useTransition } from 'react'
@@ -18,14 +22,27 @@ type MessageComposerProps = {
   threadId: string
   recipientId: string
   recipientType: 'teacher' | 'student'
-  onSent?: (message: MessageRow) => void
+  currentUserId: string
+  currentUserType: 'teacher' | 'student'
+  onOptimisticSend?: (tempMessage: MessageRow) => void
+  onSendConfirmed?: (tempId: string, realMessage: MessageRow) => void
+  onSendFailed?: (tempId: string) => void
 }
 
 // -----------------------------------------------------------------------------
 // Component
 // -----------------------------------------------------------------------------
 
-export function MessageComposer({ threadId, recipientId, recipientType, onSent }: MessageComposerProps) {
+export function MessageComposer({
+  threadId,
+  recipientId,
+  recipientType,
+  currentUserId,
+  currentUserType,
+  onOptimisticSend,
+  onSendConfirmed,
+  onSendFailed,
+}: MessageComposerProps) {
   const formRef = useRef<HTMLFormElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const [isPending, startTransition] = useTransition()
@@ -38,15 +55,33 @@ export function MessageComposer({ threadId, recipientId, recipientType, onSent }
     if (!body) return
 
     setError(null)
+
+    // Optimistic append — do this BEFORE awaiting the server action.
+    const tempId = `temp-${crypto.randomUUID()}`
+    const tempMessage: MessageRow = {
+      id: tempId,
+      thread_id: threadId,
+      sender_type: currentUserType,
+      sender_id: currentUserId,
+      recipient_type: recipientType,
+      recipient_id: recipientId,
+      body,
+      attachment_url: null,
+      read_at: null,
+      created_at: new Date().toISOString(),
+    }
+    onOptimisticSend?.(tempMessage)
+    formRef.current?.reset()
+    textareaRef.current?.focus()
+
     startTransition(async () => {
       const result = await sendMessageAction(formData)
       if (!result.success) {
         setError(result.error ?? 'Failed to send message.')
+        onSendFailed?.(tempId)
         return
       }
-      onSent?.(result.data.message)
-      formRef.current?.reset()
-      textareaRef.current?.focus()
+      onSendConfirmed?.(tempId, result.data.message)
     })
   }
 

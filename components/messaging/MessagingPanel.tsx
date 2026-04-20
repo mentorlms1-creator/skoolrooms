@@ -2,14 +2,14 @@
 
 // =============================================================================
 // components/messaging/MessagingPanel.tsx
-// Owns the messages array for a thread. Renders Thread (presentational) and
-// MessageComposer, so that a successful send appends locally without waiting
-// for the realtime echo. Realtime is still used for the other party's new
-// messages and read_at updates; the dedupe-by-id handles the sender's own
-// echo when it arrives.
+// Owns the messages array for a thread. Sender's message appears optimistically
+// the instant they submit (no await). The realtime echo + the server action's
+// returned row both get deduped against the temp id. Realtime also delivers
+// the other party's messages and read_at updates.
 // =============================================================================
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useRealtime } from '@/hooks/useRealtime'
 import { markThreadReadAction } from '@/lib/actions/messages'
 import { Thread } from './Thread'
@@ -34,16 +34,35 @@ export function MessagingPanel({
   recipientType,
 }: Props) {
   const [messages, setMessages] = useState<MessageRow[]>(initialMessages)
+  const router = useRouter()
 
   useEffect(() => {
-    void markThreadReadAction(threadId)
-  }, [threadId])
+    // Mark thread read, then refresh server components so the sidebar message
+    // badge and thread list unread counts update without a hard reload.
+    void markThreadReadAction(threadId).then(() => {
+      router.refresh()
+    })
+  }, [threadId, router])
 
   function mergeMessage(next: MessageRow) {
     setMessages((prev) => {
       if (prev.some((m) => m.id === next.id)) return prev
       return [...prev, next]
     })
+  }
+
+  function replaceTempMessage(tempId: string, real: MessageRow) {
+    setMessages((prev) => {
+      // If the realtime echo already delivered the real row, just drop the temp.
+      if (prev.some((m) => m.id === real.id)) {
+        return prev.filter((m) => m.id !== tempId)
+      }
+      return prev.map((m) => (m.id === tempId ? real : m))
+    })
+  }
+
+  function removeTempMessage(tempId: string) {
+    setMessages((prev) => prev.filter((m) => m.id !== tempId))
   }
 
   useRealtime<Record<string, unknown>>({
@@ -81,7 +100,11 @@ export function MessagingPanel({
         threadId={threadId}
         recipientId={recipientId}
         recipientType={recipientType}
-        onSent={mergeMessage}
+        currentUserId={currentUserId}
+        currentUserType={currentUserType}
+        onOptimisticSend={mergeMessage}
+        onSendConfirmed={replaceTempMessage}
+        onSendFailed={removeTempMessage}
       />
     </>
   )
