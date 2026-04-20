@@ -19,8 +19,15 @@ import {
 } from '@/lib/db/student-payments'
 import { getFeedbackByCohort } from '@/lib/db/feedback'
 import { getTeacherBalance } from '@/lib/db/balances'
-import { getOverdueSubmissions, getSubmissionStatsForStudent } from '@/lib/db/assignments'
-import { getAttendanceTimelineForStudent } from '@/lib/db/attendance'
+import {
+  getOverdueSubmissions,
+  getSubmissionStatsForCohort,
+  type StudentSubmissionStats,
+} from '@/lib/db/assignments'
+import {
+  getAttendanceTimelinesForCohort,
+  type AttendanceTimelineEntry,
+} from '@/lib/db/attendance'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Card } from '@/components/ui/card'
 import { StatusBadge } from '@/components/ui/StatusBadge'
@@ -168,28 +175,37 @@ export default async function CohortStudentsPage({ params }: StudentsPageProps) 
   const cohortArchived = cohort.status === 'archived'
 
   // Prefetch progress data per active enrollment for the Progress dialog.
-  // Capped to active enrollments only — this is the surface where teachers act.
+  // Batched: 2 queries total (1 per table) regardless of student count.
+  const activeStudentIds = activeEnrollments.map((e) => e.students.id)
+  const [timelinesByStudent, statsByStudent] = await Promise.all([
+    getAttendanceTimelinesForCohort(cohortId, activeStudentIds),
+    getSubmissionStatsForCohort(cohortId, activeStudentIds),
+  ])
+
   const progressByEnrollment = new Map<
     string,
     {
       cohortName: string
-      timeline: Awaited<ReturnType<typeof getAttendanceTimelineForStudent>>
-      stats: Awaited<ReturnType<typeof getSubmissionStatsForStudent>>
+      timeline: AttendanceTimelineEntry[]
+      stats: StudentSubmissionStats
     }
   >()
-  await Promise.all(
-    activeEnrollments.map(async (enrollment) => {
-      const [timeline, stats] = await Promise.all([
-        getAttendanceTimelineForStudent(enrollment.students.id, cohortId),
-        getSubmissionStatsForStudent(enrollment.students.id, cohortId),
-      ])
-      progressByEnrollment.set(enrollment.id, {
-        cohortName: cohort.name,
-        timeline,
-        stats,
-      })
-    }),
-  )
+  for (const enrollment of activeEnrollments) {
+    const timeline = timelinesByStudent.get(enrollment.students.id) ?? []
+    const stats =
+      statsByStudent.get(enrollment.students.id) ?? {
+        total_assignments: 0,
+        submitted: 0,
+        on_time: 0,
+        late: 0,
+        missing: 0,
+      }
+    progressByEnrollment.set(enrollment.id, {
+      cohortName: cohort.name,
+      timeline,
+      stats,
+    })
+  }
 
   return (
     <>

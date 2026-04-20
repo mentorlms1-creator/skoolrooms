@@ -292,6 +292,77 @@ export async function getAttendanceTimelineForStudent(
 }
 
 // -----------------------------------------------------------------------------
+// getAttendanceTimelinesForCohort — Batched version: returns a per-student
+// timeline for every studentId in one go. Fetches sessions once and all
+// attendance rows for the given students in a single query.
+// -----------------------------------------------------------------------------
+export async function getAttendanceTimelinesForCohort(
+  cohortId: string,
+  studentIds: string[],
+): Promise<Map<string, AttendanceTimelineEntry[]>> {
+  const result = new Map<string, AttendanceTimelineEntry[]>()
+  if (studentIds.length === 0) return result
+
+  const supabase = createAdminClient()
+
+  const { data: sessions } = await supabase
+    .from('class_sessions')
+    .select('id, scheduled_at, cancelled_at')
+    .eq('cohort_id', cohortId)
+    .is('deleted_at', null)
+    .order('scheduled_at', { ascending: true })
+
+  const typedSessions = (sessions ?? []) as Array<{
+    id: string
+    scheduled_at: string
+    cancelled_at: string | null
+  }>
+
+  if (typedSessions.length === 0) {
+    for (const sid of studentIds) result.set(sid, [])
+    return result
+  }
+
+  const sessionIds = typedSessions.map((s) => s.id)
+
+  const { data: attendanceRows } = await supabase
+    .from('attendance')
+    .select('class_session_id, student_id, present')
+    .in('student_id', studentIds)
+    .in('class_session_id', sessionIds)
+
+  // Map<studentId, Map<sessionId, present>>
+  const presentByStudent = new Map<string, Map<string, boolean>>()
+  for (const row of (attendanceRows ?? []) as Array<{
+    class_session_id: string
+    student_id: string
+    present: boolean
+  }>) {
+    let inner = presentByStudent.get(row.student_id)
+    if (!inner) {
+      inner = new Map()
+      presentByStudent.set(row.student_id, inner)
+    }
+    inner.set(row.class_session_id, row.present)
+  }
+
+  for (const sid of studentIds) {
+    const inner = presentByStudent.get(sid)
+    result.set(
+      sid,
+      typedSessions.map((s) => ({
+        session_id: s.id,
+        scheduled_at: s.scheduled_at,
+        cancelled: s.cancelled_at !== null,
+        present: inner?.get(s.id) ?? false,
+      })),
+    )
+  }
+
+  return result
+}
+
+// -----------------------------------------------------------------------------
 // getAttendanceByStudentAndSession — Single-row lookup used by edit paths.
 // Avoids fetching the whole class roster just to find one student's record.
 // -----------------------------------------------------------------------------

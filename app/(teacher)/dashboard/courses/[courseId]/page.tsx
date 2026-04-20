@@ -14,7 +14,7 @@ import { requireTeacher } from '@/lib/auth/guards'
 import { getCourseById } from '@/lib/db/courses'
 import {
   getCohortsByCourse,
-  getActiveEnrollmentCount,
+  getActiveEnrollmentCounts,
   computeCohortDisplayStatus,
 } from '@/lib/db/cohorts'
 import { PageHeader } from '@/components/ui/PageHeader'
@@ -37,22 +37,22 @@ type CourseDetailPageProps = {
 export default async function CourseDetailPage({ params }: CourseDetailPageProps) {
   const { courseId } = await params
   const teacher = await requireTeacher()
-  const course = await getCourseById(courseId)
+
+  const [course, cohorts] = await Promise.all([
+    getCourseById(courseId),
+    getCohortsByCourse(courseId),
+  ])
 
   if (!course || course.teacher_id !== teacher.id) {
     notFound()
   }
 
-  const cohorts = await getCohortsByCourse(courseId)
-
-  // Compute display status and enrollment count for each cohort
-  const cohortDisplayData = await Promise.all(
-    cohorts.map(async (cohort) => {
-      const enrollmentCount = await getActiveEnrollmentCount(cohort.id)
-      const displayStatus = computeCohortDisplayStatus(cohort, enrollmentCount)
-      return { cohort, enrollmentCount, displayStatus }
-    }),
-  )
+  const enrollmentCounts = await getActiveEnrollmentCounts(cohorts.map((c) => c.id))
+  const cohortDisplayData = cohorts.map((cohort) => {
+    const enrollmentCount = enrollmentCounts.get(cohort.id) ?? 0
+    const displayStatus = computeCohortDisplayStatus(cohort, enrollmentCount)
+    return { cohort, enrollmentCount, displayStatus }
+  })
 
   return (
     <>

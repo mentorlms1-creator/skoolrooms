@@ -295,6 +295,30 @@ export async function getActiveEnrollmentCount(
 }
 
 // -----------------------------------------------------------------------------
+// getActiveEnrollmentCounts — Batch: count active enrollments for many cohorts
+// in a single query. Returns Map<cohortId, count> with 0 for any missing.
+// -----------------------------------------------------------------------------
+export async function getActiveEnrollmentCounts(
+  cohortIds: string[]
+): Promise<Map<string, number>> {
+  const result = new Map<string, number>()
+  if (cohortIds.length === 0) return result
+  for (const id of cohortIds) result.set(id, 0)
+
+  const supabase = createAdminClient()
+  const { data } = await supabase
+    .from('enrollments')
+    .select('cohort_id')
+    .in('cohort_id', cohortIds)
+    .eq('status', 'active')
+
+  for (const row of (data ?? []) as Array<{ cohort_id: string }>) {
+    result.set(row.cohort_id, (result.get(row.cohort_id) ?? 0) + 1)
+  }
+  return result
+}
+
+// -----------------------------------------------------------------------------
 // duplicateCohort — Create a copy of a cohort with fresh dates + invite_token
 // Copies settings only; class_sessions/enrollments/announcements start empty.
 // start_date = today+30d, end_date = today+60d, status='draft'

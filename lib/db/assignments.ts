@@ -524,6 +524,93 @@ export async function getSubmissionStatsForStudent(
 }
 
 // -----------------------------------------------------------------------------
+// getSubmissionStatsForCohort — Batched version of getSubmissionStatsForStudent.
+// Fetches cohort assignments once and all submissions for the given studentIds
+// in one query, then buckets per-student client-side.
+// -----------------------------------------------------------------------------
+export async function getSubmissionStatsForCohort(
+  cohortId: string,
+  studentIds: string[],
+): Promise<Map<string, StudentSubmissionStats>> {
+  const result = new Map<string, StudentSubmissionStats>()
+  const zero: StudentSubmissionStats = {
+    total_assignments: 0,
+    submitted: 0,
+    on_time: 0,
+    late: 0,
+    missing: 0,
+  }
+  if (studentIds.length === 0) return result
+
+  const supabase = createAdminClient()
+
+  const { data: assignments } = await supabase
+    .from('assignments')
+    .select('id, due_date')
+    .eq('cohort_id', cohortId)
+    .is('deleted_at', null)
+
+  const typedAssignments = (assignments ?? []) as Array<{ id: string; due_date: string }>
+
+  if (typedAssignments.length === 0) {
+    for (const sid of studentIds) result.set(sid, { ...zero })
+    return result
+  }
+
+  const assignmentIds = typedAssignments.map((a) => a.id)
+
+  const { data: subs } = await supabase
+    .from('assignment_submissions')
+    .select('assignment_id, student_id, submitted_at')
+    .in('student_id', studentIds)
+    .in('assignment_id', assignmentIds)
+
+  // Map<studentId, Map<assignmentId, submitted_at>>
+  const subByStudent = new Map<string, Map<string, string>>()
+  for (const row of (subs ?? []) as Array<{
+    assignment_id: string
+    student_id: string
+    submitted_at: string
+  }>) {
+    let inner = subByStudent.get(row.student_id)
+    if (!inner) {
+      inner = new Map()
+      subByStudent.set(row.student_id, inner)
+    }
+    inner.set(row.assignment_id, row.submitted_at)
+  }
+
+  const now = new Date().toISOString()
+
+  for (const sid of studentIds) {
+    const inner = subByStudent.get(sid)
+    let submitted = 0
+    let onTime = 0
+    let late = 0
+    let missing = 0
+    for (const a of typedAssignments) {
+      const submittedAt = inner?.get(a.id)
+      if (submittedAt) {
+        submitted += 1
+        if (submittedAt <= a.due_date) onTime += 1
+        else late += 1
+      } else if (a.due_date < now) {
+        missing += 1
+      }
+    }
+    result.set(sid, {
+      total_assignments: typedAssignments.length,
+      submitted,
+      on_time: onTime,
+      late,
+      missing,
+    })
+  }
+
+  return result
+}
+
+// -----------------------------------------------------------------------------
 // getOverdueSubmissions — Students who haven't submitted past due_date.
 // Uses two-step approach: fetch past-due assignments, then find enrolled
 // students without submissions.
