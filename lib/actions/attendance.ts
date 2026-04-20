@@ -13,6 +13,7 @@ import {
   upsertAttendance,
   isAttendanceEditable,
   getAttendanceByCohortSession,
+  getAttendanceByStudentAndSession,
   logAttendanceEdit,
 } from '@/lib/db/attendance'
 import { checkPlanLock, getPlanLockError } from '@/lib/auth/plan-guard'
@@ -178,8 +179,7 @@ export async function updateAttendanceAction(
   }
 
   // Edits past the 24h window require a reason — every late edit is audited.
-  const existingRecords = await getAttendanceByCohortSession(sessionId)
-  const existingRecord = existingRecords.find((r) => r.student_id === studentId)
+  const existingRecord = await getAttendanceByStudentAndSession(sessionId, studentId)
   const isLateEdit = existingRecord && !isAttendanceEditable(existingRecord.marked_at)
   const trimmedReason = reason?.trim() ?? ''
 

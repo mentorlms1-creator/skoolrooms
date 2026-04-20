@@ -1,12 +1,13 @@
 'use client'
 
-import { useEffect, useMemo, useState, useTransition } from 'react'
+import { useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Search, MessageSquare } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
 import { startThreadWithStudentAction } from '@/lib/actions/messages'
 import { ROUTES } from '@/constants/routes'
+import { getInitials } from '@/lib/utils'
 
 export type NewMessageStudent = {
   id: string
@@ -33,15 +34,6 @@ export function NewMessageSearch({ students }: Props) {
         s.email.toLowerCase().includes(q),
     )
   }, [query, students])
-
-  useEffect(() => {
-    if (!openingId) return
-    // reset when transition finishes
-    if (!isPending) {
-      const t = setTimeout(() => setOpeningId(null), 200)
-      return () => clearTimeout(t)
-    }
-  }, [isPending, openingId])
 
   function handlePick(studentId: string) {
     setOpeningId(studentId)
@@ -84,12 +76,7 @@ export function NewMessageSearch({ students }: Props) {
       ) : (
         <ul className="divide-y divide-border/40 rounded-2xl border border-border/60 bg-card overflow-hidden">
           {filtered.map((student) => {
-            const initials = student.name
-              .split(' ')
-              .map((w) => w[0])
-              .slice(0, 2)
-              .join('')
-              .toUpperCase()
+            const initials = getInitials(student.name)
             const isOpening = openingId === student.id
             return (
               <li key={student.id}>

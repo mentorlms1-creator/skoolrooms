@@ -292,6 +292,24 @@ export async function getAttendanceTimelineForStudent(
 }
 
 // -----------------------------------------------------------------------------
+// getAttendanceByStudentAndSession — Single-row lookup used by edit paths.
+// Avoids fetching the whole class roster just to find one student's record.
+// -----------------------------------------------------------------------------
+export async function getAttendanceByStudentAndSession(
+  sessionId: string,
+  studentId: string,
+): Promise<AttendanceRow | null> {
+  const supabase = createAdminClient()
+  const { data } = await supabase
+    .from('attendance')
+    .select('*')
+    .eq('class_session_id', sessionId)
+    .eq('student_id', studentId)
+    .maybeSingle()
+  return (data as AttendanceRow | null) ?? null
+}
+
+// -----------------------------------------------------------------------------
 // Audit row for an attendance value changed past the 24-hour edit window.
 // -----------------------------------------------------------------------------
 export type AttendanceEditRow = {

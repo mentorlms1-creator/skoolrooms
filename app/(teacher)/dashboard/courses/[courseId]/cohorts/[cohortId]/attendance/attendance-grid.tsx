@@ -73,7 +73,6 @@ export function AttendanceGrid({
   const canInteract = editable || pastEditWindow
 
   function toggleStudent(studentId: string) {
-    if (!editable) return
     setAttendance((prev) => ({
       ...prev,
       [studentId]: !prev[studentId],

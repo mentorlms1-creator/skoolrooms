@@ -10,7 +10,7 @@ import { MessageSquare } from 'lucide-react'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { formatPKT } from '@/lib/time/pkt'
-import { cn } from '@/lib/utils'
+import { cn, getInitials } from '@/lib/utils'
 import type { ThreadSummary } from '@/lib/db/messages'
 
 // -----------------------------------------------------------------------------
@@ -46,12 +46,7 @@ export function ThreadList({ threads, baseHref }: ThreadListProps) {
       {threads.map((thread) => {
         const threadHref = `${baseHref}/${thread.thread_id}`
         const isActive = pathname === threadHref
-        const initials = thread.other_party_name
-          .split(' ')
-          .map((w: string) => w[0])
-          .slice(0, 2)
-          .join('')
-          .toUpperCase()
+        const initials = getInitials(thread.other_party_name)
 
         return (
           <li key={thread.thread_id}>

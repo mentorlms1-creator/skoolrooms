@@ -12,6 +12,7 @@ import {
   sendMessage,
   markThreadRead,
 } from '@/lib/db/messages'
+import { teacherHasEnrollmentWithStudent } from '@/lib/db/enrollments'
 import { createNotification } from '@/lib/db/notifications'
 import { sendEmail } from '@/lib/email/sender'
 import { ROUTES } from '@/constants/routes'
@@ -33,21 +34,6 @@ async function getAuthenticatedStudent() {
   const { data: { user }, error } = await supabase.auth.getUser()
   if (error || !user) return null
   return getStudentByAuthId(user.id)
-}
-
-async function enrollmentExists(teacherId: string, studentId: string): Promise<boolean> {
-  const supabase = createAdminClient()
-
-  // Join through cohorts to find any enrollment between this teacher and student
-  const { data: enrollment } = await supabase
-    .from('enrollments')
-    .select('id, cohorts!inner(teacher_id)')
-    .eq('student_id', studentId)
-    .eq('cohorts.teacher_id', teacherId)
-    .limit(1)
-    .maybeSingle()
-
-  return !!enrollment
 }
 
 // -----------------------------------------------------------------------------
@@ -88,7 +74,7 @@ export async function sendMessageAction(
     studentId = recipientId
 
     // Validate enrollment relationship
-    const connected = await enrollmentExists(teacherId, studentId)
+    const connected = await teacherHasEnrollmentWithStudent(teacherId, studentId)
     if (!connected) {
       return { success: false, error: 'NOT_CONNECTED', code: 'NOT_CONNECTED' }
     }
@@ -104,14 +90,13 @@ export async function sendMessageAction(
     studentId = senderId
 
     // Validate enrollment relationship
-    const connected = await enrollmentExists(teacherId, studentId)
+    const connected = await teacherHasEnrollmentWithStudent(teacherId, studentId)
     if (!connected) {
       return { success: false, error: 'NOT_CONNECTED', code: 'NOT_CONNECTED' }
     }
   }
 
-  // Get or create thread_id
-  const threadId = await getOrCreateThreadId(teacherId, studentId)
+  const { threadId } = await getOrCreateThreadId(teacherId, studentId)
 
   // Insert message
   const message = await sendMessage({
@@ -200,25 +185,13 @@ export async function startThreadWithStudentAction(
   const teacher = await getAuthenticatedTeacher()
   if (!teacher) return { success: false, error: 'Not authenticated.' }
 
-  const connected = await enrollmentExists(teacher.id as string, studentId)
+  const connected = await teacherHasEnrollmentWithStudent(teacher.id as string, studentId)
   if (!connected) {
     return { success: false, error: 'You can only message students enrolled in your cohorts.', code: 'NOT_CONNECTED' }
   }
 
-  // Probe for an existing thread before minting a fresh UUID, so the client
-  // knows whether to include the `?with=` fallback on navigation.
-  const supabase = createAdminClient()
-  const { data: existing } = await supabase
-    .from('direct_messages')
-    .select('thread_id')
-    .or(
-      `and(sender_id.eq.${teacher.id},recipient_id.eq.${studentId}),and(sender_id.eq.${studentId},recipient_id.eq.${teacher.id})`,
-    )
-    .limit(1)
-    .maybeSingle()
-
-  const threadId = existing?.thread_id ?? (await getOrCreateThreadId(teacher.id as string, studentId))
-  return { success: true, data: { threadId, studentId, isNew: !existing } }
+  const { threadId, isNew } = await getOrCreateThreadId(teacher.id as string, studentId)
+  return { success: true, data: { threadId, studentId, isNew } }
 }
 
 // -----------------------------------------------------------------------------

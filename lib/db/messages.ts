@@ -52,7 +52,7 @@ export type SendMessageInput = {
 export async function getOrCreateThreadId(
   teacherId: string,
   studentId: string,
-): Promise<string> {
+): Promise<{ threadId: string; isNew: boolean }> {
   const supabase = createAdminClient()
 
   const { data } = await supabase
@@ -62,18 +62,14 @@ export async function getOrCreateThreadId(
       `and(sender_id.eq.${teacherId},recipient_id.eq.${studentId}),and(sender_id.eq.${studentId},recipient_id.eq.${teacherId})`,
     )
     .limit(1)
-    .single()
+    .maybeSingle()
 
   if (data?.thread_id) {
-    return data.thread_id
+    return { threadId: data.thread_id, isNew: false }
   }
 
-  // Generate a new UUID for this fresh thread
   const { data: uuidRow } = await supabase.rpc('gen_random_uuid' as string)
-  if (uuidRow) return uuidRow as string
-
-  // Fallback: generate client-side using crypto
-  return crypto.randomUUID()
+  return { threadId: (uuidRow as string | null) ?? crypto.randomUUID(), isNew: true }
 }
 
 // -----------------------------------------------------------------------------
