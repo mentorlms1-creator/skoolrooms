@@ -5,7 +5,7 @@
  * student count, and display status. Links to cohort detail page.
  */
 
-import Link from 'next/link'
+import { Link } from 'next-view-transitions'
 import { Card } from '@/components/ui/card'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { ROUTES } from '@/constants/routes'

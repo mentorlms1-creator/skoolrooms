@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
+import { Link } from 'next-view-transitions'
 import Image from 'next/image'
 import { SignupForm } from '@/components/auth/SignupForm'
 import { ROUTES } from '@/constants/routes'

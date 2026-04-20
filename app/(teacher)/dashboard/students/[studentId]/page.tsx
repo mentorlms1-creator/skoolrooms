@@ -6,7 +6,7 @@
  */
 
 import type { Metadata } from 'next'
-import Link from 'next/link'
+import { Link } from 'next-view-transitions'
 import { notFound } from 'next/navigation'
 import { User, Mail, Phone, Calendar, BookOpen, CreditCard, Users as GuardianIcon } from 'lucide-react'
 import { requireTeacher } from '@/lib/auth/guards'

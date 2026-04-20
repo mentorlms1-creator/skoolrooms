@@ -6,7 +6,7 @@
  */
 
 import type { Metadata } from 'next'
-import Link from 'next/link'
+import { Link } from 'next-view-transitions'
 import { AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react'
 import { getAllPendingPayouts, getPayoutHistoryPage } from '@/lib/db/payouts'
 import { formatPKT } from '@/lib/time/pkt'

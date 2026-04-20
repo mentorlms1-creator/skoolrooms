@@ -12,7 +12,7 @@
  * 3. White sidebar + white content cards floating inside the gray container
  */
 
-import Link from 'next/link'
+import { Link } from 'next-view-transitions'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { LogOut, Plus, Search } from 'lucide-react'

@@ -6,7 +6,7 @@
  */
 
 import type { Metadata } from 'next'
-import Link from 'next/link'
+import { Link } from 'next-view-transitions'
 import { BookOpen, Calendar, Banknote, ArrowRight } from 'lucide-react'
 import { requireStudent } from '@/lib/auth/guards'
 import { getEnrollmentsByStudentWithTeacher } from '@/lib/db/enrollments'

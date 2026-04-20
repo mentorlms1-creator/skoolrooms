@@ -3,7 +3,7 @@
  * Minimal wrapper with "Powered by Skool Rooms" footer.
  */
 
-import Link from 'next/link'
+import { Link } from 'next-view-transitions'
 import { ROUTES } from '@/constants/routes'
 
 export default function TeacherPublicLayout({

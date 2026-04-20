@@ -5,7 +5,7 @@
  */
 
 import type { Metadata } from 'next'
-import Link from 'next/link'
+import { Link } from 'next-view-transitions'
 import { ChevronRight, Gift, Quote, Receipt } from 'lucide-react'
 import { requireTeacher } from '@/lib/auth/guards'
 import { PageHeader } from '@/components/ui/PageHeader'

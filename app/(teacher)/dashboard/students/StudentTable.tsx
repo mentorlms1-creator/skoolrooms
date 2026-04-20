@@ -7,7 +7,7 @@
  * advances via the DataTable footer's "Newer / Older" buttons.
  */
 
-import Link from 'next/link'
+import { Link } from 'next-view-transitions'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import type { ColumnDef } from '@tanstack/react-table'

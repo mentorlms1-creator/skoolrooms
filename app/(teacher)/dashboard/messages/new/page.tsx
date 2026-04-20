@@ -2,7 +2,7 @@
 // app/(teacher)/dashboard/messages/new/page.tsx — Start a new message
 // =============================================================================
 
-import Link from 'next/link'
+import { Link } from 'next-view-transitions'
 import { ArrowLeft } from 'lucide-react'
 import { requireTeacher } from '@/lib/auth/guards'
 import { searchTeacherStudents } from '@/lib/db/enrollments'

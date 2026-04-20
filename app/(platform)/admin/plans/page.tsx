@@ -3,7 +3,7 @@ import { getAllPlans, getGrandfatheredTeachers, getSubscriberCountByPlan } from 
 import { ROUTES } from '@/constants/routes'
 import { Card, CardContent } from '@/components/ui/card'
 import { StatusBadge } from '@/components/ui/StatusBadge'
-import Link from 'next/link'
+import { Link } from 'next-view-transitions'
 import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 

@@ -7,7 +7,7 @@
  * Hidden once all steps are complete (onboardingCompleted = true).
  */
 
-import Link from 'next/link'
+import { Link } from 'next-view-transitions'
 import { useTeacherContext } from '@/providers/TeacherProvider'
 import { Card } from '@/components/ui/card'
 import { ROUTES } from '@/constants/routes'

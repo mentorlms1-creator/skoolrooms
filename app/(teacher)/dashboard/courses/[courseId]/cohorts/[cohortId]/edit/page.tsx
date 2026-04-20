@@ -5,7 +5,7 @@
  * renders the client-side edit form.
  */
 
-import Link from 'next/link'
+import { Link } from 'next-view-transitions'
 import { notFound } from 'next/navigation'
 import { Tag } from 'lucide-react'
 

@@ -1,6 +1,6 @@
 'use client'
 
-import Link from 'next/link'
+import { Link } from 'next-view-transitions'
 import Image from 'next/image'
 import { Menu } from 'lucide-react'
 import { ROUTES } from '@/constants/routes'

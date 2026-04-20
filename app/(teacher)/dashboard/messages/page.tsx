@@ -2,7 +2,7 @@
 // app/(teacher)/dashboard/messages/page.tsx — Teacher messages list
 // =============================================================================
 
-import Link from 'next/link'
+import { Link } from 'next-view-transitions'
 import { PenSquare } from 'lucide-react'
 import { requireTeacher } from '@/lib/auth/guards'
 import { getThreadsForTeacherWithNames } from '@/lib/db/messages'

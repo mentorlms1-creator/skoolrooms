@@ -12,7 +12,7 @@
  * Shows in teacher dashboard layout above content.
  */
 
-import Link from 'next/link'
+import { Link } from 'next-view-transitions'
 import { useTeacherContext } from '@/providers/TeacherProvider'
 import { ROUTES } from '@/constants/routes'
 import { TIMING } from '@/constants/plans'

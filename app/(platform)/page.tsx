@@ -3,7 +3,7 @@
  * Server Component. Hero, features, and footer.
  */
 
-import Link from 'next/link'
+import { Link } from 'next-view-transitions'
 import { ROUTES } from '@/constants/routes'
 import { PublicNavbar } from '@/components/public/PublicNavbar'
 

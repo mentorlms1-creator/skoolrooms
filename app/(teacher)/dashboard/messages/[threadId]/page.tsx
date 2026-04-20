@@ -2,7 +2,7 @@
 // app/(teacher)/dashboard/messages/[threadId]/page.tsx — Teacher thread view
 // =============================================================================
 
-import Link from 'next/link'
+import { Link } from 'next-view-transitions'
 import { redirect } from 'next/navigation'
 import { PenSquare } from 'lucide-react'
 import { requireTeacher } from '@/lib/auth/guards'

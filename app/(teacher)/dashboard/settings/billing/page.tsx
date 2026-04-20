@@ -6,7 +6,7 @@
  */
 
 import type { Metadata } from 'next'
-import Link from 'next/link'
+import { Link } from 'next-view-transitions'
 import { requireTeacher } from '@/lib/auth/guards'
 import { getTeacherSubscriptions } from '@/lib/db/subscriptions'
 import { getTeacherBalance, getTeacherPayouts } from '@/lib/db/balances'

@@ -4,7 +4,7 @@
 // components/messaging/ThreadList.tsx — List of message threads
 // =============================================================================
 
-import Link from 'next/link'
+import { Link } from 'next-view-transitions'
 import { usePathname } from 'next/navigation'
 import { MessageSquare } from 'lucide-react'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'

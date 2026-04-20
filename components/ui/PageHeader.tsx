@@ -3,7 +3,7 @@
  * Server-compatible (no 'use client' needed).
  */
 
-import Link from 'next/link'
+import { Link } from 'next-view-transitions'
 import { ArrowLeft } from 'lucide-react'
 import { cn } from '@/lib/utils'
 

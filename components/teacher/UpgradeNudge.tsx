@@ -9,7 +9,7 @@
  *   - danger: red tones (at limit)
  */
 
-import Link from 'next/link'
+import { Link } from 'next-view-transitions'
 import { ROUTES } from '@/constants/routes'
 
 type UpgradeNudgeProps = {

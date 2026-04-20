@@ -124,3 +124,38 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
+/* ---------------------------------------------------------------------------
+   View Transitions — smooth cross-fade between pages. Works via React's
+   ViewTransition wrapper in layouts; Next.js triggers startViewTransition()
+   on every soft navigation. Respects prefers-reduced-motion.
+--------------------------------------------------------------------------- */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 180ms;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+::view-transition-old(root) {
+  animation-name: st-fade-out;
+}
+
+::view-transition-new(root) {
+  animation-name: st-fade-in;
+}
+
+@keyframes st-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes st-fade-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 0ms;
+  }
+}

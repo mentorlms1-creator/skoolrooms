@@ -1,6 +1,6 @@
 'use client'
 
-import Link from 'next/link'
+import { Link } from 'next-view-transitions'
 import type { ActivityLogItem } from '@/lib/db/admin'
 import { formatPKT } from '@/lib/time/pkt'
 import { ROUTES } from '@/constants/routes'

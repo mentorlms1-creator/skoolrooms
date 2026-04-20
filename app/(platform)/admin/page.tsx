@@ -19,7 +19,7 @@ import {
   getRevenueByCohort,
   getTopAdminAlert,
 } from '@/lib/db/admin'
-import Link from 'next/link'
+import { Link } from 'next-view-transitions'
 import { formatPKT } from '@/lib/time/pkt'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { DateRangeFilter } from '@/components/ui/DateRangeFilter'

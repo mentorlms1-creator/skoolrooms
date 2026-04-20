@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import { Link } from 'next-view-transitions'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { requireAdmin } from '@/lib/auth/guards'
 import { getActivityLogCursor } from '@/lib/db/admin'

@@ -3,7 +3,7 @@
 import type { GrandfatheredTeacherRow } from '@/lib/db/admin-plans'
 import { formatPKT } from '@/lib/time/pkt'
 import { ROUTES } from '@/constants/routes'
-import Link from 'next/link'
+import { Link } from 'next-view-transitions'
 import { Button } from '@/components/ui/button'
 import { useState } from 'react'
 

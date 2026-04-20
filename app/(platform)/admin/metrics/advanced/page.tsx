@@ -4,7 +4,7 @@ import {
   getCohortRetentionTableCached,
 } from '@/lib/db/admin-advanced-metrics'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import Link from 'next/link'
+import { Link } from 'next-view-transitions'
 import { ArrowLeft } from 'lucide-react'
 import { NrrCards } from './NrrCards'
 import { CohortRetentionTable } from './CohortRetentionTable'

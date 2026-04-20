@@ -3,7 +3,7 @@ import { getMrrTimeSeries, getAdminKpiMetrics } from '@/lib/db/admin-metrics'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { MrrChart } from './MrrChart'
 import { KpiCards } from './KpiCards'
-import Link from 'next/link'
+import { Link } from 'next-view-transitions'
 
 type SearchParams = { months?: string }
 

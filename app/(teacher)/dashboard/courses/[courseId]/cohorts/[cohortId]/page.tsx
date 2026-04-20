@@ -5,7 +5,7 @@
  * enrollment count, and links to edit and schedule pages.
  */
 
-import Link from 'next/link'
+import { Link } from 'next-view-transitions'
 import { notFound } from 'next/navigation'
 import { requireTeacher } from '@/lib/auth/guards'
 import {

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
+import { Link } from 'next-view-transitions'
 import Image from 'next/image'
 import { ForgotPasswordForm } from '@/components/auth/ForgotPasswordForm'
 import { ROUTES } from '@/constants/routes'

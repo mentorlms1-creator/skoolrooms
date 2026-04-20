@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "sonner";
+import { ViewTransitions } from "next-view-transitions";
 import "./globals.css";
 
 const font = Plus_Jakarta_Sans({
@@ -32,7 +33,9 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${font.variable} font-sans bg-background text-foreground antialiased`}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
-          {children}
+          <ViewTransitions>
+            {children}
+          </ViewTransitions>
           <Toaster richColors position="top-right" />
         </ThemeProvider>
       </body>
