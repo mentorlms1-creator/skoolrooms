@@ -292,6 +292,70 @@ export async function getAttendanceTimelineForStudent(
 }
 
 // -----------------------------------------------------------------------------
+// Audit row for an attendance value changed past the 24-hour edit window.
+// -----------------------------------------------------------------------------
+export type AttendanceEditRow = {
+  id: string
+  attendance_id: string
+  teacher_id: string
+  previous_present: boolean
+  new_present: boolean
+  reason: string
+  edited_at: string
+}
+
+export async function logAttendanceEdit(input: {
+  attendanceId: string
+  teacherId: string
+  previousPresent: boolean
+  newPresent: boolean
+  reason: string
+}): Promise<AttendanceEditRow | null> {
+  const supabase = createAdminClient()
+  const { data, error } = await supabase
+    .from('attendance_edits')
+    .insert({
+      attendance_id: input.attendanceId,
+      teacher_id: input.teacherId,
+      previous_present: input.previousPresent,
+      new_present: input.newPresent,
+      reason: input.reason,
+    })
+    .select('*')
+    .single()
+
+  if (error || !data) {
+    console.error('[logAttendanceEdit]', error?.message)
+    return null
+  }
+  return data as AttendanceEditRow
+}
+
+export async function getAttendanceEditsBySessionIds(
+  sessionIds: string[],
+): Promise<Map<string, AttendanceEditRow[]>> {
+  if (sessionIds.length === 0) return new Map()
+  const supabase = createAdminClient()
+
+  const { data, error } = await supabase
+    .from('attendance_edits')
+    .select('*, attendance!inner(class_session_id)')
+    .in('attendance.class_session_id', sessionIds)
+    .order('edited_at', { ascending: false })
+
+  if (error || !data) return new Map()
+
+  const map = new Map<string, AttendanceEditRow[]>()
+  for (const row of data as Array<AttendanceEditRow & { attendance: { class_session_id: string } }>) {
+    const sid = row.attendance.class_session_id
+    const list = map.get(sid) ?? []
+    list.push(row)
+    map.set(sid, list)
+  }
+  return map
+}
+
+// -----------------------------------------------------------------------------
 // bulkUpsertAttendance — Batch upsert for marking attendance for a whole class.
 // Uses .upsert() with onConflict on the UNIQUE(class_session_id, student_id)
 // constraint.

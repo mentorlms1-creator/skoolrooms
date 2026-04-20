@@ -534,6 +534,53 @@ export async function listEnrollmentsByCohortPaginated(input: {
 }
 
 // -----------------------------------------------------------------------------
+// searchTeacherStudents — Distinct student list for the teacher's message
+// composer. Filters by name/email ilike when `q` is set, capped at `limit`.
+// -----------------------------------------------------------------------------
+export type TeacherStudentSummary = {
+  id: string
+  name: string
+  email: string
+}
+
+export async function searchTeacherStudents(input: {
+  teacherId: string
+  q?: string | null
+  limit?: number
+}): Promise<TeacherStudentSummary[]> {
+  const supabase = createAdminClient()
+  const limit = Math.min(Math.max(input.limit ?? 20, 1), 50)
+
+  let query = supabase
+    .from('enrollments')
+    .select(`
+      students!inner(id, name, email),
+      cohorts!inner(teacher_id)
+    `)
+    .eq('cohorts.teacher_id', input.teacherId)
+    .in('status', ['active', 'pending', 'completed', 'withdrawn'])
+
+  if (input.q && input.q.trim()) {
+    const term = input.q.trim().replace(/[%_]/g, '\\$&')
+    query = query.or(
+      `name.ilike.%${term}%,email.ilike.%${term}%`,
+      { foreignTable: 'students' },
+    )
+  }
+
+  const { data, error } = await query.limit(limit * 4) // overfetch, dedupe below
+  if (error || !data) return []
+
+  const seen = new Map<string, TeacherStudentSummary>()
+  for (const row of data as unknown as Array<{ students: TeacherStudentSummary }>) {
+    const s = row.students
+    if (!seen.has(s.id)) seen.set(s.id, s)
+    if (seen.size >= limit) break
+  }
+  return [...seen.values()].sort((a, b) => a.name.localeCompare(b.name))
+}
+
+// -----------------------------------------------------------------------------
 // getStudentsByTeacherPage — Cursor-paginated teacher's "All Students" view.
 // -----------------------------------------------------------------------------
 export async function getStudentsByTeacherPage(input: {

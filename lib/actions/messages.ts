@@ -185,6 +185,31 @@ export async function sendMessageAction(
 }
 
 // -----------------------------------------------------------------------------
+// startThreadWithStudentAction — Teacher-initiated thread open.
+// Verifies enrollment relationship, ensures a thread id exists, and returns
+// it for the client to redirect into /dashboard/messages/[threadId].
+// -----------------------------------------------------------------------------
+
+export async function startThreadWithStudentAction(
+  studentId: string,
+): Promise<ApiResponse<{ threadId: string }>> {
+  if (!studentId) {
+    return { success: false, error: 'Student is required.' }
+  }
+
+  const teacher = await getAuthenticatedTeacher()
+  if (!teacher) return { success: false, error: 'Not authenticated.' }
+
+  const connected = await enrollmentExists(teacher.id as string, studentId)
+  if (!connected) {
+    return { success: false, error: 'You can only message students enrolled in your cohorts.', code: 'NOT_CONNECTED' }
+  }
+
+  const threadId = await getOrCreateThreadId(teacher.id as string, studentId)
+  return { success: true, data: { threadId } }
+}
+
+// -----------------------------------------------------------------------------
 // markThreadReadAction — Mark all unread messages in a thread as read
 // -----------------------------------------------------------------------------
 

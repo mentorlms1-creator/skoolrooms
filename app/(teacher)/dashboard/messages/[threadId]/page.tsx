@@ -2,7 +2,9 @@
 // app/(teacher)/dashboard/messages/[threadId]/page.tsx — Teacher thread view
 // =============================================================================
 
+import Link from 'next/link'
 import { redirect } from 'next/navigation'
+import { PenSquare } from 'lucide-react'
 import { requireTeacher } from '@/lib/auth/guards'
 import {
   getThreadsForTeacherWithNames,
@@ -50,6 +52,13 @@ export default async function TeacherThreadPage({ params }: Props) {
         <div className="flex h-[calc(100vh-280px)] min-h-[400px]">
           {/* Thread list sidebar */}
           <div className="w-72 flex-shrink-0 border-r border-border/60 overflow-y-auto">
+            <Link
+              href={ROUTES.TEACHER.messagesNew}
+              className="flex items-center gap-2 px-4 py-3 border-b border-border/40 text-sm font-medium text-primary hover:bg-primary/5 transition-colors"
+            >
+              <PenSquare className="h-4 w-4" />
+              New message
+            </Link>
             <ThreadList
               threads={threads}
               baseHref={ROUTES.TEACHER.messages}

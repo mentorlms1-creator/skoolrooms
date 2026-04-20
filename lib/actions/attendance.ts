@@ -13,6 +13,7 @@ import {
   upsertAttendance,
   isAttendanceEditable,
   getAttendanceByCohortSession,
+  logAttendanceEdit,
 } from '@/lib/db/attendance'
 import { checkPlanLock, getPlanLockError } from '@/lib/auth/plan-guard'
 import type { ApiResponse } from '@/types/api'
@@ -138,6 +139,7 @@ export async function updateAttendanceAction(
   sessionId: string,
   studentId: string,
   present: boolean,
+  reason?: string,
 ): Promise<ApiResponse<null>> {
   const teacher = await getAuthenticatedTeacher()
   if (!teacher) {
@@ -175,20 +177,34 @@ export async function updateAttendanceAction(
     }
   }
 
-  // Check 24h edit window — if there's an existing record, verify it's editable
+  // Edits past the 24h window require a reason — every late edit is audited.
   const existingRecords = await getAttendanceByCohortSession(sessionId)
   const existingRecord = existingRecords.find((r) => r.student_id === studentId)
+  const isLateEdit = existingRecord && !isAttendanceEditable(existingRecord.marked_at)
+  const trimmedReason = reason?.trim() ?? ''
 
-  if (existingRecord && !isAttendanceEditable(existingRecord.marked_at)) {
+  if (isLateEdit && trimmedReason.length < 3) {
     return {
       success: false,
-      error: 'Attendance can only be edited within 24 hours of being marked.',
+      error: 'A reason (at least 3 characters) is required to edit attendance past the 24-hour window.',
+      code: 'UNLOCK_REQUIRED',
     }
   }
 
+  const previousPresent = existingRecord?.present ?? null
   const result = await upsertAttendance(sessionId, studentId, present)
   if (!result) {
     return { success: false, error: 'Failed to update attendance. Please try again.' }
+  }
+
+  if (isLateEdit && existingRecord && previousPresent !== null && previousPresent !== present) {
+    void logAttendanceEdit({
+      attendanceId: existingRecord.id,
+      teacherId: teacher.id as string,
+      previousPresent,
+      newPresent: present,
+      reason: trimmedReason.slice(0, 1000),
+    })
   }
 
   return { success: true, data: null }

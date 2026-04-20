@@ -72,6 +72,7 @@ export const ROUTES = {
       billing: '/dashboard/settings/billing',
     },
     messages: '/dashboard/messages',
+    messagesNew: '/dashboard/messages/new',
     messageThread: (threadId: string) => `/dashboard/messages/${threadId}` as const,
   },
 

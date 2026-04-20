@@ -65,11 +65,10 @@ export default async function AttendancePage({ params }: PageProps) {
       const hasAttendance = records.length > 0
 
       // Check edit window: if marked, is the earliest marked_at within 24h?
-      let editable = true
+      let withinWindow = true
       if (hasAttendance) {
-        // Use the first record's marked_at as the reference
         const firstMarkedAt = records[0].marked_at
-        editable = isAttendanceEditable(firstMarkedAt)
+        withinWindow = isAttendanceEditable(firstMarkedAt)
       }
 
       // Build student-level data
@@ -84,7 +83,9 @@ export default async function AttendancePage({ params }: PageProps) {
         durationMinutes: session.duration_minutes,
         isCancelled,
         hasAttendance,
-        editable: !isCancelled && editable && !isArchived,
+        editable: !isCancelled && withinWindow && !isArchived,
+        // Past 24h window but cohort is still active — teacher can edit with a reason.
+        pastEditWindow: !isCancelled && hasAttendance && !withinWindow && !isArchived,
         attendanceMap: Object.fromEntries(attendanceMap) as Record<string, boolean>,
       }
     })
@@ -171,9 +172,14 @@ export default async function AttendancePage({ params }: PageProps) {
                     Cancelled
                   </span>
                 )}
-                {!session.isCancelled && session.hasAttendance && !session.editable && (
+                {!session.isCancelled && session.hasAttendance && !session.editable && !session.pastEditWindow && (
                   <span className="rounded-full bg-muted/10 px-2.5 py-1 text-xs font-medium text-muted-foreground">
                     Locked
+                  </span>
+                )}
+                {session.pastEditWindow && (
+                  <span className="rounded-full bg-warning/10 px-2.5 py-1 text-xs font-medium text-warning">
+                    Edit requires reason
                   </span>
                 )}
               </div>
@@ -188,6 +194,7 @@ export default async function AttendancePage({ params }: PageProps) {
                   students={students}
                   existingAttendance={session.attendanceMap}
                   editable={session.editable}
+                  pastEditWindow={session.pastEditWindow}
                   hasExistingData={session.hasAttendance}
                 />
               )}
