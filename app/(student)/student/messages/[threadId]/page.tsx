@@ -11,8 +11,7 @@ import {
   getThreadParticipants,
 } from '@/lib/db/messages'
 import { ThreadList } from '@/components/messaging/ThreadList'
-import { Thread } from '@/components/messaging/Thread'
-import { MessageComposer } from '@/components/messaging/MessageComposer'
+import { MessagingPanel } from '@/components/messaging/MessagingPanel'
 import { ROUTES } from '@/constants/routes'
 
 type Props = {
@@ -65,14 +64,11 @@ export default async function StudentThreadPage({ params }: Props) {
 
           {/* Thread + composer */}
           <div className="flex-1 flex flex-col min-w-0">
-            <Thread
+            <MessagingPanel
               initialMessages={messages}
               threadId={threadId}
               currentUserId={studentId}
               currentUserType="student"
-            />
-            <MessageComposer
-              threadId={threadId}
               recipientId={teacherId}
               recipientType="teacher"
             />

@@ -1,74 +1,21 @@
 'use client'
 
 // =============================================================================
-// components/messaging/Thread.tsx — Displays messages in a thread; realtime.
+// components/messaging/Thread.tsx
+// Presentational message list. State + realtime are owned by MessagingPanel.
 // =============================================================================
 
-import { useEffect, useState } from 'react'
 import { formatPKT } from '@/lib/time/pkt'
-import { useRealtime } from '@/hooks/useRealtime'
-import { markThreadReadAction } from '@/lib/actions/messages'
 import { cn } from '@/lib/utils'
 import type { MessageRow } from '@/lib/db/messages'
 
-// -----------------------------------------------------------------------------
-// Props
-// -----------------------------------------------------------------------------
-
 type ThreadProps = {
-  initialMessages: MessageRow[]
-  threadId: string
+  messages: MessageRow[]
   currentUserId: string
   currentUserType: 'teacher' | 'student'
 }
 
-// -----------------------------------------------------------------------------
-// Component
-// -----------------------------------------------------------------------------
-
-export function Thread({
-  initialMessages,
-  threadId,
-  currentUserId,
-  currentUserType,
-}: ThreadProps) {
-  const [messages, setMessages] = useState<MessageRow[]>(initialMessages)
-
-  // Mark thread as read on mount
-  useEffect(() => {
-    void markThreadReadAction(threadId)
-  }, [threadId])
-
-  // Realtime subscription — new messages inserted to this thread
-  useRealtime<Record<string, unknown>>({
-    table: 'direct_messages',
-    filter: `thread_id=eq.${threadId}`,
-    event: 'INSERT',
-    onData: (payload) => {
-      const newMsg = payload.new as MessageRow
-      if (!newMsg?.id) return
-      setMessages((prev) => {
-        // Avoid duplicates (optimistic update may already have it)
-        if (prev.some((m) => m.id === newMsg.id)) return prev
-        return [...prev, newMsg]
-      })
-    },
-  })
-
-  // Also listen for read_at updates
-  useRealtime<Record<string, unknown>>({
-    table: 'direct_messages',
-    filter: `thread_id=eq.${threadId}`,
-    event: 'UPDATE',
-    onData: (payload) => {
-      const updated = payload.new as MessageRow
-      if (!updated?.id) return
-      setMessages((prev) =>
-        prev.map((m) => (m.id === updated.id ? { ...m, read_at: updated.read_at } : m)),
-      )
-    },
-  })
-
+export function Thread({ messages, currentUserId, currentUserType }: ThreadProps) {
   if (messages.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center text-sm text-muted-foreground">

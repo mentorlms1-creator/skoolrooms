@@ -11,6 +11,7 @@ import {
   getOrCreateThreadId,
   sendMessage,
   markThreadRead,
+  type MessageRow,
 } from '@/lib/db/messages'
 import { teacherHasEnrollmentWithStudent } from '@/lib/db/enrollments'
 import { createNotification } from '@/lib/db/notifications'
@@ -43,7 +44,7 @@ async function getAuthenticatedStudent() {
 
 export async function sendMessageAction(
   formData: FormData,
-): Promise<ApiResponse<{ messageId: string }>> {
+): Promise<ApiResponse<{ message: MessageRow }>> {
   const body = (formData.get('body') as string | null)?.trim() ?? ''
   const recipientId = (formData.get('recipient_id') as string | null)?.trim() ?? ''
   const recipientType = formData.get('recipient_type') as 'teacher' | 'student' | null
@@ -127,7 +128,7 @@ export async function sendMessageAction(
     threadUrl,
   })
 
-  return { success: true, data: { messageId: message.id } }
+  return { success: true, data: { message } }
 }
 
 async function notifyRecipient(input: {

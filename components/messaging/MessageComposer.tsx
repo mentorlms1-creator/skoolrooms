@@ -8,6 +8,7 @@ import { useRef, useState, useTransition } from 'react'
 import { Send } from 'lucide-react'
 import { sendMessageAction } from '@/lib/actions/messages'
 import { Button } from '@/components/ui/button'
+import type { MessageRow } from '@/lib/db/messages'
 
 // -----------------------------------------------------------------------------
 // Props
@@ -17,13 +18,14 @@ type MessageComposerProps = {
   threadId: string
   recipientId: string
   recipientType: 'teacher' | 'student'
+  onSent?: (message: MessageRow) => void
 }
 
 // -----------------------------------------------------------------------------
 // Component
 // -----------------------------------------------------------------------------
 
-export function MessageComposer({ threadId, recipientId, recipientType }: MessageComposerProps) {
+export function MessageComposer({ threadId, recipientId, recipientType, onSent }: MessageComposerProps) {
   const formRef = useRef<HTMLFormElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const [isPending, startTransition] = useTransition()
@@ -42,6 +44,7 @@ export function MessageComposer({ threadId, recipientId, recipientType }: Messag
         setError(result.error ?? 'Failed to send message.')
         return
       }
+      onSent?.(result.data.message)
       formRef.current?.reset()
       textareaRef.current?.focus()
     })
