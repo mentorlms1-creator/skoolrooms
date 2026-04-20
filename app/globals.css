@@ -159,3 +159,28 @@
     animation-duration: 0ms;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Skeleton shimmer — only visible after ~200ms of loading. If the page
+   resolves faster than that (most navs do), the skeleton stays invisible so
+   there's no flash of "loading" UI masquerading as a delay.
+--------------------------------------------------------------------------- */
+.skeleton-shimmer {
+  animation: skeleton-reveal 1.4s ease-in-out 200ms infinite;
+  opacity: 0;
+}
+
+@keyframes skeleton-reveal {
+  0%   { opacity: 0; }
+  20%  { opacity: 0.6; }
+  60%  { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-shimmer {
+    animation: none;
+    opacity: 0.6;
+    transition: opacity 200ms ease-in-out;
+  }
+}
