@@ -534,6 +534,28 @@ export async function listEnrollmentsByCohortPaginated(input: {
 }
 
 // -----------------------------------------------------------------------------
+// teacherHasEnrollmentWithStudent — True when the teacher has at least one
+// enrollment row for the given student (any status, any cohort). Used to
+// authorise message-start + thread access even before a thread has messages.
+// -----------------------------------------------------------------------------
+export async function teacherHasEnrollmentWithStudent(
+  teacherId: string,
+  studentId: string,
+): Promise<boolean> {
+  const supabase = createAdminClient()
+
+  const { data } = await supabase
+    .from('enrollments')
+    .select('id, cohorts!inner(teacher_id)')
+    .eq('student_id', studentId)
+    .eq('cohorts.teacher_id', teacherId)
+    .limit(1)
+    .maybeSingle()
+
+  return !!data
+}
+
+// -----------------------------------------------------------------------------
 // searchTeacherStudents — Distinct student list for the teacher's message
 // composer. Filters by name/email ilike when `q` is set, capped at `limit`.
 // -----------------------------------------------------------------------------

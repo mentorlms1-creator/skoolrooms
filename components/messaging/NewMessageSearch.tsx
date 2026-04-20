@@ -52,7 +52,11 @@ export function NewMessageSearch({ students }: Props) {
         setOpeningId(null)
         return
       }
-      router.push(ROUTES.TEACHER.messageThread(result.data.threadId))
+      const base = ROUTES.TEACHER.messageThread(result.data.threadId)
+      // Brand-new threads have no rows yet — pass the studentId so the
+      // thread page can authorise via enrollment instead of by participant lookup.
+      const url = result.data.isNew ? `${base}?with=${result.data.studentId}` : base
+      router.push(url)
     })
   }
 

@@ -11,6 +11,7 @@ import {
   getThreadMessages,
   getThreadParticipants,
 } from '@/lib/db/messages'
+import { teacherHasEnrollmentWithStudent } from '@/lib/db/enrollments'
 import { ThreadList } from '@/components/messaging/ThreadList'
 import { Thread } from '@/components/messaging/Thread'
 import { MessageComposer } from '@/components/messaging/MessageComposer'
@@ -18,16 +19,27 @@ import { ROUTES } from '@/constants/routes'
 
 type Props = {
   params: Promise<{ threadId: string }>
+  searchParams: Promise<{ with?: string }>
 }
 
-export default async function TeacherThreadPage({ params }: Props) {
+export default async function TeacherThreadPage({ params, searchParams }: Props) {
   const { threadId } = await params
+  const { with: fallbackStudentId } = await searchParams
   const teacher = await requireTeacher()
   const teacherId = teacher.id as string
 
-  // Validate teacher is a participant in this thread
+  // Try to resolve the thread via existing messages first.
   const participants = await getThreadParticipants(threadId)
-  if (!participants || participants.teacherId !== teacherId) {
+
+  let studentId: string
+  if (participants && participants.teacherId === teacherId) {
+    studentId = participants.studentId
+  } else if (!participants && fallbackStudentId) {
+    // Brand-new thread with no messages yet — authorise via enrollment.
+    const allowed = await teacherHasEnrollmentWithStudent(teacherId, fallbackStudentId)
+    if (!allowed) redirect(ROUTES.TEACHER.messages)
+    studentId = fallbackStudentId
+  } else {
     redirect(ROUTES.TEACHER.messages)
   }
 
@@ -35,9 +47,6 @@ export default async function TeacherThreadPage({ params }: Props) {
     getThreadsForTeacherWithNames(teacherId),
     getThreadMessages(threadId),
   ])
-
-  // Find the student in this thread
-  const studentId = participants.studentId
 
   return (
     <div className="max-w-5xl mx-auto">

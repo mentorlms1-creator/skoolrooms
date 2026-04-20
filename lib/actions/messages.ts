@@ -192,7 +192,7 @@ export async function sendMessageAction(
 
 export async function startThreadWithStudentAction(
   studentId: string,
-): Promise<ApiResponse<{ threadId: string }>> {
+): Promise<ApiResponse<{ threadId: string; studentId: string; isNew: boolean }>> {
   if (!studentId) {
     return { success: false, error: 'Student is required.' }
   }
@@ -205,8 +205,20 @@ export async function startThreadWithStudentAction(
     return { success: false, error: 'You can only message students enrolled in your cohorts.', code: 'NOT_CONNECTED' }
   }
 
-  const threadId = await getOrCreateThreadId(teacher.id as string, studentId)
-  return { success: true, data: { threadId } }
+  // Probe for an existing thread before minting a fresh UUID, so the client
+  // knows whether to include the `?with=` fallback on navigation.
+  const supabase = createAdminClient()
+  const { data: existing } = await supabase
+    .from('direct_messages')
+    .select('thread_id')
+    .or(
+      `and(sender_id.eq.${teacher.id},recipient_id.eq.${studentId}),and(sender_id.eq.${studentId},recipient_id.eq.${teacher.id})`,
+    )
+    .limit(1)
+    .maybeSingle()
+
+  const threadId = existing?.thread_id ?? (await getOrCreateThreadId(teacher.id as string, studentId))
+  return { success: true, data: { threadId, studentId, isNew: !existing } }
 }
 
 // -----------------------------------------------------------------------------
