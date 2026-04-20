@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/supabase/server'
 import type { User } from '@supabase/supabase-js'
@@ -11,6 +12,8 @@ import type { User } from '@supabase/supabase-js'
 //   const admin   = await requireAdmin()     // returns Supabase user or redirects
 //
 // These NEVER return null — they redirect on failure.
+// Wrapped in React cache() so repeated calls within the same request (e.g.
+// layout + page) dedupe to a single Supabase lookup.
 // =============================================================================
 
 /**
@@ -19,7 +22,7 @@ import type { User } from '@supabase/supabase-js'
  * Redirects to /login/teacher if not authenticated or no teacher row.
  * Redirects to /suspended if teacher is suspended.
  */
-export async function requireTeacher() {
+export const requireTeacher = cache(async () => {
   const supabase = await createClient()
   const {
     data: { user },
@@ -37,14 +40,14 @@ export async function requireTeacher() {
   if (teacher.is_suspended) redirect('/suspended')
 
   return teacher
-}
+})
 
 /**
  * Requires an authenticated student.
  * Returns the full `students` row.
  * Redirects to /student-login if not authenticated or no student row.
  */
-export async function requireStudent() {
+export const requireStudent = cache(async () => {
   const supabase = await createClient()
   const {
     data: { user },
@@ -61,7 +64,7 @@ export async function requireStudent() {
   if (!student) redirect('/student-login')
 
   return student
-}
+})
 
 /**
  * Requires an authenticated admin.
@@ -69,7 +72,7 @@ export async function requireStudent() {
  * Returns the Supabase Auth user.
  * Redirects to /admin/login if not authenticated or not admin.
  */
-export async function requireAdmin(): Promise<User> {
+export const requireAdmin = cache(async (): Promise<User> => {
   const supabase = await createClient()
   const {
     data: { user },
@@ -79,4 +82,4 @@ export async function requireAdmin(): Promise<User> {
   if (user.user_metadata?.role !== 'admin') redirect('/admin-login')
 
   return user
-}
+})

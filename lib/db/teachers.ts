@@ -3,6 +3,7 @@
 // All database queries for teachers go through this file.
 // =============================================================================
 
+import { cache } from 'react'
 import { unstable_cache } from 'next/cache'
 import { revalidateTag } from '@/lib/cache/tags'
 import { createAdminClient } from '@/supabase/server'
@@ -46,10 +47,11 @@ export type TeacherRow = {
 
 // -----------------------------------------------------------------------------
 // getTeacherByAuthId — Look up teacher by Supabase Auth user ID
+// Wrapped in React cache() for request-scoped dedup.
 // -----------------------------------------------------------------------------
-export async function getTeacherByAuthId(
+export const getTeacherByAuthId = cache(async (
   authId: string
-): Promise<TeacherRow | null> {
+): Promise<TeacherRow | null> => {
   const supabase = createAdminClient()
 
   const { data, error } = await supabase
@@ -60,14 +62,15 @@ export async function getTeacherByAuthId(
 
   if (error || !data) return null
   return data as TeacherRow
-}
+})
 
 // -----------------------------------------------------------------------------
 // getTeacherById — Look up teacher by primary key
+// Wrapped in React cache() for request-scoped dedup.
 // -----------------------------------------------------------------------------
-export async function getTeacherById(
+export const getTeacherById = cache(async (
   id: string
-): Promise<TeacherRow | null> {
+): Promise<TeacherRow | null> => {
   const supabase = createAdminClient()
 
   const { data, error } = await supabase
@@ -78,7 +81,7 @@ export async function getTeacherById(
 
   if (error || !data) return null
   return data as TeacherRow
-}
+})
 
 // -----------------------------------------------------------------------------
 // getTeacherBySubdomain — Look up non-suspended teacher by subdomain
@@ -164,10 +167,11 @@ export async function updateTeacher(
 // -----------------------------------------------------------------------------
 // getTeacherPlanDetails — Build PlanDetails shape for TeacherProvider
 // Fetches the plan row by slug, then all plan_features for that plan.
+// Wrapped in React cache() so layout + page share a single lookup per request.
 // -----------------------------------------------------------------------------
-export async function getTeacherPlanDetails(
+export const getTeacherPlanDetails = cache(async (
   teacherId: string
-): Promise<PlanDetails | null> {
+): Promise<PlanDetails | null> => {
   const supabase = createAdminClient()
 
   // Step 1: Get teacher's plan slug
@@ -222,7 +226,7 @@ export async function getTeacherPlanDetails(
     limits,
     features: featuresMap,
   }
-}
+})
 
 // -----------------------------------------------------------------------------
 // getTeacherPlanSnapshot — Returns the snapshot row for a teacher (or null).
@@ -289,10 +293,11 @@ export async function getTeacherPlanSnapshot(
 // -----------------------------------------------------------------------------
 // getTeacherUsage — Build UsageData shape for TeacherProvider
 // Counts published courses, active enrollments, and active cohorts.
+// Wrapped in React cache() so layout + page share a single lookup per request.
 // -----------------------------------------------------------------------------
-export async function getTeacherUsage(
+export const getTeacherUsage = cache(async (
   teacherId: string
-): Promise<UsageData> {
+): Promise<UsageData> => {
   const supabase = createAdminClient()
 
   // Count published courses (status='published', not soft-deleted)
@@ -337,7 +342,7 @@ export async function getTeacherUsage(
     cohortsActive: cohortCount ?? 0,
     storageMb: 0, // TODO: Calculate from R2 storage usage once implemented
   }
-}
+})
 
 // -----------------------------------------------------------------------------
 // hasPaymentSettings — Check if teacher has at least one payment method set
