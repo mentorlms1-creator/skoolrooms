@@ -77,6 +77,11 @@ export type EnrollmentWithCohortCourseTeacher = EnrollmentRow & {
     teachers: {
       id: string
       name: string
+      plan: string
+      plan_expires_at: string | null
+      grace_until: string | null
+      downgraded_at: string | null
+      trial_ends_at: string | null
     }
   }
 }
@@ -263,7 +268,7 @@ export async function getEnrollmentsByStudentWithTeacher(
         id, name, start_date, end_date, fee_type, fee_pkr, status, is_registration_open,
         pending_can_see_schedule, pending_can_see_announcements,
         courses!inner(id, title, description, thumbnail_url, teacher_id),
-        teachers!inner(id, name)
+        teachers!inner(id, name, plan, plan_expires_at, grace_until, downgraded_at, trial_ends_at)
       )
     `)
     .eq('student_id', studentId)
@@ -482,7 +487,7 @@ export async function getEnrollmentByIdWithDetails(
         id, name, start_date, end_date, fee_type, fee_pkr, status, is_registration_open,
         pending_can_see_schedule, pending_can_see_announcements,
         courses!inner(id, title, description, thumbnail_url, teacher_id),
-        teachers!inner(id, name)
+        teachers!inner(id, name, plan, plan_expires_at, grace_until, downgraded_at, trial_ends_at)
       )
     `)
     .eq('id', enrollmentId)

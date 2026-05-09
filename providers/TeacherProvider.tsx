@@ -11,7 +11,7 @@
 
 import { createContext, useContext, useCallback } from 'react'
 import type { PlanSlug } from '@/types/domain'
-import { USAGE_THRESHOLDS } from '@/constants/plans'
+import { TIMING, USAGE_THRESHOLDS } from '@/constants/plans'
 
 // -----------------------------------------------------------------------------
 // Types
@@ -25,6 +25,8 @@ export type TeacherData = {
   plan: PlanSlug
   planExpiresAt: string | null
   graceUntil: string | null
+  /** When the soft-downgrade landed. Anchors the 30-day clock to hard-cancel. */
+  downgradedAt: string | null
   trialEndsAt: string | null
   onboardingCompleted: boolean
   onboardingStepsJson: Record<string, boolean>
@@ -56,9 +58,14 @@ type TeacherContextType = {
   teacher: TeacherData
   plan: PlanDetails
   usage: UsageData
+  /** Day-30+ hard cancel: read-only for teacher, students lose access. */
   isLocked: boolean
   isInGrace: boolean
   isTrialing: boolean
+  /** Day 5–30: plan flipped to Free, usage grandfathered, write surface restricted. */
+  isSoftDowngraded: boolean
+  /** Whole-day count remaining before hard cancel; null when not soft-downgraded. */
+  daysUntilHardCancel: number | null
   isNearLimit: (key: string) => boolean
   isAtLimit: (key: string) => boolean
 }
@@ -95,19 +102,43 @@ export function TeacherProvider({
   children,
 }: TeacherProviderProps) {
   const now = new Date()
+  const MS_PER_DAY = 24 * 60 * 60 * 1000
 
-  // Hard lock: paid plan expired AND grace period expired (or no grace)
-  // Free plan never expires (planExpiresAt = null)
+  // Soft-downgrade window starts when downgraded_at is set, OR (cron-lag
+  // safety) the moment grace_until passes — whichever happens first.
+  const downgradeAnchorIso =
+    teacher.downgradedAt ??
+    (teacher.graceUntil && new Date(teacher.graceUntil) < now && teacher.plan !== 'free'
+      ? teacher.graceUntil
+      : null)
+
+  let isSoftDowngraded = false
+  let isLocked = false
+  let daysUntilHardCancel: number | null = null
+
+  if (downgradeAnchorIso) {
+    const anchorMs = new Date(downgradeAnchorIso).getTime()
+    const hardCancelMs =
+      anchorMs + TIMING.SOFT_DOWNGRADE_TO_HARD_CANCEL_DAYS * MS_PER_DAY
+    if (now.getTime() >= hardCancelMs) {
+      isLocked = true
+    } else {
+      isSoftDowngraded = true
+      daysUntilHardCancel = Math.max(
+        0,
+        Math.ceil((hardCancelMs - now.getTime()) / MS_PER_DAY),
+      )
+    }
+  }
+
+  // In grace: plan expired but grace period still active. Grace is mutually
+  // exclusive with soft-downgrade (downgrade kicks in once grace passes).
   const planExpired = teacher.planExpiresAt
     ? new Date(teacher.planExpiresAt) < now
     : false
-  const graceExpired = teacher.graceUntil
-    ? new Date(teacher.graceUntil) < now
-    : true // no grace = grace is "expired" (not applicable)
-  const isLocked = planExpired && graceExpired
-
-  // In grace: plan expired but grace period still active
-  const isInGrace = planExpired && !graceExpired
+  const graceActive =
+    !!teacher.graceUntil && new Date(teacher.graceUntil) >= now
+  const isInGrace = !isSoftDowngraded && !isLocked && planExpired && graceActive
 
   // Trialing: trial end date set and hasn't passed yet
   const isTrialing = teacher.trialEndsAt
@@ -143,7 +174,18 @@ export function TeacherProvider({
 
   return (
     <TeacherContext.Provider
-      value={{ teacher, plan, usage, isLocked, isInGrace, isTrialing, isNearLimit, isAtLimit }}
+      value={{
+        teacher,
+        plan,
+        usage,
+        isLocked,
+        isInGrace,
+        isTrialing,
+        isSoftDowngraded,
+        daysUntilHardCancel,
+        isNearLimit,
+        isAtLimit,
+      }}
     >
       {children}
     </TeacherContext.Provider>

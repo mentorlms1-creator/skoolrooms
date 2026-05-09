@@ -16,6 +16,11 @@ import { TeacherBio } from '@/components/public/TeacherBio'
 import { CourseCard } from '@/components/public/CourseCard'
 import { TestimonialsSection } from '@/components/public/TestimonialsSection'
 import { EmptyState } from '@/components/ui/EmptyState'
+import {
+  resolveSubdomainGate,
+  SubdomainPausedBanner,
+  SubdomainUnavailable,
+} from '@/components/public/SubdomainPlanGate'
 
 type PageProps = {
   params: Promise<{ subdomain: string }>
@@ -29,6 +34,11 @@ export default async function TeacherPublicPage({ params }: PageProps) {
     notFound()
   }
 
+  const gate = resolveSubdomainGate(teacher)
+  if (gate === 'block') {
+    return <SubdomainUnavailable teacherName={teacher.name} />
+  }
+
   const [courses, testimonials] = await Promise.all([
     getPublishedCoursesByTeacherWithCurriculum(teacher.id),
     getPublishedTestimonialsByTeacher(teacher.id),
@@ -36,6 +46,7 @@ export default async function TeacherPublicPage({ params }: PageProps) {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
+      {gate === 'banner' && <SubdomainPausedBanner />}
       {/* Teacher bio */}
       <TeacherBio
         name={teacher.name}

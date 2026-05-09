@@ -111,13 +111,16 @@ async function sendReminders(
     }
   }
 
-  // Get teacher names — filter out suspended teachers
+  // Get teacher names — filter out suspended and downgraded teachers.
+  // Skipping downgraded teachers means students stop getting reminders, which
+  // is intentional pressure on the teacher to renew.
   const teacherIds = [...new Set([...cohortMap.values()].map((c) => c.teacher_id))]
   const { data: teachers } = await supabase
     .from('teachers')
     .select('id, name')
     .in('id', teacherIds)
     .eq('is_suspended', false)
+    .is('downgraded_at', null)
 
   const teacherNameMap = new Map<string, string>()
   if (teachers) {

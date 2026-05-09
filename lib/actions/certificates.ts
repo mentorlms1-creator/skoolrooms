@@ -21,7 +21,7 @@ import {
   type CertificateRow,
 } from '@/lib/db/certificates'
 import { generateCertificateNumber } from '@/lib/certificates/generateNumber'
-import { checkPlanLock, getPlanLockError } from '@/lib/auth/plan-guard'
+import { requireCanCreateContent, requireCanEditContent } from '@/lib/auth/plan-state'
 import { sendEmail } from '@/lib/email/sender'
 import type { ApiResponse } from '@/types/api'
 
@@ -67,7 +67,9 @@ export async function issueCertificateAction(
 ): Promise<ApiResponse<{ certificateId: string; certificateNumber: string }>> {
   const teacher = await getAuthenticatedTeacher()
   if (!teacher) return { success: false, error: 'Not authenticated' }
-  if (checkPlanLock(teacher)) return getPlanLockError()
+  // Issuing certificates is a paid feature — block on soft+hard.
+  const blocked = requireCanCreateContent(teacher)
+  if (blocked) return blocked
 
   const enrollment = await getEnrollmentById(enrollmentId)
   if (!enrollment) return { success: false, error: 'Enrollment not found' }
@@ -148,7 +150,9 @@ export async function revokeCertificateAction(
 ): Promise<ApiResponse<null>> {
   const teacher = await getAuthenticatedTeacher()
   if (!teacher) return { success: false, error: 'Not authenticated' }
-  if (checkPlanLock(teacher)) return getPlanLockError()
+  // Revoking an issued certificate is allowed during soft-downgrade.
+  const blocked = requireCanEditContent(teacher)
+  if (blocked) return blocked
 
   const supabase = createAdminClient()
   const { data: certData, error: certErr } = await supabase
@@ -192,7 +196,9 @@ export async function bulkIssueCertificatesAction(
 ): Promise<ApiResponse<{ issued: number; skipped: number; failed: number }>> {
   const teacher = await getAuthenticatedTeacher()
   if (!teacher) return { success: false, error: 'Not authenticated' }
-  if (checkPlanLock(teacher)) return getPlanLockError()
+  // Bulk-issuing certificates is a paid feature — block on soft+hard.
+  const blocked = requireCanCreateContent(teacher)
+  if (blocked) return blocked
 
   const cohort = await getCohortById(cohortId)
   if (!cohort || cohort.teacher_id !== teacher.id) {

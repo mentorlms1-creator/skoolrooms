@@ -11,7 +11,11 @@
 
 import { createClient } from '@/supabase/server'
 import { createAdminClient } from '@/supabase/server'
-import { getTeacherByAuthId, updateTeacher } from '@/lib/db/teachers'
+import {
+  getTeacherByAuthId,
+  invalidateTeacherPublicCaches,
+  updateTeacher,
+} from '@/lib/db/teachers'
 import {
   createSubscription,
   getSubscriptionById,
@@ -80,6 +84,8 @@ export async function subscribeAction(
       // Only grace period / paid subscription sets plan_expires_at.
       plan_expires_at: null,
       grace_until: null,
+      // Starting a trial clears any previous downgrade state — fresh start.
+      downgraded_at: null,
     })
 
     if (!updated) {
@@ -211,12 +217,15 @@ export async function approveSubscriptionAction(
     return { success: false, error: 'Failed to approve subscription' }
   }
 
-  // Update teacher plan
+  // Update teacher plan. Renewal clears every expiry-related flag — including
+  // downgraded_at — so a renewing teacher returns to full access immediately,
+  // regardless of which phase they were in (grace / soft-downgrade / hard-cancel).
   const updated = await updateTeacher(subscription.teacher_id, {
     plan: subscription.plan,
     plan_expires_at: new Date(subscription.period_end + 'T23:59:59Z').toISOString(),
     grace_until: null,
     trial_ends_at: null,
+    downgraded_at: null,
   })
 
   if (!updated) {
@@ -264,6 +273,14 @@ export async function approveSubscriptionAction(
       periodEnd: subscription.period_end,
     })
   }
+
+  // Renewal may have rescued this teacher from soft-downgrade or hard-cancel —
+  // bust every cache that gates them out (plan, public profile, explore-list,
+  // subdomain) so the lift is immediate.
+  invalidateTeacherPublicCaches({
+    teacherId: subscription.teacher_id,
+    subdomain: updated.subdomain,
+  })
 
   // Credit referral if this teacher was referred — guarded by status != 'credited'
   void creditReferralAction(subscription.teacher_id)

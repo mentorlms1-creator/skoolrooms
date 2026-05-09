@@ -62,6 +62,7 @@ export default async function TeacherLayout({
     plan: teacher.plan as PlanSlug,
     planExpiresAt: teacher.plan_expires_at,
     graceUntil: teacher.grace_until,
+    downgradedAt: teacher.downgraded_at,
     trialEndsAt: teacher.trial_ends_at,
     onboardingCompleted: teacher.onboarding_completed,
     onboardingStepsJson: teacher.onboarding_steps_json,

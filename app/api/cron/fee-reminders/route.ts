@@ -77,13 +77,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: true, sent: 0, reason: 'No active enrollments' })
     }
 
-    // Get teacher names for email content — filter out suspended teachers
+    // Get teacher names — filter out suspended and downgraded teachers.
+    // Soft-downgraded teachers can't accept new payments anyway; skipping the
+    // reminder also removes a paid feature from them.
     const teacherIds = [...new Set(cohorts.map((c) => c.teacher_id as string))]
     const { data: teachers } = await supabase
       .from('teachers')
       .select('id, name')
       .in('id', teacherIds)
       .eq('is_suspended', false)
+      .is('downgraded_at', null)
 
     const teacherNameMap = new Map<string, string>()
     if (teachers) {

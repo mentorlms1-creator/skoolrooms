@@ -8,6 +8,7 @@
 import type { Metadata } from 'next'
 import { Calendar, Clock, Video, BookOpen } from 'lucide-react'
 import { requireStudent } from '@/lib/auth/guards'
+import { canStudentAccessTeacher } from '@/lib/auth/teacher-access'
 import { getUpcomingSessionsByStudent } from '@/lib/db/class-sessions'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Card, CardContent } from '@/components/ui/card'
@@ -22,7 +23,17 @@ export default async function StudentSchedulePage() {
   const student = await requireStudent()
 
   // Fetch upcoming sessions (higher limit for full schedule view)
-  const sessions = await getUpcomingSessionsByStudent(student.id, 50)
+  const allSessions = await getUpcomingSessionsByStudent(student.id, 50)
+  // Hard-cancelled teachers' sessions disappear from the student's schedule.
+  const sessions = allSessions.filter((s) =>
+    canStudentAccessTeacher({
+      plan: s.cohorts.teachers.plan,
+      plan_expires_at: s.cohorts.teachers.plan_expires_at,
+      grace_until: s.cohorts.teachers.grace_until,
+      downgraded_at: s.cohorts.teachers.downgraded_at,
+      trial_ends_at: s.cohorts.teachers.trial_ends_at,
+    }),
+  )
 
   // Group sessions by date for visual clarity
   const sessionsByDate = new Map<string, typeof sessions>()

@@ -276,6 +276,11 @@ export type StudentSessionWithDetails = ClassSessionRow & {
     teachers: {
       id: string
       name: string
+      plan: string
+      plan_expires_at: string | null
+      grace_until: string | null
+      downgraded_at: string | null
+      trial_ends_at: string | null
     }
   }
 }
@@ -315,7 +320,7 @@ export async function getUpcomingSessionsByStudent(
       cohorts!inner(
         id, name, course_id, teacher_id, pending_can_see_schedule,
         courses!inner(id, title),
-        teachers!inner(id, name)
+        teachers!inner(id, name, plan, plan_expires_at, grace_until, downgraded_at, trial_ends_at)
       )
     `)
     .in('cohort_id', cohortIds)

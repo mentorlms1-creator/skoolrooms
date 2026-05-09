@@ -9,6 +9,7 @@ import type { Metadata } from 'next'
 import { Link } from 'next-view-transitions'
 import { BookOpen, Calendar, Banknote, ArrowRight } from 'lucide-react'
 import { requireStudent } from '@/lib/auth/guards'
+import { canStudentAccessTeacher } from '@/lib/auth/teacher-access'
 import { getEnrollmentsByStudentWithTeacher } from '@/lib/db/enrollments'
 import type { EnrollmentWithCohortCourseTeacher } from '@/lib/db/enrollments'
 import { PageHeader } from '@/components/ui/PageHeader'
@@ -24,7 +25,19 @@ export const metadata: Metadata = {
 
 export default async function StudentCoursesPage() {
   const student = await requireStudent()
-  const enrollments = await getEnrollmentsByStudentWithTeacher(student.id)
+  const allEnrollments = await getEnrollmentsByStudentWithTeacher(student.id)
+
+  // Hard-cancelled teachers' courses drop off the student's list. The
+  // enrollment row stays in the DB; if the teacher renews later, it pops back.
+  const enrollments = allEnrollments.filter((e) =>
+    canStudentAccessTeacher({
+      plan: e.cohorts.teachers.plan,
+      plan_expires_at: e.cohorts.teachers.plan_expires_at,
+      grace_until: e.cohorts.teachers.grace_until,
+      downgraded_at: e.cohorts.teachers.downgraded_at,
+      trial_ends_at: e.cohorts.teachers.trial_ends_at,
+    }),
+  )
 
   // Group by teacher
   const enrollmentsByTeacher = new Map<

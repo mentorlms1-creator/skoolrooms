@@ -22,6 +22,10 @@ import { StatusBadge } from '@/components/ui/StatusBadge'
 import { formatPKT } from '@/lib/time/pkt'
 import { ScreenshotUploadForm } from '@/components/student/ScreenshotUploadForm'
 import { DiscountCodeInput } from '@/components/student/DiscountCodeInput'
+import {
+  resolveSubdomainGate,
+  SubdomainUnavailable,
+} from '@/components/public/SubdomainPlanGate'
 
 type PageProps = {
   params: Promise<{ subdomain: string; token: string; enrollmentId: string }>
@@ -88,9 +92,25 @@ export default async function PaymentPage({ params, searchParams }: PageProps) {
 
   const { data: teacher } = await adminSupabase
     .from('teachers')
-    .select('name')
+    .select('name, plan, plan_expires_at, grace_until, downgraded_at, trial_ends_at')
     .eq('id', cohort.teacher_id)
     .single()
+
+  // Plan-state gate: a paying student should never be funneled toward a
+  // teacher whose account is paused or cancelled. Block the page entirely.
+  if (teacher) {
+    const gate = resolveSubdomainGate({
+      plan: teacher.plan as string,
+      plan_expires_at: (teacher.plan_expires_at as string | null) ?? null,
+      grace_until: (teacher.grace_until as string | null) ?? null,
+      downgraded_at: (teacher.downgraded_at as string | null) ?? null,
+      trial_ends_at: (teacher.trial_ends_at as string | null) ?? null,
+      name: (teacher.name as string) ?? 'Teacher',
+    })
+    if (gate !== 'pass') {
+      return <SubdomainUnavailable teacherName={(teacher.name as string) ?? 'Teacher'} />
+    }
+  }
 
   const { data: paymentSettings } = await adminSupabase
     .from('teacher_payment_settings')

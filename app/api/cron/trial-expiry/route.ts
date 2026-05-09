@@ -53,6 +53,9 @@ export async function GET(request: NextRequest) {
           trial_ends_at: null,
           plan_expires_at: null,
           grace_until: null,
+          // Defensive: a trial expiry should land the teacher on a clean Free
+          // tier, never inherit a stale soft-downgrade flag from elsewhere.
+          downgraded_at: null,
           updated_at: new Date().toISOString(),
         })
         .eq('id', teacher.id as string)

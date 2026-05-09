@@ -64,15 +64,22 @@ type EligibleTeacherRow = {
   teaching_levels: string[]
   plan_expires_at: string | null
   grace_until: string | null
+  downgraded_at: string | null
   created_at: string
 }
 
 // -----------------------------------------------------------------------------
-// Internal helper: filter teachers by hard-lock (plan + grace expired)
+// Internal helper: filter teachers whose plan state hides them from /explore.
+// Active, trialing, in-grace teachers stay visible; soft-downgraded and
+// hard-cancelled teachers (anyone with a non-null downgraded_at) drop off.
 // -----------------------------------------------------------------------------
 function filterEligible(rows: EligibleTeacherRow[]): EligibleTeacherRow[] {
   const now = new Date().toISOString()
   return rows.filter((t) => {
+    // Soft-downgraded or hard-cancelled — never visible.
+    if (t.downgraded_at) return false
+    // Cron-lag safety: grace expired but cron hasn't downgraded yet.
+    if (t.grace_until && t.grace_until < now) return false
     if (!t.plan_expires_at) return true
     if (t.plan_expires_at > now) return true
     if (t.grace_until && t.grace_until > now) return true
@@ -98,9 +105,10 @@ export async function getExplorableTeacherIds(
 
   let query = supabase
     .from('teachers')
-    .select('id, created_at, plan_expires_at, grace_until')
+    .select('id, created_at, plan_expires_at, grace_until, downgraded_at')
     .eq('is_publicly_listed', true)
     .eq('is_suspended', false)
+    .is('downgraded_at', null) // soft+hard hidden — keeps the page small
     .order('created_at', { ascending: false })
     .order('id', { ascending: false })
 
@@ -291,9 +299,12 @@ async function _getExploreFacetsImpl(): Promise<ExploreFacets> {
 
   const { data, error } = await supabase
     .from('teachers')
-    .select('city, subject_tags, teaching_levels, plan_expires_at, grace_until')
+    .select(
+      'city, subject_tags, teaching_levels, plan_expires_at, grace_until, downgraded_at',
+    )
     .eq('is_publicly_listed', true)
     .eq('is_suspended', false)
+    .is('downgraded_at', null)
     .limit(5000)
 
   if (error || !data) return { subjects: [], levels: [], cities: [] }
@@ -309,7 +320,12 @@ async function _getExploreFacetsImpl(): Promise<ExploreFacets> {
     teaching_levels: string[] | null
     plan_expires_at: string | null
     grace_until: string | null
+    downgraded_at: string | null
   }>) {
+    // Belt-and-braces: query already filters downgraded_at IS NULL, but the
+    // cron-lag window still surfaces grace-expired teachers if a row landed
+    // before the apply_soft_downgrade RPC ran.
+    if (row.downgraded_at) continue
     if (row.plan_expires_at) {
       if (row.plan_expires_at <= now && (!row.grace_until || row.grace_until <= now)) {
         continue

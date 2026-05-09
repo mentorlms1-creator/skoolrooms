@@ -209,8 +209,12 @@ export const RESERVED_SUBDOMAINS: readonly string[] = [
 
 /** Timing constants from ARCHITECTURE.md Section 13. All values in days unless noted. */
 export const TIMING = {
-  /** Days of full access after paid plan expiry before hard lock */
+  /** Days of full access after paid plan expiry before soft-downgrade kicks in */
   GRACE_PERIOD_DAYS: 5,
+  /** Days from soft-downgrade until hard cancel (account fully locked + students lose access) */
+  SOFT_DOWNGRADE_TO_HARD_CANCEL_DAYS: 30,
+  /** Days before hard cancel to send the final-warning email */
+  HARD_CANCEL_WARNING_DAYS_BEFORE: 5,
   /** Default trial period for Solo/Academy (days) */
   TRIAL_DAYS: 14,
   /** Days before plan_expires_at to send renewal reminder email */

@@ -20,7 +20,7 @@ import {
 } from '@/lib/db/assignments'
 import { getCohortById } from '@/lib/db/cohorts'
 import { checkExistingEnrollment } from '@/lib/db/enrollments'
-import { checkPlanLock, getPlanLockError } from '@/lib/auth/plan-guard'
+import { requireCanCreateContent, requireCanEditContent } from '@/lib/auth/plan-state'
 import type { ApiResponse } from '@/types/api'
 
 // -----------------------------------------------------------------------------
@@ -70,10 +70,9 @@ export async function createAssignmentAction(
     return { success: false, error: 'Not authenticated' }
   }
 
-  // Hard lock check: block content-write when plan + grace expired
-  if (checkPlanLock(teacher)) {
-    return getPlanLockError()
-  }
+  // Soft-downgrade or hard-cancel: no new assignments.
+  const blocked = requireCanCreateContent(teacher)
+  if (blocked) return blocked
 
   const cohortId = (formData.get('cohort_id') as string | null)?.trim() ?? ''
   const title = (formData.get('title') as string | null)?.trim() ?? ''
@@ -152,10 +151,9 @@ export async function updateAssignmentAction(
     return { success: false, error: 'Not authenticated' }
   }
 
-  // Hard lock check: block content-write when plan + grace expired
-  if (checkPlanLock(teacher)) {
-    return getPlanLockError()
-  }
+  // Editing/deleting an existing assignment is allowed during soft-downgrade.
+  const blocked = requireCanEditContent(teacher)
+  if (blocked) return blocked
 
   // Fetch assignment and verify ownership
   const assignment = await getAssignmentById(assignmentId)
@@ -220,10 +218,9 @@ export async function deleteAssignmentAction(
     return { success: false, error: 'Not authenticated' }
   }
 
-  // Hard lock check: block content-write when plan + grace expired
-  if (checkPlanLock(teacher)) {
-    return getPlanLockError()
-  }
+  // Editing/deleting an existing assignment is allowed during soft-downgrade.
+  const blocked = requireCanEditContent(teacher)
+  if (blocked) return blocked
 
   // Fetch assignment and verify ownership
   const assignment = await getAssignmentById(assignmentId)

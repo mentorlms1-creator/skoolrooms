@@ -16,7 +16,7 @@ import {
   getAttendanceByStudentAndSession,
   logAttendanceEdit,
 } from '@/lib/db/attendance'
-import { checkPlanLock, getPlanLockError } from '@/lib/auth/plan-guard'
+import { requireCanEditContent } from '@/lib/auth/plan-state'
 import type { ApiResponse } from '@/types/api'
 
 // -----------------------------------------------------------------------------
@@ -48,9 +48,10 @@ export async function markAttendanceAction(
   }
 
   // Hard lock check: block content-write when plan + grace expired
-  if (checkPlanLock(teacher)) {
-    return getPlanLockError()
-  }
+  // Marking/editing attendance is allowed during soft-downgrade — only block
+  // on hard cancel.
+  const blocked = requireCanEditContent(teacher)
+  if (blocked) return blocked
 
   const sessionId = formData.get('session_id') as string | null
   const studentsJson = formData.get('students') as string | null
@@ -148,9 +149,10 @@ export async function updateAttendanceAction(
   }
 
   // Hard lock check: block content-write when plan + grace expired
-  if (checkPlanLock(teacher)) {
-    return getPlanLockError()
-  }
+  // Marking/editing attendance is allowed during soft-downgrade — only block
+  // on hard cancel.
+  const blocked = requireCanEditContent(teacher)
+  if (blocked) return blocked
 
   // Fetch session
   const session = await getSessionById(sessionId)

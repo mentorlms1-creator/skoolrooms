@@ -20,7 +20,7 @@ import {
 import { getCohortById } from '@/lib/db/cohorts'
 import { getStudentById, getStudentByEmail, createStudent } from '@/lib/db/students'
 import { sendEmail } from '@/lib/email/sender'
-import { checkPlanLock, getPlanLockError } from '@/lib/auth/plan-guard'
+import { requireCanCreateContent } from '@/lib/auth/plan-state'
 import { firstBillingMonth } from '@/lib/time/pkt'
 import type { ApiResponse } from '@/types/api'
 import type { EnrollmentStatus, PaymentMethod, PaymentStatus } from '@/types/domain'
@@ -60,10 +60,9 @@ export async function approveEnrollmentAction(
     return { success: false, error: 'Not authenticated' }
   }
 
-  // Hard lock check: block content-write when plan + grace expired
-  if (checkPlanLock(teacher)) {
-    return getPlanLockError()
-  }
+  // Soft-downgrade or hard-cancel: no new student enrollments.
+  const blocked = requireCanCreateContent(teacher)
+  if (blocked) return blocked
 
   // Fetch enrollment
   const enrollment = await getEnrollmentById(enrollmentId)
@@ -277,10 +276,9 @@ export async function manualEnrollAction(
     return { success: false, error: 'Not authenticated' }
   }
 
-  // Hard lock check: block content-write when plan + grace expired
-  if (checkPlanLock(teacher)) {
-    return getPlanLockError()
-  }
+  // Soft-downgrade or hard-cancel: no new student enrollments.
+  const blocked = requireCanCreateContent(teacher)
+  if (blocked) return blocked
 
   const cohortId = (formData.get('cohort_id') as string | null)?.trim() ?? ''
   const studentId = (formData.get('student_id') as string | null)?.trim() ?? ''

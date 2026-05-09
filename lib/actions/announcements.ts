@@ -21,7 +21,7 @@ import {
 import { getEnrollmentsByCohort } from '@/lib/db/enrollments'
 import { sendEmail } from '@/lib/email/sender'
 import { createNotification } from '@/lib/db/notifications'
-import { checkPlanLock, getPlanLockError } from '@/lib/auth/plan-guard'
+import { requireCanCreateContent, requireCanEditContent } from '@/lib/auth/plan-state'
 import { ROUTES } from '@/constants/routes'
 import type { ApiResponse } from '@/types/api'
 
@@ -65,10 +65,10 @@ export async function createAnnouncementAction(
     return { success: false, error: 'Not authenticated' }
   }
 
-  // Hard lock check: block content-write when plan + grace expired
-  if (checkPlanLock(teacher)) {
-    return getPlanLockError()
-  }
+  // Soft-downgrade or hard-cancel: no new announcements (per spec — students
+  // notice the silence, which is part of the renewal pressure).
+  const blocked = requireCanCreateContent(teacher)
+  if (blocked) return blocked
 
   const cohortId = formData.get('cohort_id') as string | null
   const body = (formData.get('body') as string | null)?.trim() ?? ''
@@ -153,10 +153,9 @@ export async function pinAnnouncementAction(
     return { success: false, error: 'Not authenticated' }
   }
 
-  // Hard lock check: block content-write when plan + grace expired
-  if (checkPlanLock(teacher)) {
-    return getPlanLockError()
-  }
+  // Pinning/deleting an existing announcement is allowed during soft-downgrade.
+  const blocked = requireCanEditContent(teacher)
+  if (blocked) return blocked
 
   // Verify ownership via announcement.teacher_id
   const announcement = await getAnnouncementById(announcementId)
@@ -197,10 +196,9 @@ export async function deleteAnnouncementAction(
     return { success: false, error: 'Not authenticated' }
   }
 
-  // Hard lock check: block content-write when plan + grace expired
-  if (checkPlanLock(teacher)) {
-    return getPlanLockError()
-  }
+  // Pinning/deleting an existing announcement is allowed during soft-downgrade.
+  const blocked = requireCanEditContent(teacher)
+  if (blocked) return blocked
 
   // Verify ownership
   const announcement = await getAnnouncementById(announcementId)

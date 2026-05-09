@@ -1,46 +1,36 @@
 // =============================================================================
-// lib/auth/plan-guard.ts — Plan lock enforcement for content-write actions
+// lib/auth/plan-guard.ts — Backwards-compatible shim
 //
-// Hard lock: teacher's paid plan expired AND grace period also expired.
-// Free plan never expires (plan_expires_at = NULL), so free teachers are NEVER locked.
+// New code should call getPlanState / requireCanCreateContent /
+// requireCanEditContent from lib/auth/plan-state.ts directly. This file keeps
+// the legacy boolean shape so existing call sites compile while we migrate.
 //
-// When locked, teacher can: read content, update profile, request payout, renew subscription.
-// When locked, teacher CANNOT: create/edit courses, cohorts, sessions, announcements, assignments.
+// Both shims now treat soft-downgrade as "locked" for create-style actions —
+// matching what the previous boolean meant in spirit.
 // =============================================================================
 
 import type { TeacherRow } from '@/lib/db/teachers'
+import {
+  getPlanState,
+  isContentCreateBlocked,
+  getCreateBlockedError,
+} from '@/lib/auth/plan-state'
 
 /**
- * Returns true if the teacher is hard-locked (plan expired + grace expired).
- * Free plan (plan_expires_at = null) never locks.
+ * @deprecated — use `requireCanCreateContent(teacher)` from lib/auth/plan-state
+ *
+ * Returns true if the teacher is blocked from creating new content (covers
+ * both soft-downgraded and hard-locked states).
  */
 export function checkPlanLock(teacher: TeacherRow): boolean {
-  // Free plan never expires
-  if (!teacher.plan_expires_at) return false
-
-  const now = new Date()
-  const planExpired = new Date(teacher.plan_expires_at) < now
-
-  if (!planExpired) return false
-
-  // Plan expired — check grace period
-  if (teacher.grace_until) {
-    const graceExpired = new Date(teacher.grace_until) < now
-    return graceExpired
-  }
-
-  // No grace period set yet — but plan is expired
-  // The cron job will set grace_until. Until then, they're not locked
-  // because grace period hasn't been initiated yet.
-  // However, if plan_expires_at < now and grace_until IS NULL,
-  // the cron hasn't run yet — we shouldn't lock them preemptively.
-  // The grace period cron will set it, and after grace_until passes, they lock.
-  return false
+  return isContentCreateBlocked(getPlanState(teacher))
 }
 
 /**
- * Result type for plan lock check in server actions.
- * If locked, returns an error response object matching ApiResponse pattern.
+ * @deprecated — use `getCreateBlockedError(state)` from lib/auth/plan-state
+ *
+ * Returns a generic create-blocked error. Prefer the state-aware variant for
+ * better copy.
  */
 export function getPlanLockError(): {
   success: false
@@ -50,7 +40,22 @@ export function getPlanLockError(): {
   return {
     success: false,
     error:
-      'Your plan has expired and the grace period has ended. Please renew your subscription to continue creating and editing content.',
+      'Your subscription has expired. Renew to continue creating courses, cohorts, or sessions.',
     code: 'PLAN_LOCKED',
   }
 }
+
+// Re-export the new helpers so callers can migrate one import at a time.
+export {
+  getPlanState,
+  getEffectivePlan,
+  isHardLocked,
+  isContentCreateBlocked,
+  isContentEditBlocked,
+  getCreateBlockedError,
+  getEditBlockedError,
+  requireCanCreateContent,
+  requireCanEditContent,
+  type PlanState,
+  type PlanLockError,
+} from '@/lib/auth/plan-state'

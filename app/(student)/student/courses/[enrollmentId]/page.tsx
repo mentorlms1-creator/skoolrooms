@@ -18,6 +18,7 @@ import {
   LogOut,
 } from 'lucide-react'
 import { requireStudent } from '@/lib/auth/guards'
+import { canStudentAccessTeacher } from '@/lib/auth/teacher-access'
 import { getEnrollmentByIdWithDetails } from '@/lib/db/enrollments'
 import {
   getAnnouncementsByCohort,
@@ -59,6 +60,29 @@ export default async function EnrollmentDetailPage({ params }: PageParams) {
   const cohort = enrollment.cohorts
   const course = cohort.courses
   const teacher = cohort.teachers
+
+  // Hard-cancelled teachers — students lose access to course materials. The
+  // 30-day soft-downgrade window has elapsed and the teacher hasn't renewed,
+  // so the platform pulls the plug on student access too.
+  if (
+    !canStudentAccessTeacher({
+      plan: teacher.plan,
+      plan_expires_at: teacher.plan_expires_at,
+      grace_until: teacher.grace_until,
+      downgraded_at: teacher.downgraded_at,
+      trial_ends_at: teacher.trial_ends_at,
+    })
+  ) {
+    return (
+      <div className="mx-auto flex min-h-[60vh] max-w-xl flex-col items-center justify-center px-4 py-16 text-center">
+        <h1 className="text-2xl font-bold text-foreground">Course unavailable</h1>
+        <p className="mt-3 text-muted-foreground">
+          {teacher.name}’s account has been cancelled and this course is no longer
+          accessible. Contact your teacher directly for next steps.
+        </p>
+      </div>
+    )
+  }
 
   // Determine visibility based on enrollment status and cohort flags
   const isPending = enrollment.status === 'pending'

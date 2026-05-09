@@ -32,9 +32,12 @@ export const EmailType = {
   // Subscription & plan
   SUBSCRIPTION_RENEWAL_REMINDER: 'subscription_renewal_reminder',
   GRACE_PERIOD_DAILY_REMINDER: 'grace_period_daily_reminder',
-  PLAN_HARD_LOCKED: 'plan_hard_locked',
+  PLAN_HARD_LOCKED: 'plan_hard_locked', // legacy — replaced by soft_downgraded + hard_cancelled
   TRIAL_ENDING_SOON: 'trial_ending_soon',
-  PLAN_DOWNGRADED: 'plan_downgraded',
+  PLAN_DOWNGRADED: 'plan_downgraded', // trial → free
+  PLAN_SOFT_DOWNGRADED: 'plan_soft_downgraded', // grace ended → free with grandfathering, day 0 of 30-day clock
+  PLAN_HARD_CANCEL_WARNING: 'plan_hard_cancel_warning', // 5 days before hard cancel
+  PLAN_HARD_CANCELLED: 'plan_hard_cancelled', // 30 days post-downgrade — students lose access
 
   // Payouts
   PAYOUT_REQUESTED: 'payout_requested',

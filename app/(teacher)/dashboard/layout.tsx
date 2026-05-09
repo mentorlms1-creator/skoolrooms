@@ -61,6 +61,7 @@ export default async function DashboardLayout({
     plan: (teacher.plan as PlanSlug) ?? 'free',
     planExpiresAt: (teacher.plan_expires_at as string | null) ?? null,
     graceUntil: (teacher.grace_until as string | null) ?? null,
+    downgradedAt: (teacher.downgraded_at as string | null) ?? null,
     trialEndsAt: (teacher.trial_ends_at as string | null) ?? null,
     onboardingCompleted: teacher.onboarding_completed as boolean,
     onboardingStepsJson: (teacher.onboarding_steps_json || {}) as Record<string, boolean>,

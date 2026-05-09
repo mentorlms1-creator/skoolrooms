@@ -1,17 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/supabase/server'
 import { sendEmail } from '@/lib/email/sender'
+import { revalidateTag } from '@/lib/cache/tags'
+import { TIMING } from '@/constants/plans'
 
 /**
  * GET /api/cron/grace-period — Daily cron job
  *
- * 3-step process:
- * 1. Find teachers whose paid plan expired (plan_expires_at < now) AND grace_until IS NULL
- *    → call set_grace_period() RPC to set grace_until = plan_expires_at + 5 days
- * 2. Find teachers currently in grace period (grace_until > now AND plan_expires_at < now)
- *    → send daily grace_period_daily_reminder email
- * 3. Find teachers whose grace expired (grace_until < now AND plan_expires_at < now, plan != 'free')
- *    → send plan_hard_locked email (one-time, only if not already sent)
+ * 5-step process:
+ *   1. Set grace_until for newly expired paid plans (plan_expires_at < now,
+ *      grace_until null) — call set_grace_period() RPC.
+ *   2. Send daily reminder email to teachers in active grace period
+ *      (grace_until > now, plan_expires_at < now).
+ *   3. Soft-downgrade teachers whose grace just ended (grace_until < now,
+ *      downgraded_at null) — call apply_soft_downgrade() RPC, send the
+ *      one-time plan_soft_downgraded email, invalidate caches.
+ *   4. Day-25 warning: teachers downgraded ≥ (30 - 5) days ago, no warning
+ *      email sent yet → send plan_hard_cancel_warning.
+ *   5. Hard-cancel notification: teachers downgraded ≥ 30 days, no cancel
+ *      email sent yet → send plan_hard_cancelled.
+ *
+ * Each step is idempotent. Re-runs are safe.
  */
 export async function GET(request: NextRequest) {
   // Validate CRON_SECRET
@@ -22,17 +31,20 @@ export async function GET(request: NextRequest) {
 
   try {
     const supabase = createAdminClient()
-    const now = new Date().toISOString()
+    const now = new Date()
+    const nowIso = now.toISOString()
     let graceSet = 0
     let reminders = 0
-    let locked = 0
+    let downgraded = 0
+    let warnings = 0
+    let cancelled = 0
 
     // ── Step 1: Set grace period for newly expired plans ──
     const { data: newlyExpired } = await supabase
       .from('teachers')
       .select('id')
       .neq('plan', 'free')
-      .lt('plan_expires_at', now)
+      .lt('plan_expires_at', nowIso)
       .is('grace_until', null)
       .eq('is_suspended', false)
 
@@ -46,7 +58,7 @@ export async function GET(request: NextRequest) {
         } else {
           console.error(
             `[cron:grace-period] Failed to set grace for teacher ${teacher.id}:`,
-            rpcError.message
+            rpcError.message,
           )
         }
       }
@@ -58,8 +70,8 @@ export async function GET(request: NextRequest) {
       .from('teachers')
       .select('id, name, email, grace_until, plan')
       .neq('plan', 'free')
-      .lt('plan_expires_at', now)
-      .gt('grace_until', now)
+      .lt('plan_expires_at', nowIso)
+      .gt('grace_until', nowIso)
       .eq('is_suspended', false)
 
     if (inGrace && inGrace.length > 0) {
@@ -80,44 +92,149 @@ export async function GET(request: NextRequest) {
       console.log(`[cron:grace-period] Sent ${reminders} grace period reminders`)
     }
 
-    // ── Step 3: Hard lock notification for expired grace periods ──
-    // Teachers whose grace has expired — send one-time hard lock email
-    // We identify these as: plan_expires_at < now AND grace_until < now AND plan != 'free'
-    // To avoid re-sending, we check notifications_log for plan_hard_locked
-    const { data: hardLocked } = await supabase
+    // ── Step 3: Soft-downgrade teachers whose grace expired ──
+    const { data: pendingDowngrade } = await supabase
       .from('teachers')
       .select('id, name, email, plan')
       .neq('plan', 'free')
-      .lt('plan_expires_at', now)
-      .lt('grace_until', now)
+      .lt('grace_until', nowIso)
+      .is('downgraded_at', null)
       .eq('is_suspended', false)
 
-    if (hardLocked && hardLocked.length > 0) {
-      for (const teacher of hardLocked) {
-        // Check if hard lock email already sent
+    if (pendingDowngrade && pendingDowngrade.length > 0) {
+      for (const teacher of pendingDowngrade) {
+        const previousPlan = teacher.plan as string
+
+        const { error: rpcError } = await supabase.rpc('apply_soft_downgrade', {
+          p_teacher_id: teacher.id,
+        })
+        if (rpcError) {
+          console.error(
+            `[cron:grace-period] Failed to soft-downgrade ${teacher.id}:`,
+            rpcError.message,
+          )
+          continue
+        }
+
+        // RPC won't no-op silently — re-check that downgrade actually applied
+        // (race vs renewal: renewal may have raced ahead and reset state).
+        const { data: postRow } = await supabase
+          .from('teachers')
+          .select('downgraded_at')
+          .eq('id', teacher.id)
+          .single()
+        if (!postRow?.downgraded_at) continue
+
+        // Bust caches: plan, public surfaces, explore-list.
+        revalidateTag(`teacher-plan:${teacher.id}`)
+        revalidateTag(`teacher:${teacher.id}`)
+        revalidateTag(`teacher-courses:${teacher.id}`)
+        revalidateTag('explore-list')
+
+        await sendEmail({
+          to: teacher.email as string,
+          type: 'plan_soft_downgraded',
+          recipientId: teacher.id as string,
+          recipientType: 'teacher',
+          data: {
+            teacherName: teacher.name,
+            previousPlan,
+            daysUntilHardCancel: TIMING.SOFT_DOWNGRADE_TO_HARD_CANCEL_DAYS,
+          },
+        })
+        downgraded++
+      }
+      if (downgraded > 0) {
+        console.log(`[cron:grace-period] Soft-downgraded ${downgraded} teachers`)
+      }
+    }
+
+    // ── Step 4: Day-25 warning email (5 days before hard cancel) ──
+    const warningCutoffMs =
+      now.getTime() -
+      (TIMING.SOFT_DOWNGRADE_TO_HARD_CANCEL_DAYS -
+        TIMING.HARD_CANCEL_WARNING_DAYS_BEFORE) *
+        24 *
+        60 *
+        60 *
+        1000
+    const warningCutoffIso = new Date(warningCutoffMs).toISOString()
+    const hardCancelCutoffMs =
+      now.getTime() -
+      TIMING.SOFT_DOWNGRADE_TO_HARD_CANCEL_DAYS * 24 * 60 * 60 * 1000
+    const hardCancelCutoffIso = new Date(hardCancelCutoffMs).toISOString()
+
+    const { data: pendingWarning } = await supabase
+      .from('teachers')
+      .select('id, name, email, downgraded_at')
+      .lt('downgraded_at', warningCutoffIso)
+      .gt('downgraded_at', hardCancelCutoffIso) // not yet at hard-cancel
+      .eq('is_suspended', false)
+
+    if (pendingWarning && pendingWarning.length > 0) {
+      for (const teacher of pendingWarning) {
+        // Idempotency: skip if warning already sent
         const { count } = await supabase
           .from('notifications_log')
           .select('*', { count: 'exact', head: true })
           .eq('recipient_id', teacher.id as string)
-          .eq('type', 'plan_hard_locked')
+          .eq('type', 'plan_hard_cancel_warning')
           .eq('status', 'sent')
+        if ((count ?? 0) > 0) continue
 
-        if ((count ?? 0) === 0) {
-          await sendEmail({
-            to: teacher.email as string,
-            type: 'plan_hard_locked',
-            recipientId: teacher.id as string,
-            recipientType: 'teacher',
-            data: {
-              teacherName: teacher.name,
-              planName: teacher.plan,
-            },
-          })
-          locked++
-        }
+        await sendEmail({
+          to: teacher.email as string,
+          type: 'plan_hard_cancel_warning',
+          recipientId: teacher.id as string,
+          recipientType: 'teacher',
+          data: {
+            teacherName: teacher.name,
+            daysUntilHardCancel: TIMING.HARD_CANCEL_WARNING_DAYS_BEFORE,
+          },
+        })
+        warnings++
       }
-      if (locked > 0) {
-        console.log(`[cron:grace-period] Sent ${locked} hard lock notifications`)
+      if (warnings > 0) {
+        console.log(`[cron:grace-period] Sent ${warnings} hard-cancel warnings`)
+      }
+    }
+
+    // ── Step 5: Hard-cancel notification (day 30+) ──
+    const { data: pendingCancel } = await supabase
+      .from('teachers')
+      .select('id, name, email, downgraded_at')
+      .lt('downgraded_at', hardCancelCutoffIso)
+      .eq('is_suspended', false)
+
+    if (pendingCancel && pendingCancel.length > 0) {
+      for (const teacher of pendingCancel) {
+        const { count } = await supabase
+          .from('notifications_log')
+          .select('*', { count: 'exact', head: true })
+          .eq('recipient_id', teacher.id as string)
+          .eq('type', 'plan_hard_cancelled')
+          .eq('status', 'sent')
+        if ((count ?? 0) > 0) continue
+
+        // Bust caches one more time so any stale snapshot flips to hard-locked.
+        revalidateTag(`teacher-plan:${teacher.id}`)
+        revalidateTag(`teacher:${teacher.id}`)
+        revalidateTag(`teacher-courses:${teacher.id}`)
+        revalidateTag('explore-list')
+
+        await sendEmail({
+          to: teacher.email as string,
+          type: 'plan_hard_cancelled',
+          recipientId: teacher.id as string,
+          recipientType: 'teacher',
+          data: { teacherName: teacher.name },
+        })
+        cancelled++
+      }
+      if (cancelled > 0) {
+        console.log(
+          `[cron:grace-period] Sent ${cancelled} hard-cancel notifications`,
+        )
       }
     }
 
@@ -125,7 +242,9 @@ export async function GET(request: NextRequest) {
       success: true,
       graceSet,
       reminders,
-      locked,
+      downgraded,
+      warnings,
+      cancelled,
     })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error'

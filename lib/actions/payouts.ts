@@ -16,6 +16,7 @@ import { getTeacherPaymentSettings } from '@/lib/db/admin'
 import { getMinPayoutAmount } from '@/lib/platform/settings'
 import { sendEmail } from '@/lib/email/sender'
 import { revalidatePath } from 'next/cache'
+import { getPlanState, isContentCreateBlocked } from '@/lib/auth/plan-state'
 import type { ApiResponse } from '@/types/api'
 
 // -----------------------------------------------------------------------------
@@ -38,6 +39,18 @@ export async function requestPayoutAction(
   const teacher = await getTeacherByAuthId(user.id)
   if (!teacher) {
     return { success: false, error: 'Teacher not found' }
+  }
+
+  // Payouts are frozen once a plan is in soft-downgrade or hard-cancel.
+  // Teachers can renew first, then come back to request the payout.
+  const state = getPlanState(teacher)
+  if (isContentCreateBlocked(state)) {
+    return {
+      success: false,
+      error:
+        'Payouts are paused while your subscription is expired. Renew your plan to unfreeze your balance.',
+      code: 'PAYOUT_FROZEN',
+    }
   }
 
   // 2. Parse and validate amount

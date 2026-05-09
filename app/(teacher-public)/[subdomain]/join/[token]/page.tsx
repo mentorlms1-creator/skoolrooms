@@ -16,10 +16,15 @@ import {
   getActiveEnrollmentCount,
   computeCohortDisplayStatus,
 } from '@/lib/db/cohorts'
+import { getTeacherById } from '@/lib/db/teachers'
 import { Card } from '@/components/ui/card'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { WaitlistForm } from '@/components/public/WaitlistForm'
 import { EnrollNowButton } from '@/components/public/EnrollNowButton'
+import {
+  resolveSubdomainGate,
+  SubdomainUnavailable,
+} from '@/components/public/SubdomainPlanGate'
 import { formatPKT } from '@/lib/time/pkt'
 import { ROUTES } from '@/constants/routes'
 
@@ -41,6 +46,16 @@ export default async function JoinCohortPage({ params }: PageProps) {
   const cohort = await getCohortByInviteToken(token)
   if (!cohort) {
     notFound()
+  }
+
+  // Plan-state gate: both soft-downgraded and hard-cancelled teachers can't
+  // accept new enrollments. Show the same "service unavailable" card so the
+  // student knows to come back later (or contact the teacher directly).
+  const teacher = await getTeacherById(cohort.teacher_id)
+  if (!teacher) notFound()
+  const gate = resolveSubdomainGate(teacher)
+  if (gate !== 'pass') {
+    return <SubdomainUnavailable teacherName={teacher.name} />
   }
 
   const course = cohort.courses

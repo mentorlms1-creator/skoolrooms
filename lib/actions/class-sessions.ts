@@ -17,7 +17,7 @@ import {
 } from '@/lib/db/class-sessions'
 import { RRule } from 'rrule'
 import { canUseFeature } from '@/lib/plans/features'
-import { checkPlanLock, getPlanLockError } from '@/lib/auth/plan-guard'
+import { requireCanCreateContent, requireCanEditContent } from '@/lib/auth/plan-state'
 import { sendEmail } from '@/lib/email/sender'
 import { formatPKT } from '@/lib/time/pkt'
 import { createAdminClient } from '@/supabase/server'
@@ -54,10 +54,9 @@ export async function createSessionAction(
     return { success: false, error: 'Not authenticated' }
   }
 
-  // Hard lock check: block content-write when plan + grace expired
-  if (checkPlanLock(teacher)) {
-    return getPlanLockError()
-  }
+  // Soft-downgrade or hard-cancel: no new sessions.
+  const blocked = requireCanCreateContent(teacher)
+  if (blocked) return blocked
 
   const cohortId = formData.get('cohort_id') as string | null
   const meetLink = (formData.get('meet_link') as string | null)?.trim() ?? ''
@@ -213,10 +212,10 @@ export async function cancelSessionAction(
     return { success: false, error: 'Not authenticated' }
   }
 
-  // Hard lock check: block content-write when plan + grace expired
-  if (checkPlanLock(teacher)) {
-    return getPlanLockError()
-  }
+  // Cancelling an existing session is allowed during soft-downgrade — only
+  // block on hard cancel.
+  const blocked = requireCanEditContent(teacher)
+  if (blocked) return blocked
 
   const session = await getSessionById(sessionId)
   if (!session) {
@@ -269,9 +268,9 @@ export async function rescheduleSessionAction(
     return { success: false, error: 'Not authenticated' }
   }
 
-  if (checkPlanLock(teacher)) {
-    return getPlanLockError()
-  }
+  // Rescheduling an existing session is allowed during soft-downgrade.
+  const blocked = requireCanEditContent(teacher)
+  if (blocked) return blocked
 
   const session = await getSessionById(sessionId)
   if (!session) {

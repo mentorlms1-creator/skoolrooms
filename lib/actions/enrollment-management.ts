@@ -14,7 +14,7 @@ import {
   getActiveEnrollmentsByCohort,
 } from '@/lib/db/enrollments'
 import { revokeCertificateIfAny } from '@/lib/actions/certificates'
-import { checkPlanLock, getPlanLockError } from '@/lib/auth/plan-guard'
+import { requireCanCreateContent, requireCanEditContent } from '@/lib/auth/plan-state'
 import {
   getPaymentsByEnrollment,
   getPaymentById,
@@ -396,7 +396,9 @@ export async function markCompleteAction(
 ): Promise<ApiResponse<null>> {
   const teacher = await getAuthenticatedTeacher()
   if (!teacher) return { success: false, error: 'Not authenticated' }
-  if (checkPlanLock(teacher)) return getPlanLockError()
+  // Marking enrollments complete is admin housekeeping on existing data.
+  const blocked = requireCanEditContent(teacher)
+  if (blocked) return blocked
 
   const enrollment = await getEnrollmentById(enrollmentId)
   if (!enrollment) return { success: false, error: 'Enrollment not found' }
@@ -436,7 +438,9 @@ export async function bulkMarkCompleteAction(
 ): Promise<ApiResponse<{ updated: number }>> {
   const teacher = await getAuthenticatedTeacher()
   if (!teacher) return { success: false, error: 'Not authenticated' }
-  if (checkPlanLock(teacher)) return getPlanLockError()
+  // Marking enrollments complete is admin housekeeping on existing data.
+  const blocked = requireCanEditContent(teacher)
+  if (blocked) return blocked
 
   const cohort = await getCohortById(cohortId)
   if (!cohort || cohort.teacher_id !== teacher.id) {
@@ -493,6 +497,13 @@ export async function recordRefundAction(
   if (!teacher) {
     return { success: false, error: 'Not authenticated' }
   }
+
+  // Refunds adjust the teacher's balance, which is frozen during soft-downgrade
+  // and hard-cancel. Block here to keep the balance state consistent with
+  // payout freeze. The teacher can still refund students off-platform via
+  // direct bank transfer; recording it here can wait until renewal.
+  const refundBlocked = requireCanCreateContent(teacher)
+  if (refundBlocked) return refundBlocked
 
   const refundMode = (formData.get('refund_mode') as string | null)?.trim() ?? ''
   const refundNote = (formData.get('refund_note') as string | null)?.trim() ?? ''

@@ -23,6 +23,7 @@ import { monthlyBillingSchedule } from '@/lib/time/pkt'
 import type { ApiResponse } from '@/types/api'
 import { PaymentStatus, PaymentMethod } from '@/types/domain'
 import type { TeacherRow } from '@/lib/db/teachers'
+import { requireCanCreateContent } from '@/lib/auth/plan-state'
 
 // -----------------------------------------------------------------------------
 // Helpers
@@ -384,6 +385,12 @@ export async function approveMonthlyPaymentAction(
 ): Promise<ApiResponse<null>> {
   const teacher = await getAuthenticatedTeacher()
   if (!teacher) return { success: false, error: 'Not authenticated' }
+
+  // Approving a student payment credits the teacher's balance — and balance is
+  // frozen during soft-downgrade and hard-cancel. The pending payment stays
+  // queued; the teacher can approve after renewal.
+  const blocked = requireCanCreateContent(teacher)
+  if (blocked) return blocked
 
   const payment = await getPaymentById(paymentId)
   if (!payment) return { success: false, error: 'Payment not found.' }

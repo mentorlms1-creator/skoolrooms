@@ -15,7 +15,7 @@ import {
   countPublishedCourses,
 } from '@/lib/db/courses'
 import { getLimit } from '@/lib/plans/limits'
-import { checkPlanLock, getPlanLockError } from '@/lib/auth/plan-guard'
+import { requireCanCreateContent, requireCanEditContent } from '@/lib/auth/plan-state'
 import { completeOnboardingStep } from '@/lib/actions/onboarding'
 import { isValidCourseCategory, normalizeTags } from '@/constants/course-categories'
 import type { ApiResponse } from '@/types/api'
@@ -77,10 +77,9 @@ export async function createCourseAction(
     return { success: false, error: 'Not authenticated' }
   }
 
-  // Hard lock check: block content-write when plan + grace expired
-  if (checkPlanLock(teacher)) {
-    return getPlanLockError()
-  }
+  // Soft-downgrade or hard-cancelled teachers can't create new courses.
+  const blocked = requireCanCreateContent(teacher)
+  if (blocked) return blocked
 
   const title = (formData.get('title') as string | null)?.trim() ?? ''
   const description = (formData.get('description') as string | null) ?? null
@@ -124,10 +123,11 @@ export async function updateCourseAction(
     return { success: false, error: 'Not authenticated' }
   }
 
-  // Hard lock check: block content-write when plan + grace expired
-  if (checkPlanLock(teacher)) {
-    return getPlanLockError()
-  }
+  // Editing/deleting existing courses is allowed during soft-downgrade — only
+  // block on hard cancel. Limit checks (e.g. publishing past Free's max_courses)
+  // are handled separately by getLimit(), which uses effective plan.
+  const blocked = requireCanEditContent(teacher)
+  if (blocked) return blocked
 
   // Verify ownership
   const course = await getCourseById(courseId)
@@ -221,10 +221,11 @@ export async function deleteCourseAction(
     return { success: false, error: 'Not authenticated' }
   }
 
-  // Hard lock check: block content-write when plan + grace expired
-  if (checkPlanLock(teacher)) {
-    return getPlanLockError()
-  }
+  // Editing/deleting existing courses is allowed during soft-downgrade — only
+  // block on hard cancel. Limit checks (e.g. publishing past Free's max_courses)
+  // are handled separately by getLimit(), which uses effective plan.
+  const blocked = requireCanEditContent(teacher)
+  if (blocked) return blocked
 
   // Verify ownership
   const course = await getCourseById(courseId)

@@ -13,7 +13,7 @@ import {
   deleteCurriculumItem,
   reorderCurriculumItems,
 } from '@/lib/db/course-curriculum'
-import { checkPlanLock, getPlanLockError } from '@/lib/auth/plan-guard'
+import { requireCanEditContent } from '@/lib/auth/plan-state'
 import type { ApiResponse } from '@/types/api'
 
 async function getAuthenticatedTeacher() {
@@ -31,8 +31,11 @@ async function ownCourseOrError(courseId: string) {
   if (!teacher) {
     return { ok: false as const, response: { success: false as const, error: 'Not authenticated' } }
   }
-  if (checkPlanLock(teacher)) {
-    return { ok: false as const, response: getPlanLockError() }
+  // Curriculum management is per-course housekeeping on existing data.
+  // Allowed during soft-downgrade; only blocked on hard cancel.
+  const blocked = requireCanEditContent(teacher)
+  if (blocked) {
+    return { ok: false as const, response: blocked }
   }
   const course = await getCourseById(courseId)
   if (!course || course.teacher_id !== teacher.id) {

@@ -5,6 +5,7 @@
 // =============================================================================
 
 import { createAdminClient } from '@/supabase/server'
+import { getEffectivePlan } from '@/lib/auth/plan-state'
 import type { FeatureKey } from '@/types/domain'
 
 /**
@@ -41,19 +42,24 @@ export async function canUseFeature(
     }
   }
 
-  // Step 2: Fall back to live plan_features table
+  // Step 2: Fall back to live plan_features table.
+  // Use effective plan (not raw teacher.plan) so soft-downgraded teachers lose
+  // access to paid-tier features even if the cron hasn't flipped plan='free'
+  // in the row yet, and stay at 'free' across the whole soft-downgrade window.
   const { data: teacher } = await supabase
     .from('teachers')
-    .select('plan')
+    .select('plan, plan_expires_at, grace_until, downgraded_at, trial_ends_at')
     .eq('id', teacherId)
     .single()
 
   if (!teacher) return false
 
+  const effectivePlan = getEffectivePlan(teacher)
+
   const { data: planRow } = await supabase
     .from('plans')
     .select('id')
-    .eq('slug', teacher.plan)
+    .eq('slug', effectivePlan)
     .single()
 
   if (!planRow) return false

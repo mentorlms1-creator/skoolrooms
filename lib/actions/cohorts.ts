@@ -20,7 +20,7 @@ import type { CreateCohortInput } from '@/lib/db/cohorts'
 import { countActiveConfirmedEnrollments } from '@/lib/db/enrollments'
 import { getCourseById } from '@/lib/db/courses'
 import { getLimit } from '@/lib/plans/limits'
-import { checkPlanLock, getPlanLockError } from '@/lib/auth/plan-guard'
+import { requireCanCreateContent, requireCanEditContent } from '@/lib/auth/plan-state'
 import { completeOnboardingStep } from '@/lib/actions/onboarding'
 import { sendEmail } from '@/lib/email/sender'
 import type { ApiResponse } from '@/types/api'
@@ -60,10 +60,9 @@ export async function createCohortAction(
     return { success: false, error: 'Not authenticated' }
   }
 
-  // Hard lock check: block content-write when plan + grace expired
-  if (checkPlanLock(teacher)) {
-    return getPlanLockError()
-  }
+  // Soft-downgrade or hard-cancel: no new cohorts.
+  const blocked = requireCanCreateContent(teacher)
+  if (blocked) return blocked
 
   // Extract fields from FormData
   const courseId = (formData.get('course_id') as string | null)?.trim() ?? ''
@@ -227,10 +226,10 @@ export async function updateCohortAction(
     return { success: false, error: 'Not authenticated' }
   }
 
-  // Hard lock check: block content-write when plan + grace expired
-  if (checkPlanLock(teacher)) {
-    return getPlanLockError()
-  }
+  // Editing existing cohort settings is allowed during soft-downgrade — only
+  // block on hard cancel.
+  const blocked = requireCanEditContent(teacher)
+  if (blocked) return blocked
 
   // Verify ownership
   const cohort = await getCohortById(cohortId)
@@ -464,9 +463,9 @@ export async function duplicateCohortAction(
     return { success: false, error: 'Not authenticated' }
   }
 
-  if (checkPlanLock(teacher)) {
-    return getPlanLockError()
-  }
+  // Duplicating creates a new cohort — block on soft-downgrade and hard-cancel.
+  const blocked = requireCanCreateContent(teacher)
+  if (blocked) return blocked
 
   const newCohort = await duplicateCohort(cohortId, teacher.id)
 

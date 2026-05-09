@@ -1,7 +1,7 @@
 import { cache } from 'react'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/supabase/server'
-import { checkPlanLock } from '@/lib/auth/plan-guard'
+import { getPlanState, isContentCreateBlocked } from '@/lib/auth/plan-state'
 import type { User } from '@supabase/supabase-js'
 
 // =============================================================================
@@ -44,14 +44,16 @@ export const requireTeacher = cache(async () => {
 })
 
 /**
- * Requires an authenticated, unlocked teacher (paid plan + grace not expired).
- * Use this on pages whose only purpose is content-write (new course, new cohort,
- * new session, edit forms). Redirects locked teachers to /subscribe so they
- * can never reach a form that the server action would silently reject.
+ * Requires an authenticated teacher who can create new content.
+ * Use this on pages whose only purpose is content-write (new course, new
+ * cohort, new session, edit forms that publish/promote). Redirects soft-
+ * downgraded and hard-locked teachers to /subscribe so they never reach a
+ * form whose server action would just reject them.
  */
 export const requireUnlockedTeacher = cache(async () => {
   const teacher = await requireTeacher()
-  if (checkPlanLock(teacher)) redirect('/subscribe')
+  const state = getPlanState(teacher)
+  if (isContentCreateBlocked(state)) redirect('/subscribe')
   return teacher
 })
 

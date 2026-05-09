@@ -5,6 +5,7 @@
 // =============================================================================
 
 import { createAdminClient } from '@/supabase/server'
+import { getEffectivePlan } from '@/lib/auth/plan-state'
 import type { LimitKey } from '@/types/domain'
 
 /**
@@ -26,20 +27,24 @@ export async function getLimit(
 ): Promise<number> {
   const supabase = createAdminClient()
 
-  // Get the teacher's current plan
+  // Get the teacher's current plan + downgrade fields. Use effective plan so a
+  // soft-downgraded teacher is treated as Free even if the cron hasn't yet
+  // flipped plan='free' in the row.
   const { data: teacher } = await supabase
     .from('teachers')
-    .select('plan')
+    .select('plan, plan_expires_at, grace_until, downgraded_at, trial_ends_at')
     .eq('id', teacherId)
     .single()
 
   if (!teacher) return 0
 
+  const effectivePlan = getEffectivePlan(teacher)
+
   // Get live plan limits
   const { data: plan } = await supabase
     .from('plans')
     .select('max_courses, max_students, max_cohorts_active, max_storage_mb, max_teachers')
-    .eq('slug', teacher.plan)
+    .eq('slug', effectivePlan)
     .single()
 
   if (!plan) return 0

@@ -53,7 +53,9 @@ export async function changePlanAction(
     ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
     : null
 
-  // Update plan, clear grace/trial, set expiry
+  // Update plan, clear grace/trial, clear soft-downgrade flag, set expiry.
+  // Admin manual changes always land the teacher on a clean state — never
+  // inherit a stale downgrade marker.
   const { error: updateError } = await supabase
     .from('teachers')
     .update({
@@ -61,6 +63,7 @@ export async function changePlanAction(
       plan_expires_at: planExpiresAt,
       grace_until: null,
       trial_ends_at: null,
+      downgraded_at: null,
       updated_at: new Date().toISOString(),
     })
     .eq('id', teacherId)
@@ -154,12 +157,15 @@ export async function extendExpiryAction(
 
   const newExpiry = new Date(currentExpiry.getTime() + days * 24 * 60 * 60 * 1000)
 
-  // Extend plan_expires_at and clear grace_until (unlocks hard-locked teacher)
+  // Extend plan_expires_at, clear grace + downgrade flags. This is the manual
+  // unlock path — admin grants a teacher more time, so any soft-downgrade
+  // marker is also cleared.
   const { error: updateError } = await supabase
     .from('teachers')
     .update({
       plan_expires_at: newExpiry.toISOString(),
       grace_until: null,
+      downgraded_at: null,
       updated_at: new Date().toISOString(),
     })
     .eq('id', teacherId)

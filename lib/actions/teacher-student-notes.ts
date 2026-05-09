@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { requireTeacher } from '@/lib/auth/guards'
-import { checkPlanLock, getPlanLockError } from '@/lib/auth/plan-guard'
+import { requireCanEditContent } from '@/lib/auth/plan-state'
 import { getEnrollmentsByStudentForTeacher } from '@/lib/db/enrollments'
 import {
   createNote,
@@ -41,7 +41,9 @@ export async function createNoteAction(
 ): Promise<ApiResponse<TeacherStudentNoteRow>> {
   const teacher = await requireTeacher()
 
-  if (checkPlanLock(teacher)) return getPlanLockError()
+  // Private notes are admin housekeeping on existing students.
+  const blocked = requireCanEditContent(teacher)
+  if (blocked) return blocked
 
   const trimmed = body.trim()
   if (trimmed.length === 0) return { success: false, error: 'Note cannot be empty' }
@@ -68,7 +70,9 @@ export async function updateNoteAction(
 ): Promise<ApiResponse<TeacherStudentNoteRow>> {
   const teacher = await requireTeacher()
 
-  if (checkPlanLock(teacher)) return getPlanLockError()
+  // Private notes are admin housekeeping on existing students.
+  const blocked = requireCanEditContent(teacher)
+  if (blocked) return blocked
 
   const trimmed = body.trim()
   if (trimmed.length === 0) return { success: false, error: 'Note cannot be empty' }

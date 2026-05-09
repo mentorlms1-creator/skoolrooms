@@ -20,6 +20,9 @@ const TRANSACTIONAL_TYPES: ReadonlySet<string> = new Set([
   'plan_hard_locked',
   'trial_ending_soon',
   'plan_downgraded',
+  'plan_soft_downgraded',
+  'plan_hard_cancel_warning',
+  'plan_hard_cancelled',
   'payout_processed',
   'payout_failed',
   'refund_debit_recorded',
@@ -228,6 +231,9 @@ function buildSubject(type: EmailType, data: Record<string, unknown>): string {
     plan_hard_locked: `${platformName} — Plan Locked`,
     trial_ending_soon: `${platformName} — Trial Ending Soon`,
     plan_downgraded: `${platformName} — Plan Updated`,
+    plan_soft_downgraded: `${platformName} — You're on Free — Renew to keep your full plan`,
+    plan_hard_cancel_warning: `${platformName} — Final warning: 5 days until your account is cancelled`,
+    plan_hard_cancelled: `${platformName} — Your account has been cancelled`,
     payout_requested: `${platformName} — Payout Requested`,
     payout_processed: `${platformName} — Payout Processed`,
     payout_failed: `${platformName} — Payout Failed`,
@@ -345,6 +351,85 @@ function buildHtmlContent(type: EmailType, data: Record<string, unknown>): strin
         </p>
         <p style="color: #666; font-size: 13px;">Open your dashboard, find this cohort, and click <em>Download certificate</em>. You'll need to be logged in to your student account.</p>
         ${certificateNumber ? `<p style="color: #666; font-size: 12px;">Certificate number: <strong>${certificateNumber}</strong></p>` : ''}
+        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+        <p style="color: #666; font-size: 12px;">Sent by ${platformName}</p>
+      </body>
+      </html>
+    `
+  }
+
+  if (type === 'plan_soft_downgraded') {
+    const teacherName = (data.teacherName as string) || ''
+    const previousPlan = (data.previousPlan as string) || 'paid'
+    const days = (data.daysUntilHardCancel as number) || 30
+    const renewUrl = `${process.env.NEXT_PUBLIC_PLATFORM_URL || 'https://skoolrooms.com'}/subscribe`
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head><meta charset="utf-8"></head>
+      <body style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h2 style="color: #1a1a1a;">${platformName}</h2>
+        ${teacherName ? `<p>Hi ${teacherName},</p>` : ''}
+        <p>Your <strong>${previousPlan}</strong> plan has expired and the grace period has ended.</p>
+        <p>You're now on the <strong>Free</strong> plan. Your existing courses, cohorts, and students stay accessible — but until you renew you can't:</p>
+        <ul style="color: #555;">
+          <li>Create new courses, cohorts, sessions, announcements, or assignments</li>
+          <li>Accept new student enrollments</li>
+          <li>Approve new student payments</li>
+          <li>Request payouts (your balance is frozen)</li>
+        </ul>
+        <p style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 12px 16px; margin: 20px 0;">
+          <strong>You have ${days} days to renew.</strong> After that, your account is cancelled and your students lose access to their courses.
+        </p>
+        <p style="margin: 24px 0;">
+          <a href="${renewUrl}" style="display: inline-block; background: #4f46e5; color: #ffffff; padding: 12px 20px; border-radius: 6px; text-decoration: none; font-weight: 600;">Renew now</a>
+        </p>
+        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+        <p style="color: #666; font-size: 12px;">Sent by ${platformName}</p>
+      </body>
+      </html>
+    `
+  }
+
+  if (type === 'plan_hard_cancel_warning') {
+    const teacherName = (data.teacherName as string) || ''
+    const days = (data.daysUntilHardCancel as number) || 5
+    const renewUrl = `${process.env.NEXT_PUBLIC_PLATFORM_URL || 'https://skoolrooms.com'}/subscribe`
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head><meta charset="utf-8"></head>
+      <body style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h2 style="color: #1a1a1a;">${platformName}</h2>
+        ${teacherName ? `<p>Hi ${teacherName},</p>` : ''}
+        <p style="font-size: 18px; color: #b91c1c;"><strong>Final warning.</strong></p>
+        <p>In <strong>${days} days</strong> your account will be cancelled and your students will lose access to their courses, cohort materials, and live sessions.</p>
+        <p>This is your last chance to renew without disruption.</p>
+        <p style="margin: 24px 0;">
+          <a href="${renewUrl}" style="display: inline-block; background: #b91c1c; color: #ffffff; padding: 12px 20px; border-radius: 6px; text-decoration: none; font-weight: 600;">Renew before cancellation</a>
+        </p>
+        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+        <p style="color: #666; font-size: 12px;">Sent by ${platformName}</p>
+      </body>
+      </html>
+    `
+  }
+
+  if (type === 'plan_hard_cancelled') {
+    const teacherName = (data.teacherName as string) || ''
+    const renewUrl = `${process.env.NEXT_PUBLIC_PLATFORM_URL || 'https://skoolrooms.com'}/subscribe`
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head><meta charset="utf-8"></head>
+      <body style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h2 style="color: #1a1a1a;">${platformName}</h2>
+        ${teacherName ? `<p>Hi ${teacherName},</p>` : ''}
+        <p>Your account has been <strong>cancelled</strong>. Your subdomain is offline and your students no longer have access to their courses.</p>
+        <p>Your data is preserved — renewing your subscription will restore everything (courses, cohorts, students, sessions) exactly as it was.</p>
+        <p style="margin: 24px 0;">
+          <a href="${renewUrl}" style="display: inline-block; background: #4f46e5; color: #ffffff; padding: 12px 20px; border-radius: 6px; text-decoration: none; font-weight: 600;">Renew and restore access</a>
+        </p>
         <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
         <p style="color: #666; font-size: 12px;">Sent by ${platformName}</p>
       </body>
