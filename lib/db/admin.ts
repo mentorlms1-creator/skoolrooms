@@ -683,11 +683,24 @@ export async function updatePlatformSetting(
 export async function getOperationsStats(): Promise<OperationsStats> {
   const supabase = createAdminClient()
 
-  const { count: totalActiveCohorts } = await supabase
-    .from('cohorts')
-    .select('*', { count: 'exact', head: true })
-    .eq('status', 'active')
-    .is('deleted_at', null)
+  // "Active" mirrors lib/db/cohorts.ts countActiveCohorts: status='active'
+  // OR status='upcoming' with start_date already in the past (the transition
+  // cron may not have promoted them yet).
+  const today = new Date().toISOString().split('T')[0]
+
+  const [{ count: activeCount }, { count: startedUpcomingCount }] = await Promise.all([
+    supabase
+      .from('cohorts')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'active')
+      .is('deleted_at', null),
+    supabase
+      .from('cohorts')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'upcoming')
+      .lte('start_date', today)
+      .is('deleted_at', null),
+  ])
 
   const { count: totalStudents } = await supabase
     .from('students')
@@ -699,7 +712,7 @@ export async function getOperationsStats(): Promise<OperationsStats> {
     .eq('status', 'pending_verification')
 
   return {
-    totalActiveCohorts: totalActiveCohorts ?? 0,
+    totalActiveCohorts: (activeCount ?? 0) + (startedUpcomingCount ?? 0),
     totalStudents: totalStudents ?? 0,
     pendingPaymentCount: pendingPaymentCount ?? 0,
   }

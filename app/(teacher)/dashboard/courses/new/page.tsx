@@ -5,7 +5,7 @@
  */
 
 import type { Metadata } from 'next'
-import { requireTeacher } from '@/lib/auth/guards'
+import { requireUnlockedTeacher } from '@/lib/auth/guards'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Card } from '@/components/ui/card'
 import { ROUTES } from '@/constants/routes'
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 }
 
 export default async function NewCoursePage() {
-  await requireTeacher()
+  await requireUnlockedTeacher()
 
   return (
     <>

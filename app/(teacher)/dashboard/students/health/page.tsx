@@ -71,7 +71,10 @@ export default async function StudentHealthPage() {
         <Card className="p-6">
           <SectionHeader title="At-risk" count={atRisk.length} />
           {atRisk.length === 0 ? (
-            <EmptyState title="No at-risk students" description="Everyone above 70% attendance." />
+            <EmptyState
+              title="No at-risk students"
+              description="Everyone above 70% attendance — and brand-new cohorts (under 3 sessions) are excluded to avoid noise."
+            />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">

@@ -42,7 +42,7 @@ export function TestimonialForm() {
         <Input
           id="author_name"
           name="author_name"
-          placeholder="Ahmed Khan"
+          placeholder="Sara Ali"
           required
         />
       </div>

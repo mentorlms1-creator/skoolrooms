@@ -62,7 +62,10 @@ export function formatPKT(
     },
   }
 
-  return new Intl.DateTimeFormat('en-PK', formatOptions[format]).format(date)
+  // Use en-GB locale: en-PK renders meridiem as "Pm/Am" (mixed case);
+  // en-GB keeps the "DD Mon YYYY" ordering Pakistani users expect AND
+  // gives uppercase "PM/AM".
+  return new Intl.DateTimeFormat('en-GB', formatOptions[format]).format(date)
 }
 
 /**

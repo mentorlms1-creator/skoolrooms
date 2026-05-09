@@ -180,20 +180,23 @@ export default async function AdminDashboardPage() {
                 <PlanChart data={stats.planDistribution} />
               </div>
               <div className="w-full space-y-4 mt-6">
-                <div className="flex items-center justify-between text-[15px] font-bold px-2">
-                  <div className="flex items-center gap-2">
-                    <div className="h-3 w-3 rounded-full bg-primary" />
-                    <span className="text-muted-foreground">Pro</span>
-                  </div>
-                  <span>65%</span>
-                </div>
-                <div className="flex items-center justify-between text-[15px] font-bold px-2">
-                  <div className="flex items-center gap-2">
-                    <div className="h-3 w-3 rounded-full bg-primary/50" />
-                    <span className="text-muted-foreground">Free</span>
-                  </div>
-                  <span>35%</span>
-                </div>
+                {(() => {
+                  const total = stats.planDistribution.reduce((sum, p) => sum + p.count, 0)
+                  const sorted = [...stats.planDistribution].sort((a, b) => b.count - a.count)
+                  const dotColors = ['bg-primary', 'bg-primary/50', 'bg-primary/25']
+                  return sorted.map((entry, i) => (
+                    <div
+                      key={entry.plan}
+                      className="flex items-center justify-between text-[15px] font-bold px-2"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className={`h-3 w-3 rounded-full ${dotColors[i] ?? 'bg-primary/25'}`} />
+                        <span className="text-muted-foreground capitalize">{entry.plan}</span>
+                      </div>
+                      <span>{total > 0 ? Math.round((entry.count / total) * 100) : 0}%</span>
+                    </div>
+                  ))
+                })()}
               </div>
             </CardContent>
           </Card>

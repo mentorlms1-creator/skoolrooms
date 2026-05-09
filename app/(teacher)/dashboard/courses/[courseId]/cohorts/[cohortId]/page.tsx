@@ -5,6 +5,7 @@
  * enrollment count, and links to edit and schedule pages.
  */
 
+import type { Metadata } from 'next'
 import { Link } from 'next-view-transitions'
 import { notFound } from 'next/navigation'
 import { requireTeacher } from '@/lib/auth/guards'
@@ -29,6 +30,13 @@ import { formatPKT } from '@/lib/time/pkt'
 
 type CohortDetailPageProps = {
   params: Promise<{ courseId: string; cohortId: string }>
+}
+
+export async function generateMetadata({ params }: CohortDetailPageProps): Promise<Metadata> {
+  const { cohortId } = await params
+  const cohort = await getCohortById(cohortId)
+  if (!cohort) return { title: 'Cohort — Skool Rooms' }
+  return { title: `${cohort.name} — Skool Rooms` }
 }
 
 export default async function CohortDetailPage({ params }: CohortDetailPageProps) {

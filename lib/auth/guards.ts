@@ -1,6 +1,7 @@
 import { cache } from 'react'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/supabase/server'
+import { checkPlanLock } from '@/lib/auth/plan-guard'
 import type { User } from '@supabase/supabase-js'
 
 // =============================================================================
@@ -39,6 +40,18 @@ export const requireTeacher = cache(async () => {
   if (!teacher) redirect('/login/teacher')
   if (teacher.is_suspended) redirect('/suspended')
 
+  return teacher
+})
+
+/**
+ * Requires an authenticated, unlocked teacher (paid plan + grace not expired).
+ * Use this on pages whose only purpose is content-write (new course, new cohort,
+ * new session, edit forms). Redirects locked teachers to /subscribe so they
+ * can never reach a form that the server action would silently reject.
+ */
+export const requireUnlockedTeacher = cache(async () => {
+  const teacher = await requireTeacher()
+  if (checkPlanLock(teacher)) redirect('/subscribe')
   return teacher
 })
 

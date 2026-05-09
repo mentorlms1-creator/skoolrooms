@@ -6,7 +6,7 @@
 
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { requireTeacher } from '@/lib/auth/guards'
+import { requireUnlockedTeacher } from '@/lib/auth/guards'
 import { getCourseById } from '@/lib/db/courses'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Card } from '@/components/ui/card'
@@ -23,7 +23,7 @@ type EditCoursePageProps = {
 
 export default async function EditCoursePage({ params }: EditCoursePageProps) {
   const { courseId } = await params
-  const teacher = await requireTeacher()
+  const teacher = await requireUnlockedTeacher()
   const course = await getCourseById(courseId)
 
   if (!course || course.teacher_id !== teacher.id) {

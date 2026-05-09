@@ -62,6 +62,10 @@ export function CreateCourseForm() {
 
       if (!result.success) {
         setError(result.error)
+        toast.error(result.error)
+        if ('code' in result && result.code === 'PLAN_LOCKED') {
+          router.push(ROUTES.PLATFORM.subscribe)
+        }
         return
       }
 

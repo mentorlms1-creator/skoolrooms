@@ -9,7 +9,7 @@ import { Link } from 'next-view-transitions'
 import { notFound } from 'next/navigation'
 import { Tag } from 'lucide-react'
 
-import { requireTeacher } from '@/lib/auth/guards'
+import { requireUnlockedTeacher } from '@/lib/auth/guards'
 import { getCohortById } from '@/lib/db/cohorts'
 import { getCourseById } from '@/lib/db/courses'
 import { countActiveConfirmedEnrollments } from '@/lib/db/enrollments'
@@ -27,7 +27,7 @@ export default async function EditCohortPage({ params, searchParams }: EditCohor
   const { courseId, cohortId } = await params
   const { from } = await searchParams
   const fromDuplicate = from === 'duplicate'
-  const teacher = await requireTeacher()
+  const teacher = await requireUnlockedTeacher()
 
   const [cohort, course] = await Promise.all([
     getCohortById(cohortId),

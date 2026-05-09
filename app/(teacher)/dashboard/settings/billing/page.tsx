@@ -53,7 +53,9 @@ export default async function TeacherBillingPage() {
         <h2 className="mb-4 text-base font-semibold text-foreground">Subscription history</h2>
         {subscriptions.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            You&apos;re on the Free plan — no billing history yet. Trial periods don&apos;t appear here.
+            {teacher.plan === 'free'
+              ? 'You’re on the Free plan — no billing history yet. Trial periods don’t appear here.'
+              : `Current plan: ${teacher.plan.charAt(0).toUpperCase() + teacher.plan.slice(1)}. No paid subscription history yet (current access was assigned manually). Trial periods don’t appear here.`}
           </p>
         ) : (
           <>

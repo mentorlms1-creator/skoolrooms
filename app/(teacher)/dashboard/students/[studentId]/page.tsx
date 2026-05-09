@@ -147,7 +147,7 @@ export default async function TeacherStudentDetailPage(
                       <span className="flex items-center gap-1">
                         <CreditCard className="h-3.5 w-3.5" />
                         PKR {enrollment.cohorts.fee_pkr.toLocaleString()}
-                        <span className="capitalize">({enrollment.cohorts.fee_type})</span>
+                        <span>({enrollment.cohorts.fee_type === 'one_time' ? 'One-time' : 'Monthly'})</span>
                       </span>
                     </div>
                   </div>

@@ -202,7 +202,7 @@ export default async function AdminTeacherDetailPage(
             </CardHeader>
             <CardContent className="px-8 pb-8">
               <div className="space-y-3">
-                <InfoGroup label="Current Plan" value={teacher.plan} />
+                <InfoGroup label="Current Plan" value={teacher.plan} capitalize />
                 <InfoGroup
                   label="Status"
                   value={teacher.is_suspended ? 'Suspended' : 'Active'}
@@ -242,13 +242,25 @@ export default async function AdminTeacherDetailPage(
   )
 }
 
-function InfoGroup({ label, value }: { label: string; value: string }) {
+function InfoGroup({
+  label,
+  value,
+  capitalize,
+}: {
+  label: string
+  value: string
+  capitalize?: boolean
+}) {
   return (
     <div className="rounded-2xl bg-container ring-1 ring-foreground/[0.03] p-4">
       <dt className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/50">
         {label}
       </dt>
-      <dd className="mt-1 text-[15px] font-bold text-foreground capitalize">{value}</dd>
+      <dd
+        className={`mt-1 text-[15px] font-bold text-foreground${capitalize ? ' capitalize' : ''}`}
+      >
+        {value}
+      </dd>
     </div>
   )
 }
