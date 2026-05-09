@@ -1,17 +1,21 @@
-'use client'
+/**
+ * PublicNavbar — Marketing site header.
+ *
+ * Server Component. Detects the visitor's session and swaps the
+ * "Log In / Start Free" CTA pair for a single "Go to Dashboard" link when
+ * a session exists, so logged-in users aren't asked to sign in again.
+ */
 
 import { Link } from 'next-view-transitions'
 import Image from 'next/image'
-import { Menu } from 'lucide-react'
 import { ROUTES } from '@/constants/routes'
+import { getSessionDestination } from '@/lib/auth/session'
 import { Button } from '@/components/ui/button'
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
+import { PublicNavbarMobile } from './PublicNavbarMobile'
 
-/**
- * PublicNavbar — Marketing site header.
- * Mobile menu uses shadcn Sheet (Radix Dialog) for native touch handling.
- */
-export function PublicNavbar() {
+export async function PublicNavbar() {
+  const session = await getSessionDestination()
+
   return (
     <header className="border-b border-border bg-card">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
@@ -34,55 +38,27 @@ export function PublicNavbar() {
           >
             Pricing
           </Link>
-          <Link
-            href={ROUTES.PLATFORM.login}
-            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Log In
-          </Link>
-          <Button asChild>
-            <Link href={ROUTES.PLATFORM.signup}>
-              Start Free
-            </Link>
-          </Button>
-        </nav>
-
-        {/* Mobile menu — Sheet provides native touch handling via Radix */}
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="sm:hidden">
-              <Menu className="h-6 w-6" />
-              <span className="sr-only">Toggle navigation menu</span>
+          {session ? (
+            <Button asChild>
+              <Link href={session.href}>{session.label}</Link>
             </Button>
-          </SheetTrigger>
-          <SheetContent side="right" className="w-64">
-            <nav className="flex flex-col gap-4 mt-8">
-              <Link
-                href={ROUTES.PLATFORM.explore}
-                className="rounded-md px-3 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-              >
-                Find a Teacher
-              </Link>
-              <Link
-                href={ROUTES.PLATFORM.pricing}
-                className="rounded-md px-3 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-              >
-                Pricing
-              </Link>
+          ) : (
+            <>
               <Link
                 href={ROUTES.PLATFORM.login}
-                className="rounded-md px-3 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
               >
                 Log In
               </Link>
-              <Button asChild className="mt-2">
-                <Link href={ROUTES.PLATFORM.signup}>
-                  Start Free
-                </Link>
+              <Button asChild>
+                <Link href={ROUTES.PLATFORM.signup}>Start Free</Link>
               </Button>
-            </nav>
-          </SheetContent>
-        </Sheet>
+            </>
+          )}
+        </nav>
+
+        {/* Mobile menu — Sheet provides native touch handling via Radix */}
+        <PublicNavbarMobile session={session} />
       </div>
     </header>
   )
