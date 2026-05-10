@@ -28,6 +28,8 @@ CREATE INDEX IF NOT EXISTS idx_teachers_grace_pending_downgrade
 --    Idempotent: only flips a teacher who is past grace and not already
 --    downgraded. Sets plan = 'free' and stamps downgraded_at = now().
 --    plan_expires_at is left intact so we still know they were paid.
+--    NOTE: superseded by migration 021 (which anchors downgraded_at on
+--    grace_until instead of now() to avoid timeline drift on delayed cron).
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION apply_soft_downgrade(
   p_teacher_id uuid

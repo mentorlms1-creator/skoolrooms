@@ -17,6 +17,9 @@ import {
 import { teacherHasEnrollmentWithStudent } from '@/lib/db/enrollments'
 import { createNotification } from '@/lib/db/notifications'
 import { sendEmail } from '@/lib/email/sender'
+import { requireCanEditContent } from '@/lib/auth/plan-state'
+import { canStudentAccessTeacher } from '@/lib/auth/teacher-access'
+import { getTeacherById } from '@/lib/db/teachers'
 import { ROUTES } from '@/constants/routes'
 import type { ApiResponse } from '@/types/api'
 
@@ -68,6 +71,10 @@ export async function sendMessageAction(
     // Sender is a teacher
     const teacher = await getAuthenticatedTeacher()
     if (!teacher) return { success: false, error: 'Not authenticated.' }
+    // Hard-cancelled teacher can't initiate new messages. Soft-downgrade is OK
+    // — keeping touch with existing students is part of grandfathering.
+    const blocked = requireCanEditContent(teacher)
+    if (blocked) return blocked
     senderId = teacher.id as string
     senderType = 'teacher'
     senderName = teacher.name as string
@@ -95,6 +102,26 @@ export async function sendMessageAction(
     const connected = await teacherHasEnrollmentWithStudent(teacherId, studentId)
     if (!connected) {
       return { success: false, error: 'NOT_CONNECTED', code: 'NOT_CONNECTED' }
+    }
+
+    // Block student from messaging a hard-cancelled teacher — students lost
+    // access at day 30. Soft-downgrade is fine; the teacher is still around.
+    const teacherRow = await getTeacherById(teacherId)
+    if (
+      !teacherRow ||
+      !canStudentAccessTeacher({
+        plan: teacherRow.plan,
+        plan_expires_at: teacherRow.plan_expires_at,
+        grace_until: teacherRow.grace_until,
+        downgraded_at: teacherRow.downgraded_at,
+        trial_ends_at: teacherRow.trial_ends_at,
+      })
+    ) {
+      return {
+        success: false,
+        error: 'This teacher’s account is no longer active.',
+        code: 'TEACHER_INACTIVE',
+      }
     }
   }
 

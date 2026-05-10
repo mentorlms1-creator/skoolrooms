@@ -262,6 +262,11 @@ export async function approveWithdrawalAction(
     return { success: false, error: 'Not authenticated' }
   }
 
+  // Approving an existing withdrawal is enrollment housekeeping — allow during
+  // soft-downgrade, only block on hard cancel.
+  const blocked = requireCanEditContent(teacher)
+  if (blocked) return blocked
+
   // Fetch enrollment
   const enrollment = await getEnrollmentById(enrollmentId)
   if (!enrollment) {
@@ -328,6 +333,11 @@ export async function rejectWithdrawalAction(
   if (!teacher) {
     return { success: false, error: 'Not authenticated' }
   }
+
+  // Rejecting an existing withdrawal request is enrollment housekeeping —
+  // allow during soft-downgrade, only block on hard cancel.
+  const blocked = requireCanEditContent(teacher)
+  if (blocked) return blocked
 
   const note = (formData.get('note') as string | null)?.trim() ?? ''
 

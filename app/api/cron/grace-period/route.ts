@@ -103,8 +103,6 @@ export async function GET(request: NextRequest) {
 
     if (pendingDowngrade && pendingDowngrade.length > 0) {
       for (const teacher of pendingDowngrade) {
-        const previousPlan = teacher.plan as string
-
         const { error: rpcError } = await supabase.rpc('apply_soft_downgrade', {
           p_teacher_id: teacher.id,
         })
@@ -130,6 +128,33 @@ export async function GET(request: NextRequest) {
         revalidateTag(`teacher:${teacher.id}`)
         revalidateTag(`teacher-courses:${teacher.id}`)
         revalidateTag('explore-list')
+        downgraded++
+      }
+      if (downgraded > 0) {
+        console.log(`[cron:grace-period] Soft-downgraded ${downgraded} teachers`)
+      }
+    }
+
+    // ── Step 3b: Send plan_soft_downgraded email (one-time, retry-safe) ──
+    // Decoupled from the RPC step so that if a previous run flipped the row
+    // but the email failed, we retry on the next cron tick. The query covers
+    // every downgraded teacher; notifications_log dedupes the actual sends.
+    let downgradedEmails = 0
+    const { data: downgradedTeachers } = await supabase
+      .from('teachers')
+      .select('id, name, email')
+      .not('downgraded_at', 'is', null)
+      .eq('is_suspended', false)
+
+    if (downgradedTeachers && downgradedTeachers.length > 0) {
+      for (const teacher of downgradedTeachers) {
+        const { count } = await supabase
+          .from('notifications_log')
+          .select('*', { count: 'exact', head: true })
+          .eq('recipient_id', teacher.id as string)
+          .eq('type', 'plan_soft_downgraded')
+          .eq('status', 'sent')
+        if ((count ?? 0) > 0) continue
 
         await sendEmail({
           to: teacher.email as string,
@@ -138,14 +163,10 @@ export async function GET(request: NextRequest) {
           recipientType: 'teacher',
           data: {
             teacherName: teacher.name,
-            previousPlan,
             daysUntilHardCancel: TIMING.SOFT_DOWNGRADE_TO_HARD_CANCEL_DAYS,
           },
         })
-        downgraded++
-      }
-      if (downgraded > 0) {
-        console.log(`[cron:grace-period] Soft-downgraded ${downgraded} teachers`)
+        downgradedEmails++
       }
     }
 
@@ -243,6 +264,7 @@ export async function GET(request: NextRequest) {
       graceSet,
       reminders,
       downgraded,
+      downgradedEmails,
       warnings,
       cancelled,
     })
