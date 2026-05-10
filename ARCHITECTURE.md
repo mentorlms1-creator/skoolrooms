@@ -656,7 +656,8 @@ export async function GET(request: Request) {
 | subdomain_changed_at | timestamptz | nullable | 30-day change cooldown |
 | plan | text | NOT NULL, FK → plans.slug, default 'free' | |
 | plan_expires_at | timestamptz | nullable | null = free forever |
-| grace_until | timestamptz | nullable | 5 days after expiry |
+| grace_until | timestamptz | nullable | 5 days after expiry; cleared on renewal |
+| downgraded_at | timestamptz | nullable | When soft-downgrade kicked in (anchor for the 30-day clock to hard-cancel). Set to `grace_until` (NOT `now()`) by `apply_soft_downgrade()` so a delayed cron doesn't drift the timeline. Cleared on renewal/admin manual change/trial expiry. |
 | trial_ends_at | timestamptz | nullable | Auto-downgrade to free |
 | onboarding_completed | bool | default false | |
 | onboarding_steps_json | jsonb | default see below | Per-step completion tracking |
@@ -1522,6 +1523,23 @@ BEGIN
     AND plan_expires_at < now()
     AND (grace_until IS NULL OR grace_until < plan_expires_at);
 END; $$ LANGUAGE plpgsql;
+
+-- Soft-downgrade: paid plan + grace expired → flip to Free, anchor 30-day
+-- hard-cancel clock on grace_until (NOT now() — see migration 021 for why).
+-- Idempotent via the WHERE clause; safe to call repeatedly per teacher.
+CREATE OR REPLACE FUNCTION apply_soft_downgrade(
+  p_teacher_id UUID
+) RETURNS VOID AS $$
+BEGIN
+  UPDATE teachers SET
+    plan = 'free',
+    downgraded_at = grace_until
+  WHERE id = p_teacher_id
+    AND plan != 'free'
+    AND grace_until IS NOT NULL
+    AND grace_until < now()
+    AND downgraded_at IS NULL;
+END; $$ LANGUAGE plpgsql;
 ```
 
 ---
@@ -2270,9 +2288,12 @@ On cohort archive: all 'waiting' entries → status = 'expired'. No notification
 | `payment_rejected` | Admin rejects subscription | Teacher | No | Email |
 | `subscription_renewal_reminder` | 3 days before expiry | Teacher | No | Email |
 | `grace_period_daily_reminder` | Days 1–5 after expiry (daily) | Teacher | No | Email |
-| `plan_hard_locked` | Day 6 after expiry — read-only lock applied | Teacher | No | Email |
+| `plan_hard_locked` | **Legacy** — replaced by `plan_soft_downgraded` + `plan_hard_cancelled` | Teacher | No | Email |
+| `plan_soft_downgraded` | Day 5 — grace ended, plan flipped to Free, 30-day clock to hard cancel started | Teacher | No | Email — one-time, retry-safe via `notifications_log` |
+| `plan_hard_cancel_warning` | Day 25 — 5 days before hard cancel | Teacher | No | Email — one-time, "final warning" |
+| `plan_hard_cancelled` | Day 30+ — account cancelled, students lose access | Teacher | No | Email — one-time |
 | `trial_ending_soon` | 2 days before trial ends | Teacher | No | Email |
-| `plan_downgraded` | Trial expired / grace ended | Teacher | No | Email |
+| `plan_downgraded` | Trial expired → Free | Teacher | No | Email (trial path only; paid expiry uses `plan_soft_downgraded`) |
 | `payout_processed` | Admin marks payout complete | Teacher | No | Email |
 | `payout_failed` | Admin marks payout failed | Teacher | No | Email |
 | `refund_debit_recorded` | Platform absorbs refund | Teacher | No | Email |
@@ -2402,60 +2423,139 @@ Set to `true` when all 5 steps in `onboarding_steps_json` are `true`. Check on e
 
 ---
 
-### 9.3 Plan Expiry UI States
+### 9.3 Plan Expiry — Soft-Downgrade Flow
 
-**ExpiryBanner component** — shown at top of teacher dashboard in three escalating states:
+**Source of truth:** `lib/auth/plan-state.ts::getPlanState(teacher)` returns a
+discriminated union. Every gate (server actions, page guards, banners, cron
+filters) derives intent from this — never check `plan_expires_at` /
+`grace_until` / `downgraded_at` directly.
 
-| State | Condition | Banner Colour | Message |
-|-------|-----------|--------------|---------|
-| Expiry warning | `plan_expires_at` within 3 days | Amber | "Your plan expires in X days. Renew to keep access." |
-| Grace period | `plan_expires_at` passed, `grace_until` in future | Orange | "Your plan expired. You have X days of full access remaining." |
-| Hard locked | `grace_until` passed | Red | "Your account is read-only. Renew to create new content." |
-| Trial ending | `trial_ends_at` within 2 days | Amber | "Your free trial ends in X days. Upgrade to keep your features." |
+**Timeline (paid plan → no payment):**
 
-**Hard Read-Only Lock — What Is Blocked:**
+| Day | Phase | Trigger | What happens |
+|---|---|---|---|
+| 0 | Plan expires | `plan_expires_at < now()` | Cron sets `grace_until = plan_expires_at + 5d`. Daily reminder email. |
+| 0–5 | Grace | `grace_until > now()` | Full access. Teacher gets daily reminder. |
+| 5 | Soft-downgrade | `grace_until < now()` | Cron RPC: `plan = 'free'`, `downgraded_at = grace_until` (NOT `now()` — anchors the 30-day clock on real grace expiry). One-time `plan_soft_downgraded` email. Public surfaces gated. |
+| 5–30 | Soft-downgraded | `downgraded_at` set, `< 30d` ago | Existing data grandfathered. Restrictions apply (see below). |
+| 25 | Day-25 warning | `now() − downgraded_at >= 25d` | One-time `plan_hard_cancel_warning` email. |
+| 30+ | Hard-cancelled | `now() − downgraded_at >= 30d` | One-time `plan_hard_cancelled` email. Students lose access. Subdomain disabled. |
 
-When `grace_until < now()` (hard lock active):
+**`PlanState` union (`lib/auth/plan-state.ts`):**
 
-| Action | Blocked? | Notes |
-|--------|---------|-------|
-| Create course | ✅ Blocked | API returns 403 PLAN_LOCKED |
-| Edit existing course | ✅ Blocked | |
-| Create cohort | ✅ Blocked | |
-| Create class session | ✅ Blocked | |
-| Post announcement | ✅ Blocked | |
-| Create assignment | ✅ Blocked | |
-| Mark attendance | ✅ Blocked | |
-| Add student | ✅ Blocked | |
-| View existing data | ✅ Allowed | Read-only access to all existing content |
-| Request payout | ✅ Allowed | Financial access never blocked |
-| Download reports | ✅ Allowed | |
-| Update profile | ✅ Allowed | |
-| Renew subscription | ✅ Allowed | Primary action from lock screen |
-| Students affected | ❌ No | Students retain read access to enrolled cohort content |
-
-**API lock check pattern** — add to all write routes for locked teachers:
-
-```typescript
-// In API routes that create/modify content:
-if (teacher.grace_until && new Date(teacher.grace_until) < new Date()) {
-  return Response.json(
-    { success: false, error: 'Account is read-only. Renew your plan to continue.', code: 'PLAN_LOCKED' },
-    { status: 403 }
-  )
-}
-
-// ALSO check cohort archived status on all cohort-scoped write routes:
-const cohort = await getCohort(cohortId)
-if (cohort.status === 'archived') {
-  return Response.json(
-    { success: false, error: 'This cohort is archived. No changes allowed.', code: 'COHORT_ARCHIVED' },
-    { status: 403 }
-  )
-}
+```ts
+type PlanState =
+  | { kind: 'free' }                  // never paid; plan_expires_at null
+  | { kind: 'active' }                // paid, in good standing
+  | { kind: 'trialing'; trialEndsAt }
+  | { kind: 'grace'; graceUntil }
+  | { kind: 'soft_downgraded'; downgradedAt; hardCancelAt; daysUntilHardCancel }
+  | { kind: 'hard_locked'; downgradedAt }
 ```
 
-> **Archived cohort write guard:** Apply to ALL routes that create/modify cohort content: announcements, assignments, attendance, class sessions, enrollments. Archived cohorts are permanently read-only for both teachers and students.
+**Cron-lag safety.** State is derived from timestamps, not the cron's success.
+If `grace_until` is in the past but `downgraded_at` is still null (cron hasn't
+fired yet), `getPlanState()` still reports `soft_downgraded`, anchoring the
+30-day clock on `grace_until`. The cron just makes it official + sends emails.
+This means the soft-downgrade banner shows the moment grace ends, regardless
+of cron timing.
+
+**Effective plan.** `getEffectivePlan(teacher)` returns `'free'` for any
+soft-downgraded or hard-locked teacher. `canUseFeature` and `getLimit` route
+through this so paid features turn off and limits drop the moment the
+soft-downgrade window opens — even if the cron hasn't flipped `plan='free'` in
+the row yet.
+
+**Restriction matrix:**
+
+| Action | Active / Grace | Soft-downgraded | Hard-locked |
+|---|---|---|---|
+| Create course / cohort / session | ✅ | ❌ | ❌ |
+| Create announcement / assignment | ✅ | ❌ | ❌ |
+| Edit existing course / cohort / session | ✅ | ✅ | ❌ |
+| Pin / delete announcement | ✅ | ✅ | ❌ |
+| Update / delete assignment | ✅ | ✅ | ❌ |
+| Mark attendance (existing sessions) | ✅ | ✅ | ❌ |
+| Manage existing curriculum | ✅ | ✅ | ❌ |
+| Approve / reject withdrawal | ✅ | ✅ | ❌ |
+| Mark enrollment complete | ✅ | ✅ | ❌ |
+| Private student notes | ✅ | ✅ | ❌ |
+| Send messages to existing students | ✅ | ✅ | ❌ |
+| Accept new enrollment | ✅ | ❌ | ❌ |
+| Approve student screenshot payment | ✅ | ❌ | ❌ |
+| Record refund | ✅ | ❌ | ❌ |
+| Issue / bulk-issue certificates | ✅ | ❌ | ❌ |
+| Revoke certificate | ✅ | ✅ | ❌ |
+| Request payout (balance frozen during soft+hard) | ✅ | ❌ | ❌ |
+| Subdomain visible | ✅ | banner over content | "service unavailable" page |
+| Listed on /explore | ✅ | ❌ | ❌ |
+| Class reminder emails to students | ✅ | ❌ | ❌ |
+| Fee reminder emails to students | ✅ | ❌ | ❌ |
+| Paid features (analytics, certificates, fee reminders, discount codes, etc.) | ✅ if plan allows | ❌ | ❌ |
+| Students access existing cohort content | ✅ | ✅ | ❌ |
+| Student message to teacher | ✅ | ✅ | ❌ |
+
+**Action-side helpers (`lib/auth/plan-state.ts`):**
+
+```ts
+// At the top of any teacher action:
+const blocked = requireCanCreateContent(teacher)  // blocks soft + hard
+if (blocked) return blocked
+
+const blocked = requireCanEditContent(teacher)    // blocks hard only
+if (blocked) return blocked
+```
+
+Use `requireCanCreateContent` for actions that produce *new* content/state
+that counts against limits or flows money (new course/cohort/session,
+enrollments, payment approvals, payouts, refunds, certificate issuance).
+Use `requireCanEditContent` for actions that modify *existing* state
+(updates, deletes, attendance marking, approvals on already-pending requests,
+notes, message send).
+
+**Page-level guard.** `requireUnlockedTeacher` (in `lib/auth/guards.ts`)
+redirects soft-downgraded AND hard-locked teachers to `/subscribe`. Use on
+pages whose only purpose is content creation (`new course`, `new cohort`,
+`edit cohort`, etc.) — never lets a locked teacher reach a form whose action
+would silently reject.
+
+**Renewal recovery.** `approveSubscriptionAction` (and the trial-start +
+admin-manual-plan-change paths) clear `grace_until`, `trial_ends_at`,
+`downgraded_at` in a single update and call `invalidateTeacherPublicCaches()`.
+A renewing teacher returns to full access immediately, regardless of which
+phase they were in. Hard-cancelled teachers' subdomains come back online,
+explore listing is restored, students regain access.
+
+**Cron (`app/api/cron/grace-period/route.ts`) — 5 idempotent steps:**
+
+1. Set `grace_until` for newly-expired paid plans (`set_grace_period` RPC).
+2. Daily reminder email to teachers in active grace.
+3. Soft-downgrade past-grace teachers (`apply_soft_downgrade` RPC; sets
+   `plan='free'`, `downgraded_at = grace_until`). Cache bust.
+4. Day-25 warning email (`now() - downgraded_at >= 25d`, idempotent via
+   `notifications_log`).
+5. Day-30+ hard-cancel notification email + cache bust (idempotent).
+
+A separate "send soft-downgrade email" sub-step queries every teacher with
+`downgraded_at IS NOT NULL` and dedupes via `notifications_log`, so an email
+that failed in a previous cron tick (after the RPC succeeded) actually retries
+on the next run.
+
+**Hard cancel — subdomain + students.**
+- `[subdomain].skoolrooms.com` returns the "service unavailable" card via
+  `components/public/SubdomainPlanGate.tsx::resolveSubdomainGate()`.
+- `/join/[token]` and `/join/[token]/pay/[id]` return the same card for both
+  soft AND hard (teacher can't accept new students either way).
+- Student `/student/courses/[id]` shows "Course unavailable — teacher's
+  account has been cancelled" when `canStudentAccessTeacher()` returns false.
+- `/student/courses` and `/student/schedule` filter out hard-cancelled
+  teachers' rows (they vanish from the list).
+- `sendMessageAction` rejects student-to-teacher messages with code
+  `TEACHER_INACTIVE` when the teacher is hard-locked.
+
+> **Archived cohort write guard:** Apply to ALL routes that create/modify cohort content: announcements, assignments, attendance, class sessions, enrollments. Archived cohorts are permanently read-only for both teachers and students. (Independent of plan-state.)
+
+> **Known v2 gap.** Paid features (`cohort_archive_history`, `analytics_dashboard`, `revenue_analytics`, etc.) hide their data the moment soft-downgrade kicks in, instead of grandfathering view access to data created during the paid period. See `docs/v2-tech-debt.md`.
 
 ---
 
@@ -2609,6 +2709,13 @@ if (current >= limit) {
   return Response.json({ success: false, error: 'Plan limit reached', code: 'LIMIT_REACHED' }, { status: 403 })
 }
 ```
+
+> **`getLimit` and `canUseFeature` use effective plan.** Both helpers route
+> through `getEffectivePlan(teacher)` (in `lib/auth/plan-state.ts`), which
+> returns `'free'` for any soft-downgraded or hard-locked teacher — even if
+> the cron hasn't yet flipped `plan='free'` in the row. This guarantees that
+> a teacher who hits day 5 immediately loses paid features and faces Free
+> limits, regardless of when the daily cron actually runs.
 
 ### 9.7 Idempotency
 
@@ -3368,7 +3475,9 @@ Full KPI dashboard available at `/admin/analytics` (Phase 2). All figures PKR. P
 
 | Event | Timing |
 |-------|--------|
-| Grace period after plan expiry | 5 days full access → hard read-only lock |
+| Grace period after plan expiry | 5 days full access → soft-downgrade (`TIMING.GRACE_PERIOD_DAYS`) |
+| Soft-downgrade window before hard cancel | 30 days from `downgraded_at` (`TIMING.SOFT_DOWNGRADE_TO_HARD_CANCEL_DAYS`) |
+| Hard-cancel final-warning email | 5 days before hard cancel (`TIMING.HARD_CANCEL_WARNING_DAYS_BEFORE`) |
 | Trial period | 14 days (Solo/Academy default) |
 | Renewal reminder email | 3 days before plan_expires_at |
 | Trial ending soon email | 2 days before trial_ends_at |
@@ -3484,7 +3593,15 @@ blog, docs, status, cdn, assets, static, files, media
 | Archive plan with active subscribers | Existing subscribers keep access until their `plan_expires_at`. No new signups to that plan. |
 | Delete plan | Only allowed if zero active subscribers. Confirmation modal required. |
 | Teacher on Free plan (no expiry) | `plan_expires_at = null` = never expires. Grace period and renewal reminders do not apply. |
-| Trial ends → grace period logic | Trial expiry: plan auto-downgrades to Free (no grace). Grace period is only for paid plan expiry. |
+| Trial ends → grace period logic | Trial expiry: plan auto-downgrades to Free (no grace, no `downgraded_at`). The trial-expiry cron defensively clears `downgraded_at` so a stale flag never carries over. |
+| Teacher renews during grace / soft-downgrade / hard-cancel | `approveSubscriptionAction` clears `grace_until`, `trial_ends_at`, AND `downgraded_at` in one update + busts public caches. Teacher snaps back to full access regardless of phase. Hard-cancelled subdomain comes back online, explore listing restored, students regain access. |
+| Cron is delayed past day 5 | `getPlanState` derives soft-downgrade state from `grace_until` directly when `downgraded_at` is null, so the banner / restrictions / hidden-from-explore are already correct before the cron catches up. The cron just makes it official + sends emails. |
+| Cron is delayed past day 35 | Same derivation. State is `hard_locked` once `grace_until + 30d < now()`, regardless of `downgraded_at`. When the cron eventually runs, `apply_soft_downgrade` stamps `downgraded_at = grace_until` (NOT `now()`) so the teacher stays in `hard_locked` instead of being resurrected into a fresh 30-day window. |
+| Cron RPC succeeds but email fails | `plan_soft_downgraded` email is sent in a separate cron sub-step that queries every teacher with `downgraded_at IS NOT NULL` and dedupes via `notifications_log`. Next cron tick retries the email even though the RPC step itself is now a no-op. |
+| Admin manually changes plan from soft-downgraded teacher | `changePlanAction` and `extendExpiryAction` clear `downgraded_at` defensively — teacher lands on a clean state for the new plan. |
+| Student-initiated withdrawal during teacher's downgrade | `requestWithdrawalAction` is student-side, has no plan check — students can always leave. `approveWithdrawalAction` / `rejectWithdrawalAction` block only on hard cancel (housekeeping on existing enrollment). |
+| Pending student payment at moment of downgrade | Stays in `pending_verification`. `approveMonthlyPaymentAction` blocks on soft+hard, so the teacher can't approve until renewal. After renewal, all queued payments are approvable. |
+| Teacher tries to publish course past Free's `max_courses` while soft-downgraded | `getLimit('max_courses')` uses effective plan (`'free'` for soft-downgraded), so the existing limit check in `updateCourseAction` blocks. Existing published courses stay published — Free limit only gates new transitions to `published`. |
 
 ### Pending Visibility Edge Cases
 
