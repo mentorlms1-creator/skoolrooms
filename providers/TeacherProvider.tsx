@@ -103,7 +103,7 @@ type TeacherProviderProps = {
   teacher: TeacherData
   plan: PlanDetails
   usage: UsageData
-  latestSubscription: LatestSubscription | null
+  latestSubscription?: LatestSubscription | null
   children: React.ReactNode
 }
 
@@ -111,7 +111,7 @@ export function TeacherProvider({
   teacher,
   plan,
   usage,
-  latestSubscription,
+  latestSubscription = null,
   children,
 }: TeacherProviderProps) {
   const now = new Date()
