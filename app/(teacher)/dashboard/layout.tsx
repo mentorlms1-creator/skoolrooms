@@ -11,9 +11,10 @@
 import { redirect } from 'next/navigation'
 import { requireTeacher } from '@/lib/auth/guards'
 import { getTeacherPlanDetails, getTeacherUsage } from '@/lib/db/teachers'
+import { getLatestSubscription } from '@/lib/db/subscriptions'
 import { SidebarShell } from '@/components/ui/SidebarShell'
 import { TeacherProvider } from '@/providers/TeacherProvider'
-import type { TeacherData } from '@/providers/TeacherProvider'
+import type { LatestSubscription, TeacherData } from '@/providers/TeacherProvider'
 import type { PlanSlug } from '@/types/domain'
 import { ExpiryBanner } from '@/components/teacher/ExpiryBanner'
 import { ROUTES } from '@/constants/routes'
@@ -43,14 +44,25 @@ export default async function DashboardLayout({
   const teacherId = teacher.id as string
 
   // Fetch plan details, usage, notification data, and view-as session in parallel
-  const [planDetails, usage, unreadNotifCount, notifications, unreadMsgCount, viewAsSession] = await Promise.all([
+  const [planDetails, usage, unreadNotifCount, notifications, unreadMsgCount, viewAsSession, latestSubRow] = await Promise.all([
     getTeacherPlanDetails(teacherId),
     getTeacherUsage(teacherId),
     getUnreadCountForUser(teacherId, 'teacher'),
     getNotificationsForUser(teacherId, 'teacher'),
     getUnreadCountForTeacher(teacherId),
     getViewAsSession(),
+    getLatestSubscription(teacherId),
   ])
+
+  const latestSubscription: LatestSubscription | null = latestSubRow
+    ? {
+        id: latestSubRow.id,
+        plan: latestSubRow.plan,
+        status: latestSubRow.status,
+        rejectionReason: latestSubRow.rejection_reason,
+        createdAt: latestSubRow.created_at,
+      }
+    : null
 
   // Build TeacherData shape for the provider
   const teacherData: TeacherData = {
@@ -89,6 +101,7 @@ export default async function DashboardLayout({
       teacher={teacherData}
       plan={planDetails ?? defaultPlan}
       usage={usage ?? defaultUsage}
+      latestSubscription={latestSubscription}
     >
       <SidebarShell
         role="teacher"

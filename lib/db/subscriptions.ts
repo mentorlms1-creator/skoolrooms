@@ -171,6 +171,30 @@ export async function rejectSubscription(
     .select('*')
     .single()
 
+  if (error || !data) {
+    console.error('[rejectSubscription] failed', { id, error })
+    return null
+  }
+  return data as SubscriptionRow
+}
+
+// -----------------------------------------------------------------------------
+// getLatestSubscription — Most recent subscription row for a teacher
+// Used by the dashboard banner to detect pending_verification / rejected states.
+// -----------------------------------------------------------------------------
+export async function getLatestSubscription(
+  teacherId: string
+): Promise<SubscriptionRow | null> {
+  const supabase = createAdminClient()
+
+  const { data, error } = await supabase
+    .from('teacher_subscriptions')
+    .select('*')
+    .eq('teacher_id', teacherId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
   if (error || !data) return null
   return data as SubscriptionRow
 }

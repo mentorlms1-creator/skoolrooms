@@ -8,6 +8,15 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/ui/StatusBadge'
+import { Textarea } from '@/components/ui/textarea'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { formatPKT } from '@/lib/time/pkt'
 import {
   approveSubscriptionAction,
@@ -19,10 +28,16 @@ type SubscriptionQueueProps = {
   subscriptions: PendingSubscriptionRow[]
 }
 
+const MIN_REASON_LENGTH = 10
+const MAX_REASON_LENGTH = 500
+
 export function SubscriptionQueue({ subscriptions }: SubscriptionQueueProps) {
   const router = useRouter()
   const [loadingId, setLoadingId] = useState<string | null>(null)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [rejectTarget, setRejectTarget] = useState<PendingSubscriptionRow | null>(null)
+  const [reason, setReason] = useState('')
+  const [reasonError, setReasonError] = useState<string | null>(null)
 
   async function handleApprove(id: string) {
     setLoadingId(id)
@@ -37,14 +52,37 @@ export function SubscriptionQueue({ subscriptions }: SubscriptionQueueProps) {
     setLoadingId(null)
   }
 
-  async function handleReject(id: string) {
-    setLoadingId(id)
+  function openRejectDialog(sub: PendingSubscriptionRow) {
+    setRejectTarget(sub)
+    setReason('')
+    setReasonError(null)
+  }
+
+  function closeRejectDialog() {
+    if (loadingId) return
+    setRejectTarget(null)
+    setReason('')
+    setReasonError(null)
+  }
+
+  async function submitReject() {
+    if (!rejectTarget) return
+    const trimmed = reason.trim()
+    if (trimmed.length < MIN_REASON_LENGTH) {
+      setReasonError(`Please write at least ${MIN_REASON_LENGTH} characters — the teacher will see this.`)
+      return
+    }
+
+    setLoadingId(rejectTarget.id)
+    setReasonError(null)
     setMessage(null)
     const formData = new FormData()
-    formData.set('reason', 'Rejected by admin')
-    const result = await rejectSubscriptionAction(id, formData)
+    formData.set('reason', trimmed)
+    const result = await rejectSubscriptionAction(rejectTarget.id, formData)
     if (result.success) {
       setMessage({ type: 'success', text: 'Subscription rejected.' })
+      setRejectTarget(null)
+      setReason('')
       router.refresh()
     } else {
       setMessage({ type: 'error', text: result.error })
@@ -137,8 +175,8 @@ export function SubscriptionQueue({ subscriptions }: SubscriptionQueueProps) {
               <Button
                 variant="danger"
                 size="sm"
-                loading={loadingId === sub.id}
-                onClick={() => handleReject(sub.id)}
+                disabled={loadingId === sub.id}
+                onClick={() => openRejectDialog(sub)}
                 className="rounded-xl"
               >
                 Reject
@@ -147,6 +185,61 @@ export function SubscriptionQueue({ subscriptions }: SubscriptionQueueProps) {
           </div>
         </div>
       ))}
+
+      <Dialog open={rejectTarget !== null} onOpenChange={(open) => { if (!open) closeRejectDialog() }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Reject subscription</DialogTitle>
+            <DialogDescription>
+              {rejectTarget && (
+                <>Tell <span className="font-semibold text-foreground">{rejectTarget.teacher_name}</span> why their {rejectTarget.plan} subscription payment was rejected. They&apos;ll receive this in an email.</>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-2">
+            <Textarea
+              value={reason}
+              onChange={(e) => {
+                setReason(e.target.value)
+                if (reasonError) setReasonError(null)
+              }}
+              maxLength={MAX_REASON_LENGTH}
+              rows={4}
+              placeholder="e.g. Screenshot is unclear — please re-upload a clearer image showing the transaction reference."
+              disabled={loadingId !== null}
+              autoFocus
+            />
+            <div className="flex items-center justify-between text-xs">
+              <span className={reasonError ? 'text-destructive font-medium' : 'text-muted-foreground'}>
+                {reasonError ?? `Min ${MIN_REASON_LENGTH} characters`}
+              </span>
+              <span className="text-muted-foreground tabular-nums">
+                {reason.length}/{MAX_REASON_LENGTH}
+              </span>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={closeRejectDialog}
+              disabled={loadingId !== null}
+              className="rounded-xl"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              loading={loadingId !== null}
+              onClick={submitReject}
+              className="rounded-xl"
+            >
+              Reject subscription
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

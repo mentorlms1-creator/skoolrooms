@@ -53,6 +53,14 @@ export function NotificationBell({
       if (!newRow?.id) return
       setNotifications((prev) => [newRow, ...prev].slice(0, 20))
       setUnreadCount((c) => c + 1)
+      // Re-run the server-rendered layout for kinds that affect plan banner /
+      // sidebar state, so the UI doesn't show stale info alongside the new ping.
+      if (
+        newRow.kind === 'subscription_approved' ||
+        newRow.kind === 'subscription_rejected'
+      ) {
+        router.refresh()
+      }
     },
   })
 

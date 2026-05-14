@@ -6,6 +6,7 @@
  */
 
 import type { Metadata } from 'next'
+import { Fragment } from 'react'
 import { Link } from 'next-view-transitions'
 import { requireTeacher } from '@/lib/auth/guards'
 import { getTeacherSubscriptions } from '@/lib/db/subscriptions'
@@ -85,6 +86,11 @@ export default async function TeacherBillingPage() {
                       Download invoice
                     </a>
                   )}
+                  {sub.status === 'rejected' && sub.rejection_reason && (
+                    <div className="mt-2 rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs text-destructive">
+                      <span className="font-semibold">Reason:</span> {sub.rejection_reason}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -104,39 +110,50 @@ export default async function TeacherBillingPage() {
                 </thead>
                 <tbody>
                   {subscriptions.map((sub) => (
-                    <tr key={sub.id} className="border-b border-border/50">
-                      <td className="py-2.5 pr-4 font-medium text-foreground capitalize">{sub.plan}</td>
-                      <td className="py-2.5 pr-4 text-foreground">
-                        Rs. {sub.amount_pkr.toLocaleString()}
-                      </td>
-                      <td className="py-2.5 pr-4 text-muted-foreground">
-                        {formatPKT(sub.period_start, 'date')} &mdash;{' '}
-                        {formatPKT(sub.period_end, 'date')}
-                      </td>
-                      <td className="py-2.5 pr-4 text-muted-foreground capitalize">
-                        {sub.payment_method.replace('_', ' ')}
-                      </td>
-                      <td className="py-2.5 pr-4">
-                        <StatusBadge status={sub.status} size="sm" />
-                      </td>
-                      <td className="py-2.5 pr-4 text-muted-foreground">
-                        {formatPKT(sub.created_at, 'date')}
-                      </td>
-                      <td className="py-2.5 text-right">
-                        {sub.status === 'approved' ? (
-                          <a
-                            href={`/api/teacher/invoice/${sub.id}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs text-primary hover:underline"
-                          >
-                            Download
-                          </a>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">—</span>
-                        )}
-                      </td>
-                    </tr>
+                    <Fragment key={sub.id}>
+                      <tr className={sub.status === 'rejected' && sub.rejection_reason ? '' : 'border-b border-border/50'}>
+                        <td className="py-2.5 pr-4 font-medium text-foreground capitalize">{sub.plan}</td>
+                        <td className="py-2.5 pr-4 text-foreground">
+                          Rs. {sub.amount_pkr.toLocaleString()}
+                        </td>
+                        <td className="py-2.5 pr-4 text-muted-foreground">
+                          {formatPKT(sub.period_start, 'date')} &mdash;{' '}
+                          {formatPKT(sub.period_end, 'date')}
+                        </td>
+                        <td className="py-2.5 pr-4 text-muted-foreground capitalize">
+                          {sub.payment_method.replace('_', ' ')}
+                        </td>
+                        <td className="py-2.5 pr-4">
+                          <StatusBadge status={sub.status} size="sm" />
+                        </td>
+                        <td className="py-2.5 pr-4 text-muted-foreground">
+                          {formatPKT(sub.created_at, 'date')}
+                        </td>
+                        <td className="py-2.5 text-right">
+                          {sub.status === 'approved' ? (
+                            <a
+                              href={`/api/teacher/invoice/${sub.id}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs text-primary hover:underline"
+                            >
+                              Download
+                            </a>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          )}
+                        </td>
+                      </tr>
+                      {sub.status === 'rejected' && sub.rejection_reason && (
+                        <tr className="border-b border-border/50">
+                          <td colSpan={7} className="pb-3 pr-4">
+                            <div className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs text-destructive">
+                              <span className="font-semibold">Rejection reason:</span> {sub.rejection_reason}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
                   ))}
                 </tbody>
               </table>

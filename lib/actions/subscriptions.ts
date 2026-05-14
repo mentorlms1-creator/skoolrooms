@@ -26,8 +26,10 @@ import {
   hasPriorPaidPlan,
 } from '@/lib/db/subscriptions'
 import { sendEmail } from '@/lib/email/sender'
+import { createNotification } from '@/lib/db/notifications'
 import { platformDomain } from '@/lib/platform/domain'
 import { creditReferralAction } from '@/lib/actions/referrals'
+import { ROUTES } from '@/constants/routes'
 import type { ApiResponse } from '@/types/api'
 import type { PlanSlug } from '@/types/domain'
 import { PLANS, TIMING } from '@/constants/plans'
@@ -312,6 +314,16 @@ export async function approveSubscriptionAction(
     },
   })
 
+  // In-app notification (bell)
+  await createNotification({
+    userType: 'teacher',
+    userId: subscription.teacher_id,
+    kind: 'subscription_approved',
+    title: 'Subscription approved',
+    body: `Your ${subscription.plan} plan is now active.`,
+    linkUrl: ROUTES.TEACHER.settings.billing,
+  })
+
   return { success: true, data: null }
 }
 
@@ -373,6 +385,16 @@ export async function rejectSubscriptionAction(
       },
     })
   }
+
+  // In-app notification (bell) — body truncated; full reason lives on the banner + billing page
+  await createNotification({
+    userType: 'teacher',
+    userId: subscription.teacher_id,
+    kind: 'subscription_rejected',
+    title: 'Subscription payment rejected',
+    body: reason.length > 140 ? `${reason.slice(0, 137)}...` : reason,
+    linkUrl: ROUTES.TEACHER.settings.billing,
+  })
 
   return { success: true, data: null }
 }

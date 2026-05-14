@@ -54,10 +54,21 @@ export type UsageData = {
   storageMb: number
 }
 
+/** Subset of the latest teacher_subscriptions row, surfaced to client components. */
+export type LatestSubscription = {
+  id: string
+  plan: string
+  status: string
+  rejectionReason: string | null
+  createdAt: string
+}
+
 type TeacherContextType = {
   teacher: TeacherData
   plan: PlanDetails
   usage: UsageData
+  /** Most recent teacher_subscriptions row (any status). null if none ever submitted. */
+  latestSubscription: LatestSubscription | null
   /** Day-30+ hard cancel: read-only for teacher, students lose access. */
   isLocked: boolean
   isInGrace: boolean
@@ -92,6 +103,7 @@ type TeacherProviderProps = {
   teacher: TeacherData
   plan: PlanDetails
   usage: UsageData
+  latestSubscription: LatestSubscription | null
   children: React.ReactNode
 }
 
@@ -99,6 +111,7 @@ export function TeacherProvider({
   teacher,
   plan,
   usage,
+  latestSubscription,
   children,
 }: TeacherProviderProps) {
   const now = new Date()
@@ -178,6 +191,7 @@ export function TeacherProvider({
         teacher,
         plan,
         usage,
+        latestSubscription,
         isLocked,
         isInGrace,
         isTrialing,
