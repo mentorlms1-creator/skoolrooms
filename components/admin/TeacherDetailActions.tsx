@@ -39,6 +39,7 @@ import {
 } from '@/lib/actions/admin'
 import { generatePasswordResetLinkAction, startViewAsActionClient } from '@/lib/actions/admin-teacher-ops'
 import { WipeTestAccountButton } from './WipeTestAccountButton'
+import { platformDomain } from '@/lib/platform/domain'
 
 type TeacherDetailActionsProps = {
   teacherId: string
@@ -161,7 +162,7 @@ export function TeacherDetailActions({
 
   // Test account pattern check
   const isTestAccount =
-    teacherEmail.includes('+test') || teacherEmail.endsWith('@test.skoolrooms.com')
+    teacherEmail.includes('+test') || teacherEmail.endsWith(`@test.${platformDomain()}`)
 
   return (
     <>

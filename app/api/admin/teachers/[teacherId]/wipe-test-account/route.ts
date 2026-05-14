@@ -1,7 +1,7 @@
 // =============================================================================
 // app/api/admin/teachers/[teacherId]/wipe-test-account/route.ts
 // POST — Wipe all data for a test account (admin only, confirmation required)
-// Guard: teacher email must contain '+test' or end with '@test.skoolrooms.com'
+// Guard: teacher email must contain '+test' or end with '@test.<platform domain>'
 // Body: { confirmation_email: string } — must equal teacher email
 // =============================================================================
 
@@ -9,9 +9,10 @@ import { NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/auth/guards'
 import { createAdminClient } from '@/supabase/server'
 import { logAdminActivity } from '@/lib/db/admin'
+import { platformDomain } from '@/lib/platform/domain'
 
 function isTestAccount(email: string): boolean {
-  return email.includes('+test') || email.endsWith('@test.skoolrooms.com')
+  return email.includes('+test') || email.endsWith(`@test.${platformDomain()}`)
 }
 
 export async function POST(

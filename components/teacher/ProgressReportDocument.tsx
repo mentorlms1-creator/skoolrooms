@@ -1,4 +1,5 @@
 import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer'
+import { platformDomain } from '@/lib/platform/domain'
 
 const styles = StyleSheet.create({
   page: { padding: 40, fontFamily: 'Helvetica', fontSize: 10, color: '#1a1a1a' },
@@ -136,7 +137,7 @@ export function ProgressReportDocument({
           </View>
         )}
 
-        <Text style={styles.footer}>Skool Rooms — skoolrooms.com</Text>
+        <Text style={styles.footer}>Skool Rooms — {platformDomain()}</Text>
       </Page>
     </Document>
   )

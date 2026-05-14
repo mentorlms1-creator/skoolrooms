@@ -6,6 +6,7 @@
 import { Link } from 'next-view-transitions'
 import { ROUTES } from '@/constants/routes'
 import { PublicNavbar } from '@/components/public/PublicNavbar'
+import { platformDomain } from '@/lib/platform/domain'
 
 export default function HomePage() {
   return (
@@ -90,7 +91,7 @@ const FEATURES: Feature[] = [
   {
     title: 'Branded Subdomain',
     description:
-      'Get your own yourname.skoolrooms.com page where students can discover your courses and enroll instantly.',
+      `Get your own yourname.${platformDomain()} page where students can discover your courses and enroll instantly.`,
     icon: (
       <svg
         xmlns="http://www.w3.org/2000/svg"

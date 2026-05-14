@@ -2,7 +2,7 @@
 
 // =============================================================================
 // components/admin/WipeTestAccountButton.tsx — Destructive wipe for test accounts
-// Only rendered when teacher email matches test pattern (+test or @test.skoolrooms.com)
+// Only rendered when teacher email matches test pattern (+test or @test.<platform domain>)
 // =============================================================================
 
 import { useState } from 'react'
