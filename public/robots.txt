@@ -1,8 +1,0 @@
-User-agent: *
-Allow: /
-Disallow: /dashboard/
-Disallow: /admin/
-Disallow: /student/
-Disallow: /api/
-
-Sitemap: https://skoolrooms.com/sitemap.xml
