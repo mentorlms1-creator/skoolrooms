@@ -6,6 +6,7 @@
 // =============================================================================
 
 import { createAdminClient } from '@/supabase/server'
+import { platformDomain, platformUrl, studentPortalUrl } from '@/lib/platform/domain'
 import type { EmailType } from '@/types/domain'
 
 // -----------------------------------------------------------------------------
@@ -31,6 +32,7 @@ const TRANSACTIONAL_TYPES: ReadonlySet<string> = new Set([
   'enrollment_rejected',
   'enrollment_revoked',
   'cohort_archived',
+  'signup_confirmation',
 ])
 
 // -----------------------------------------------------------------------------
@@ -85,7 +87,7 @@ export async function sendEmail(params: {
 
   // Step 2: Send via Brevo
   const brevoApiKey = process.env.BREVO_API_KEY
-  const fromEmail = process.env.BREVO_FROM_EMAIL || 'noreply@skoolrooms.com'
+  const fromEmail = process.env.BREVO_FROM_EMAIL || `noreply@${platformDomain()}`
 
   if (!brevoApiKey) {
     console.error('[sendEmail] BREVO_API_KEY not configured')
@@ -257,6 +259,7 @@ function buildSubject(type: EmailType, data: Record<string, unknown>): string {
     admin_broadcast: (data.subject as string) || `${platformName} — Important Update`,
     subdomain_changed: `${platformName} — Your subdomain has changed`,
     certificate_issued: `${platformName} — Your certificate for ${(data.cohortName as string) || 'your cohort'} is ready`,
+    signup_confirmation: `Confirm your email — ${platformName}`,
   }
 
   return subjects[type] || `${platformName} — Notification`
@@ -270,6 +273,50 @@ function buildSubject(type: EmailType, data: Record<string, unknown>): string {
 function buildHtmlContent(type: EmailType, data: Record<string, unknown>): string {
   const platformName = (data.platformName as string) || 'Skool Rooms'
   const recipientName = (data.teacherName as string) || (data.studentName as string) || ''
+
+  if (type === 'signup_confirmation') {
+    const confirmationUrl = data.confirmationUrl as string
+    const teacherName = (data.teacherName as string) || ''
+    const logoUrl = platformUrl('/logo.png')
+    return `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /></head>
+      <body style="margin:0; padding:0; background-color:#f5f4f8; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; color:#1a1a1a;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5f4f8; padding:40px 16px;">
+          <tr><td align="center">
+            <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px; background:#ffffff; border-radius:16px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(70,40,180,0.06);">
+              <tr><td style="padding:32px 40px 24px; text-align:left; border-bottom:1px solid #f0eef5;">
+                <img src="${logoUrl}" alt="${platformName}" width="140" style="display:block; max-width:140px; height:auto;" />
+              </td></tr>
+              <tr><td style="padding:40px 40px 32px;">
+                <h1 style="margin:0 0 16px; font-size:24px; line-height:1.3; font-weight:700; color:#1a1a1a; letter-spacing:-0.01em;">Confirm your email${teacherName ? `, ${teacherName}` : ''}</h1>
+                <p style="margin:0 0 24px; font-size:15px; line-height:1.6; color:#4a4a55;">Welcome to ${platformName}. Tap the button below to confirm your email address and start setting up your teaching dashboard.</p>
+                <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 32px;"><tr>
+                  <td style="background:#6d28d9; border-radius:10px;">
+                    <a href="${confirmationUrl}" style="display:inline-block; padding:14px 28px; font-size:15px; font-weight:600; color:#ffffff; text-decoration:none; border-radius:10px;">Confirm email →</a>
+                  </td>
+                </tr></table>
+                <p style="margin:0 0 8px; font-size:13px; line-height:1.5; color:#7a7a85;">Or copy and paste this link in your browser:</p>
+                <p style="margin:0 0 24px; font-size:13px; line-height:1.5; word-break:break-all;">
+                  <a href="${confirmationUrl}" style="color:#6d28d9; text-decoration:underline;">${confirmationUrl}</a>
+                </p>
+                <div style="height:1px; background:#f0eef5; margin:24px 0;"></div>
+                <p style="margin:0; font-size:13px; line-height:1.5; color:#7a7a85;">Didn't sign up? You can safely ignore this email — no account will be created.</p>
+              </td></tr>
+              <tr><td style="padding:24px 40px 32px; background:#fafafd; border-top:1px solid #f0eef5;">
+                <p style="margin:0; font-size:12px; line-height:1.5; color:#9a9aa5; text-align:center;">
+                  ${platformName} · Built for independent tutors and coaching centers<br />
+                  <a href="${platformUrl()}" style="color:#9a9aa5; text-decoration:none;">${platformDomain()}</a>
+                </p>
+              </td></tr>
+            </table>
+          </td></tr>
+        </table>
+      </body>
+      </html>
+    `
+  }
 
   if (type === 'subdomain_changed') {
     const oldUrl = data.oldUrl as string
@@ -335,9 +382,7 @@ function buildHtmlContent(type: EmailType, data: Record<string, unknown>): strin
     const courseName = (data.courseName as string) || ''
     const cohortName = (data.cohortName as string) || ''
     const certificateNumber = (data.certificateNumber as string) || ''
-    const studentDashboardUrl =
-      process.env.NEXT_PUBLIC_STUDENT_URL || 'https://students.skoolrooms.com'
-    const downloadUrl = `${studentDashboardUrl}/student/payments`
+    const downloadUrl = studentPortalUrl('/student/payments')
     return `
       <!DOCTYPE html>
       <html>
@@ -362,7 +407,7 @@ function buildHtmlContent(type: EmailType, data: Record<string, unknown>): strin
     const teacherName = (data.teacherName as string) || ''
     const previousPlan = (data.previousPlan as string) || 'paid'
     const days = (data.daysUntilHardCancel as number) || 30
-    const renewUrl = `${process.env.NEXT_PUBLIC_PLATFORM_URL || 'https://skoolrooms.com'}/subscribe`
+    const renewUrl = platformUrl('/subscribe')
     return `
       <!DOCTYPE html>
       <html>
@@ -394,7 +439,7 @@ function buildHtmlContent(type: EmailType, data: Record<string, unknown>): strin
   if (type === 'plan_hard_cancel_warning') {
     const teacherName = (data.teacherName as string) || ''
     const days = (data.daysUntilHardCancel as number) || 5
-    const renewUrl = `${process.env.NEXT_PUBLIC_PLATFORM_URL || 'https://skoolrooms.com'}/subscribe`
+    const renewUrl = platformUrl('/subscribe')
     return `
       <!DOCTYPE html>
       <html>
@@ -417,7 +462,7 @@ function buildHtmlContent(type: EmailType, data: Record<string, unknown>): strin
 
   if (type === 'plan_hard_cancelled') {
     const teacherName = (data.teacherName as string) || ''
-    const renewUrl = `${process.env.NEXT_PUBLIC_PLATFORM_URL || 'https://skoolrooms.com'}/subscribe`
+    const renewUrl = platformUrl('/subscribe')
     return `
       <!DOCTYPE html>
       <html>

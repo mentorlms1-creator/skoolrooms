@@ -83,6 +83,9 @@ export const EmailType = {
 
   // Certificates
   CERTIFICATE_ISSUED: 'certificate_issued',
+
+  // Auth
+  SIGNUP_CONFIRMATION: 'signup_confirmation',
 } as const
 
 export type EmailType = (typeof EmailType)[keyof typeof EmailType]

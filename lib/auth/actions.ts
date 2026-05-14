@@ -7,6 +7,7 @@ import { platformUrl } from '@/lib/platform/domain'
 import { rateLimit } from '@/lib/rate-limit'
 import { convertReferralAction } from '@/lib/actions/referrals'
 import { getStudentByAuthId, markStudentLoggedIn } from '@/lib/db/students'
+import { sendEmail } from '@/lib/email/sender'
 import type { ApiResponse } from '@/types/api'
 
 // Best-effort write of last_login_at for the Student Health page.
@@ -114,13 +115,30 @@ export async function signUpTeacher(
     await convertReferralAction(ref, teacher.id)
   }
 
-  // Send verification email via Supabase Auth
-  await supabaseAdmin.auth.admin.generateLink({
-    type: 'signup',
-    email,
-    password,
-    options: { redirectTo: platformUrl('/auth/callback') },
-  })
+  // Generate confirmation link via Supabase, then send branded email via Brevo.
+  // generateLink() does NOT send email — it only returns the action_link.
+  const { data: linkData, error: linkError } =
+    await supabaseAdmin.auth.admin.generateLink({
+      type: 'signup',
+      email,
+      password,
+      options: { redirectTo: platformUrl('/auth/callback') },
+    })
+
+  if (linkError || !linkData?.properties?.action_link) {
+    console.error('[signUpTeacher] Failed to generate confirmation link:', linkError?.message)
+  } else {
+    await sendEmail({
+      to: email,
+      type: 'signup_confirmation',
+      recipientId: teacher.id,
+      recipientType: 'teacher',
+      data: {
+        teacherName: name,
+        confirmationUrl: linkData.properties.action_link,
+      },
+    })
+  }
 
   return { success: true, data: { teacherId: teacher.id } }
 }
@@ -365,7 +383,9 @@ export async function updatePassword(
 
 /**
  * Resend the verification email for a teacher who hasn't confirmed yet.
- * Uses Supabase Auth resend method for email verification.
+ * Mirrors signUpTeacher: generates a Supabase action_link, sends via Brevo.
+ * supabase.auth.resend() would go through Supabase Auth SMTP which isn't
+ * configured — we send all transactional mail through Brevo.
  */
 export async function resendVerificationEmail(
   formData: FormData
@@ -376,17 +396,45 @@ export async function resendVerificationEmail(
     return { success: false, error: 'Email is required' }
   }
 
-  const supabase = await createClient()
+  const supabaseAdmin = createAdminClient()
 
-  const { error } = await supabase.auth.resend({
-    type: 'signup',
-    email,
-    options: { emailRedirectTo: platformUrl('/auth/callback') },
-  })
+  // Look up teacher (for recipientId + name on the email template)
+  const { data: teacher } = await supabaseAdmin
+    .from('teachers')
+    .select('id, name')
+    .eq('email', email)
+    .single()
 
-  if (error) {
-    return { success: false, error: error.message }
+  if (!teacher) {
+    // Don't leak whether the email exists — return success either way.
+    return { success: true, data: { sent: true } }
   }
+
+  // 'magiclink' for an unconfirmed user generates a link that, when clicked,
+  // confirms the email and signs them in — the resend-confirmation outcome we
+  // want. Avoids 'signup' which would require a password we don't have here.
+  const { data: linkData, error: linkError } =
+    await supabaseAdmin.auth.admin.generateLink({
+      type: 'magiclink',
+      email,
+      options: { redirectTo: platformUrl('/auth/callback') },
+    })
+
+  if (linkError || !linkData?.properties?.action_link) {
+    console.error('[resendVerificationEmail] Failed to generate link:', linkError?.message)
+    return { success: false, error: 'Failed to send verification email. Please try again.' }
+  }
+
+  await sendEmail({
+    to: email,
+    type: 'signup_confirmation',
+    recipientId: teacher.id,
+    recipientType: 'teacher',
+    data: {
+      teacherName: teacher.name,
+      confirmationUrl: linkData.properties.action_link,
+    },
+  })
 
   return { success: true, data: { sent: true } }
 }
