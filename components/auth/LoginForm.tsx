@@ -2,15 +2,48 @@
 
 import { useActionState } from 'react'
 import { Link } from 'next-view-transitions'
+import { Mail, Lock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { signInAction } from '@/lib/auth/actions'
 import { ROUTES } from '@/constants/routes'
+import { cn } from '@/lib/utils'
 
 type LoginFormProps = {
   action: 'teacher' | 'student'
   redirectTo: string
+}
+
+type FieldProps = {
+  id: string
+  name: string
+  type: string
+  placeholder: string
+  autoComplete?: string
+  icon: React.ReactNode
+}
+
+function Field({ id, name, type, placeholder, autoComplete, icon }: FieldProps) {
+  return (
+    <div
+      className={cn(
+        'group relative flex items-center rounded-2xl border border-border bg-background/60 transition-all',
+        'focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/15',
+      )}
+    >
+      <span className="pointer-events-none flex h-12 w-12 items-center justify-center text-primary">
+        {icon}
+      </span>
+      <input
+        id={id}
+        name={name}
+        type={type}
+        placeholder={placeholder}
+        required
+        autoComplete={autoComplete}
+        className="h-12 w-full bg-transparent pr-4 text-sm text-foreground placeholder:text-muted-foreground/80 outline-none"
+      />
+    </div>
+  )
 }
 
 /**
@@ -24,47 +57,45 @@ export function LoginForm({ action, redirectTo }: LoginFormProps) {
   const [state, formAction, isPending] = useActionState(boundAction, { error: null })
 
   return (
-    <form action={formAction} className="flex flex-col gap-4">
+    <form action={formAction} className="flex flex-col gap-3.5">
       {state?.error && (
-        <div className="rounded-md bg-destructive/10 px-4 py-3 text-sm text-destructive">
+        <div className="rounded-xl bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {state.error}
         </div>
       )}
 
-      <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
-        <Input
-          id="email"
-          name="email"
-          type="email"
-          placeholder="you@example.com"
-          required
-          autoComplete="email"
-        />
-      </div>
+      <Field
+        id="email"
+        name="email"
+        type="email"
+        placeholder="Email"
+        autoComplete="email"
+        icon={<Mail className="h-5 w-5" strokeWidth={1.75} />}
+      />
 
-      <div className="space-y-2">
-        <Label htmlFor="password">Password</Label>
-        <Input
-          id="password"
-          name="password"
-          type="password"
-          placeholder="Enter your password"
-          required
-          autoComplete="current-password"
-        />
-      </div>
+      <Field
+        id="password"
+        name="password"
+        type="password"
+        placeholder="Password"
+        autoComplete="current-password"
+        icon={<Lock className="h-5 w-5" strokeWidth={1.75} />}
+      />
 
-      <div className="flex items-center justify-end">
+      <div className="flex items-center justify-end pt-1">
         <Link
           href={action === 'student' ? ROUTES.PLATFORM.studentForgotPassword : ROUTES.PLATFORM.forgotPassword}
-          className="text-sm text-primary hover:text-primary/90"
+          className="text-sm font-medium text-primary hover:text-primary/80"
         >
           Forgot password?
         </Link>
       </div>
 
-      <Button type="submit" loading={isPending} className="w-full">
+      <Button
+        type="submit"
+        loading={isPending}
+        className="mt-1 h-12 w-full rounded-2xl text-sm font-semibold shadow-[0_10px_30px_-12px_oklch(0.55_0.25_285_/_0.55)]"
+      >
         Sign in
       </Button>
     </form>

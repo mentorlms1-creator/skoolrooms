@@ -1,10 +1,48 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { User, Mail, Lock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { signUpTeacher } from '@/lib/auth/actions'
+import { cn } from '@/lib/utils'
+
+type FieldProps = {
+  id: string
+  name: string
+  type: string
+  placeholder: string
+  autoComplete?: string
+  icon: React.ReactNode
+  error?: string
+}
+
+function Field({ id, name, type, placeholder, autoComplete, icon, error }: FieldProps) {
+  return (
+    <div>
+      <div
+        className={cn(
+          'group relative flex items-center rounded-2xl border border-border bg-background/60 transition-all',
+          'focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/15',
+          error && 'border-destructive focus-within:border-destructive focus-within:ring-destructive/20',
+        )}
+      >
+        <span className="pointer-events-none flex h-12 w-12 items-center justify-center text-primary">
+          {icon}
+        </span>
+        <input
+          id={id}
+          name={name}
+          type={type}
+          placeholder={placeholder}
+          required
+          autoComplete={autoComplete}
+          className="peer h-12 w-full bg-transparent pr-4 text-sm text-foreground placeholder:text-muted-foreground/80 outline-none"
+        />
+      </div>
+      {error && <p className="mt-1.5 pl-1 text-xs text-destructive">{error}</p>}
+    </div>
+  )
+}
 
 export function SignupForm() {
   const [error, setError] = useState<string | null>(null)
@@ -14,6 +52,7 @@ export function SignupForm() {
     const code = new URLSearchParams(window.location.search).get('ref')
     if (code) setRef(code)
   }, [])
+
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
@@ -86,66 +125,58 @@ export function SignupForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
       {ref && <input type="hidden" name="ref" value={ref} />}
       {error && (
-        <div className="rounded-md bg-destructive/10 px-4 py-3 text-sm text-destructive">
+        <div className="rounded-xl bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {error}
         </div>
       )}
 
-      <div className="space-y-2">
-        <Label htmlFor="name">Full name</Label>
-        <Input
-          id="name"
-          name="name"
-          type="text"
-          placeholder="Your full name"
-          required
-          autoComplete="name"
-        />
-        {fieldErrors.name && <p className="text-sm text-destructive">{fieldErrors.name}</p>}
-      </div>
+      <Field
+        id="name"
+        name="name"
+        type="text"
+        placeholder="Full name"
+        autoComplete="name"
+        icon={<User className="h-5 w-5" strokeWidth={1.75} />}
+        error={fieldErrors.name}
+      />
 
-      <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
-        <Input
-          id="email"
-          name="email"
-          type="email"
-          placeholder="you@example.com"
-          required
-          autoComplete="email"
-        />
-      </div>
+      <Field
+        id="email"
+        name="email"
+        type="email"
+        placeholder="Email"
+        autoComplete="email"
+        icon={<Mail className="h-5 w-5" strokeWidth={1.75} />}
+      />
 
-      <div className="space-y-2">
-        <Label htmlFor="password">Password</Label>
-        <Input
-          id="password"
-          name="password"
-          type="password"
-          placeholder="At least 8 characters"
-          required
-          autoComplete="new-password"
-        />
-        {fieldErrors.password && <p className="text-sm text-destructive">{fieldErrors.password}</p>}
-      </div>
+      <Field
+        id="password"
+        name="password"
+        type="password"
+        placeholder="Password"
+        autoComplete="new-password"
+        icon={<Lock className="h-5 w-5" strokeWidth={1.75} />}
+        error={fieldErrors.password}
+      />
 
-      <div className="space-y-2">
-        <Label htmlFor="confirmPassword">Confirm password</Label>
-        <Input
-          id="confirmPassword"
-          name="confirmPassword"
-          type="password"
-          placeholder="Re-enter your password"
-          required
-          autoComplete="new-password"
-        />
-        {fieldErrors.confirmPassword && <p className="text-sm text-destructive">{fieldErrors.confirmPassword}</p>}
-      </div>
+      <Field
+        id="confirmPassword"
+        name="confirmPassword"
+        type="password"
+        placeholder="Confirm password"
+        autoComplete="new-password"
+        icon={<Lock className="h-5 w-5" strokeWidth={1.75} />}
+        error={fieldErrors.confirmPassword}
+      />
 
-      <Button type="submit" loading={loading} className="w-full">
+      <Button
+        type="submit"
+        loading={loading}
+        className="mt-2 h-12 w-full rounded-2xl text-sm font-semibold shadow-[0_10px_30px_-12px_oklch(0.55_0.25_285_/_0.55)]"
+      >
         Create account
       </Button>
     </form>
