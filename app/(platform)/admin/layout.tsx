@@ -9,6 +9,8 @@ import { requireAdmin } from '@/lib/auth/guards'
 import { SidebarShell } from '@/components/ui/SidebarShell'
 import { UIProvider } from '@/providers/UIProvider'
 import { signOut } from '@/lib/auth/actions'
+import { getOperationsStats } from '@/lib/db/admin'
+import { ROUTES } from '@/constants/routes'
 
 export default async function AdminLayout({
   children,
@@ -18,6 +20,8 @@ export default async function AdminLayout({
   // This redirects to /admin/login if not an admin user
   await requireAdmin()
 
+  const ops = await getOperationsStats()
+
   return (
     <UIProvider>
       <SidebarShell
@@ -25,6 +29,7 @@ export default async function AdminLayout({
         user={{ name: 'Admin' }}
         roleBadge="Admin"
         signOutAction={signOut}
+        navBadges={{ [ROUTES.ADMIN.payments]: ops.pendingPaymentCount }}
       >
         {children}
       </SidebarShell>

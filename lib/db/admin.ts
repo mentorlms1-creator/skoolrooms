@@ -706,8 +706,10 @@ export async function getOperationsStats(): Promise<OperationsStats> {
     .from('students')
     .select('*', { count: 'exact', head: true })
 
+  // Pending Action on admin dashboard = teacher subscription screenshots awaiting
+  // admin verification. Student enrollment payments are reviewed by teachers, not admins.
   const { count: pendingPaymentCount } = await supabase
-    .from('student_payments')
+    .from('teacher_subscriptions')
     .select('*', { count: 'exact', head: true })
     .eq('status', 'pending_verification')
 

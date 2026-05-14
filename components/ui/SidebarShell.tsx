@@ -56,6 +56,8 @@ type SidebarShellProps = {
   adminBannerSlot?: React.ReactNode
   ctaLabel?: string
   ctaHref?: string
+  /** Map of nav-item href → badge count. Renders a small pill on matching items when count > 0. */
+  navBadges?: Record<string, number>
   signOutAction: () => Promise<void>
   children: React.ReactNode
 }
@@ -88,6 +90,7 @@ export function SidebarShell({
   adminBannerSlot,
   ctaLabel,
   ctaHref = '#',
+  navBadges,
   signOutAction,
   children,
 }: SidebarShellProps) {
@@ -131,6 +134,7 @@ export function SidebarShell({
                     <SidebarMenu className="gap-1">
                       {group.items.map((item) => {
                         const active = isActive(item.href)
+                        const badge = navBadges?.[item.href] ?? 0
                         return (
                           <SidebarMenuItem key={item.href}>
                             <SidebarMenuButton
@@ -138,7 +142,7 @@ export function SidebarShell({
                               isActive={active}
                               className={cn(
                                 "flex items-center gap-3 h-11 px-4 rounded-xl transition-all duration-200",
-                                active 
+                                active
                                   ? "bg-card shadow-sm ring-1 ring-foreground/5 text-foreground font-semibold"
                                   : "text-muted-foreground hover:bg-foreground/[0.03] hover:text-foreground"
                               )}
@@ -146,6 +150,14 @@ export function SidebarShell({
                               <Link href={item.href}>
                                 <item.icon className={cn("h-[22px] w-[22px]", active ? "text-foreground" : "text-muted-foreground")} strokeWidth={1.5} />
                                 <span className="text-[15px]">{item.label}</span>
+                                {badge > 0 && (
+                                  <span
+                                    className="ml-auto inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-bold text-primary-foreground tabular-nums"
+                                    aria-label={`${badge} pending`}
+                                  >
+                                    {badge > 99 ? '99+' : badge}
+                                  </span>
+                                )}
                               </Link>
                             </SidebarMenuButton>
                           </SidebarMenuItem>

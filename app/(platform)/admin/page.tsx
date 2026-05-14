@@ -82,14 +82,19 @@ export default async function AdminDashboardPage() {
           />
         </div>
         <div className="col-span-12 sm:col-span-6 lg:col-span-3">
-          <StatCard
-            label="Pending Action"
-            value={String(ops.pendingPaymentCount)}
-            unit="payments"
-            icon={CreditCard}
-            iconColor="text-foreground"
-            iconBg="bg-muted"
-          />
+          <Link
+            href="/admin/payments"
+            className="block h-full rounded-[2rem] transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+          >
+            <StatCard
+              label="Pending Action"
+              value={String(ops.pendingPaymentCount)}
+              unit="payments"
+              icon={CreditCard}
+              iconColor="text-foreground"
+              iconBg="bg-muted"
+            />
+          </Link>
         </div>
         <div className="col-span-12 sm:col-span-6 lg:col-span-3">
           <StatCard
