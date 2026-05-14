@@ -109,16 +109,22 @@ export function FileUpload({
           }),
         })
 
-        if (!presignResponse.ok) {
-          const data = await presignResponse.json().catch(() => ({}))
+        const presignBody = (await presignResponse.json().catch(() => ({}))) as {
+          success?: boolean
+          error?: string
+          data?: { uploadUrl?: string; publicUrl?: string }
+        }
+
+        if (!presignResponse.ok || !presignBody.success) {
           throw new Error(
-            (data as { error?: string }).error || 'Failed to prepare upload. Please try again.',
+            presignBody.error || 'Failed to prepare upload. Please try again.',
           )
         }
 
-        const { uploadUrl, publicUrl } = (await presignResponse.json()) as {
-          uploadUrl: string
-          publicUrl: string
+        const uploadUrl = presignBody.data?.uploadUrl
+        const publicUrl = presignBody.data?.publicUrl
+        if (!uploadUrl || !publicUrl) {
+          throw new Error('Failed to prepare upload. Please try again.')
         }
 
         // Upload directly to R2
