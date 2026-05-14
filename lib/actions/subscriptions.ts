@@ -11,6 +11,7 @@
 
 import { createClient } from '@/supabase/server'
 import { createAdminClient } from '@/supabase/server'
+import { revalidateTag } from '@/lib/cache/tags'
 import {
   getTeacherByAuthId,
   invalidateTeacherPublicCaches,
@@ -25,6 +26,7 @@ import {
   hasPriorPaidPlan,
 } from '@/lib/db/subscriptions'
 import { sendEmail } from '@/lib/email/sender'
+import { platformDomain } from '@/lib/platform/domain'
 import { creditReferralAction } from '@/lib/actions/referrals'
 import type { ApiResponse } from '@/types/api'
 import type { PlanSlug } from '@/types/domain'
@@ -72,25 +74,37 @@ export async function subscribeAction(
   const hadPriorPaidPlan = await hasPriorPaidPlan(teacher.id)
 
   if (!hadPriorPaidPlan) {
-    // First time on paid plan — start trial
+    // First time on paid plan — start trial.
+    // Atomic compare-and-swap on trial_started_at to guarantee one trial per
+    // teacher even under concurrent requests (double-click, retry). If the
+    // CAS rowcount is 0, someone else already started the trial.
     const trialDays = TIMING.TRIAL_DAYS
-    const trialEndsAt = new Date()
-    trialEndsAt.setDate(trialEndsAt.getDate() + trialDays)
+    const now = new Date()
+    const trialEndsAt = new Date(now.getTime() + trialDays * 24 * 60 * 60 * 1000)
 
-    const updated = await updateTeacher(teacher.id, {
-      plan: planSlug,
-      trial_ends_at: trialEndsAt.toISOString(),
-      // Free plan has null plan_expires_at. Trial also has null plan_expires_at.
-      // Only grace period / paid subscription sets plan_expires_at.
-      plan_expires_at: null,
-      grace_until: null,
-      // Starting a trial clears any previous downgrade state — fresh start.
-      downgraded_at: null,
-    })
+    const supabase = createAdminClient()
+    const { data: updated, error: updateErr } = await supabase
+      .from('teachers')
+      .update({
+        plan: planSlug,
+        trial_started_at: now.toISOString(),
+        trial_ends_at: trialEndsAt.toISOString(),
+        // Trial has no expiry/grace — only paid subscriptions set those.
+        plan_expires_at: null,
+        grace_until: null,
+        updated_at: now.toISOString(),
+      })
+      .eq('id', teacher.id)
+      .is('trial_started_at', null)
+      .select('id')
+      .single()
 
-    if (!updated) {
+    if (updateErr || !updated) {
+      // CAS failed — someone else already started a trial, or DB error.
       return { success: false, error: 'Failed to start trial. Please try again.' }
     }
+
+    revalidateTag(`teacher-plan:${teacher.id}`)
 
     return {
       success: true,
@@ -164,7 +178,7 @@ export async function submitSubscriptionScreenshotAction(
 
   // Notify admin about new screenshot
   await sendEmail({
-    to: process.env.ADMIN_EMAIL ?? 'admin@skoolrooms.com',
+    to: process.env.ADMIN_EMAIL ?? `admin@${platformDomain()}`,
     type: 'new_subscription_screenshot',
     recipientId: 'admin',
     recipientType: 'teacher', // admin notifications use teacher type for routing

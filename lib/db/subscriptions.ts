@@ -234,22 +234,27 @@ export async function hasExistingSubscription(
 
 // -----------------------------------------------------------------------------
 // hasPriorPaidPlan — Check if teacher has ever been on a paid plan
-// Checks trial_ends_at presence or any subscription record
+//
+// Source of truth is `trial_started_at` (set once on first trial, never
+// cleared). `downgraded_at` and an existing subscription row are kept as
+// belt-and-suspenders signals: a soft-downgraded teacher or anyone with a
+// historical subscription is unambiguously not a new customer, even if the
+// backfill missed their trial_started_at for some reason.
 // -----------------------------------------------------------------------------
 export async function hasPriorPaidPlan(
   teacherId: string
 ): Promise<boolean> {
   const supabase = createAdminClient()
 
-  // Check if teacher has trial_ends_at set (means they've had a trial)
   const { data: teacher } = await supabase
     .from('teachers')
-    .select('trial_ends_at')
+    .select('trial_started_at, trial_ends_at, downgraded_at')
     .eq('id', teacherId)
     .single()
 
+  if (teacher?.trial_started_at) return true
   if (teacher?.trial_ends_at) return true
+  if (teacher?.downgraded_at) return true
 
-  // Also check if they have any subscription record
   return hasExistingSubscription(teacherId)
 }

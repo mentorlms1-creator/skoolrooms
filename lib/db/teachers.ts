@@ -31,6 +31,8 @@ export type TeacherRow = {
   /** When the soft-downgrade kicked in. Anchors the 30-day clock to hard-cancel. */
   downgraded_at: string | null
   trial_ends_at: string | null
+  /** Set once on first trial start, never cleared. Source of truth for trial eligibility. */
+  trial_started_at: string | null
   onboarding_completed: boolean
   onboarding_steps_json: Record<string, boolean>
   referral_code: string | null

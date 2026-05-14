@@ -15,6 +15,7 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { FileUpload } from '@/components/ui/FileUpload'
 import { PLANS } from '@/constants/plans'
 import { ROUTES } from '@/constants/routes'
 import {
@@ -23,13 +24,18 @@ import {
 } from '@/lib/actions/subscriptions'
 
 type SubscribeFormProps = {
+  teacherId: string
   currentPlan: string
   teacherName: string
+  /** True only when the teacher has never had a paid plan or trial.
+   *  Reactivating teachers (soft-downgraded, trial-used) are routed straight
+   *  to the screenshot flow — no trial branch, no "Trial Started!" copy. */
+  isNewUpgrade: boolean
 }
 
 type FormStep = 'select_plan' | 'upload_screenshot' | 'trial_success' | 'screenshot_submitted'
 
-export function SubscribeForm({ currentPlan, teacherName }: SubscribeFormProps) {
+export function SubscribeForm({ teacherId, currentPlan, teacherName, isNewUpgrade }: SubscribeFormProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [step, setStep] = useState<FormStep>('select_plan')
@@ -57,7 +63,11 @@ export function SubscribeForm({ currentPlan, teacherName }: SubscribeFormProps) 
         return
       }
 
-      if (result.data.trialStarted) {
+      // Defense in depth: even if the server says trialStarted, never show
+      // the trial-success copy to a reactivating teacher. The server gate
+      // (hasPriorPaidPlan) should prevent this, but if it ever slips through
+      // we'd rather route them to payment than silently grant a free trial.
+      if (result.data.trialStarted && isNewUpgrade) {
         setStep('trial_success')
       } else {
         setStep('upload_screenshot')
@@ -161,22 +171,22 @@ export function SubscribeForm({ currentPlan, teacherName }: SubscribeFormProps) 
           </div>
         </div>
 
-        {/* Screenshot URL input */}
+        {/* Screenshot upload */}
         <div className="mt-6 space-y-4">
           <div>
-            <label htmlFor="screenshotUrl" className="block text-sm font-medium text-foreground">
-              Screenshot URL <span className="text-destructive">*</span>
+            <label className="block text-sm font-medium text-foreground">
+              Payment Screenshot <span className="text-destructive">*</span>
             </label>
-            <Input
-              id="screenshotUrl"
-              type="url"
-              placeholder="https://..."
-              value={screenshotUrl}
-              onChange={(e) => setScreenshotUrl(e.target.value)}
-              className="mt-1"
-            />
+            <div className="mt-1">
+              <FileUpload
+                fileType="screenshot"
+                entityId={teacherId}
+                onUploadComplete={(url) => setScreenshotUrl(url)}
+                currentUrl={screenshotUrl || undefined}
+              />
+            </div>
             <p className="mt-1 text-xs text-muted-foreground">
-              Upload your screenshot and paste the URL here. Must start with https://
+              Upload a clear image of your payment confirmation (JPEG, PNG, or WebP).
             </p>
           </div>
 
