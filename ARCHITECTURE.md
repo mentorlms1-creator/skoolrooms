@@ -51,6 +51,8 @@
 /
 ├── app/                                  # Next.js 16 App Router
 │   │
+│   ├── robots.ts                         # Next.js robots metadata route (SEO; replaces public/robots.txt)
+│   │
 │   ├── (platform)/                       # skoolrooms.com routes
 │   │   ├── layout.tsx                    # Platform root layout
 │   │   ├── page.tsx                      # Marketing homepage
@@ -171,14 +173,23 @@
 │       ├── r2/
 │       │   └── presign/route.ts          # Generate pre-signed R2 upload URLs
 │       ├── student/
-│       │   └── enroll/route.ts           # Atomic student enrollment (slot check + payment)
+│       │   ├── enroll/route.ts           # Atomic student enrollment (slot check + payment)
+│       │   └── certificate/[enrollmentId]/route.ts  # Stream student completion certificate PDF (React-PDF + CertificateDocument)
+│       ├── teacher/
+│       │   ├── invoice/[subscriptionId]/route.ts    # Stream teacher subscription invoice PDF
+│       │   └── progress-report/[enrollmentId]/route.ts # Stream per-student progress report PDF
+│       ├── admin/
+│       │   ├── view-as/route.ts          # Admin impersonation — issue scoped view-as session
+│       │   └── teachers/[teacherId]/
+│       │       ├── reset-password/route.ts        # Generate Supabase recovery link for teacher
+│       │       └── wipe-test-account/route.ts     # Destructive: purge a teacher's data (dev/test accounts only)
 │       ├── explore/
 │       │   └── track/route.ts            # Analytics tracking for explore page views
 │       ├── public/
 │       │   └── cohort/[token]/
 │       │       └── payment-info/route.ts # Public payment info for student payment page
 │       ├── webhooks/
-│       │   └── payment/route.ts          # Payment gateway webhook handler (NOT YET BUILT)
+│       │   └── payment/route.ts          # Payment gateway webhook handler (NOT YET BUILT — Phase 2)
 │       └── cron/
 │           ├── archive-cohorts/route.ts  # Nightly: archive past-end-date cohorts
 │           ├── fee-reminders/route.ts    # Daily 12:00 UTC: fee reminder emails
@@ -292,12 +303,21 @@
 │   ├── teacher/                          # Teacher-SPECIFIC compositions (use ui/ primitives)
 │   │   ├── PaymentVerificationCard.tsx   # Extends PaymentRow with screenshot viewer + approve/reject
 │   │   ├── CohortCard.tsx                # Cohort summary card for course detail page
+│   │   ├── CohortAnalyticsCard.tsx       # Cohort-level analytics (attendance %, payment %, etc.)
+│   │   ├── DuplicateCohortButton.tsx     # Clone-cohort action (copies schedule + settings, blank roster)
 │   │   ├── UpgradeNudge.tsx              # Contextual upgrade banner
 │   │   ├── ExpiryBanner.tsx              # 4-state plan expiry banner (amber/orange/red/trial)
 │   │   ├── PaymentCard.tsx               # Payment summary card for teacher dashboard
 │   │   ├── PaymentSettingsForm.tsx        # Bank account / payout method settings form
+│   │   ├── ProfileSettingsForm.tsx        # Teacher profile editor (name, photo, bio, subjects)
+│   │   ├── ChangeSubdomainSection.tsx     # Subdomain rename UI (30-day cooldown enforced)
+│   │   ├── InviteLinkCopy.tsx             # Copy-to-clipboard for cohort/enrollment invite links
 │   │   ├── NotificationSettingsForm.tsx   # Email notification preferences form
-│   │   └── OnboardingChecklist.tsx        # Post-signup onboarding progress checklist
+│   │   ├── PlanLimitGuard.tsx             # Wraps features — shows UpgradeNudge at 80%, hard block at 100%
+│   │   ├── OnboardingChecklist.tsx        # Post-signup onboarding progress checklist
+│   │   ├── CertificateDocument.tsx        # React-PDF: student completion certificate (rendered by /api/student/certificate)
+│   │   ├── InvoiceDocument.tsx            # React-PDF: teacher subscription invoice (rendered by /api/teacher/invoice)
+│   │   └── ProgressReportDocument.tsx     # React-PDF: per-student progress summary (rendered by /api/teacher/progress-report)
 │   ├── student/                          # Student-SPECIFIC compositions
 │   │   ├── TeacherGroup.tsx              # Groups enrollments by teacher in student portal
 │   │   └── EnrollmentStatus.tsx          # Enrollment status with payment action
@@ -312,7 +332,14 @@
 │       ├── CourseCard.tsx                 # Course display for teacher subdomain
 │       ├── TeacherCard.tsx               # Teacher card for explore page (photo, subjects, fee, students)
 │       ├── TeacherBio.tsx                # Bio section on teacher subdomain
-│       └── EnrollButton.tsx              # Enroll CTA (handles full/waitlist/closed states)
+│       ├── EnrollNowButton.tsx           # Enroll CTA (handles full/waitlist/closed states) — replaces older EnrollButton
+│       ├── ExploreFilters.tsx            # Subject/level/price filters for /explore page
+│       ├── PublicNavbar.tsx              # Desktop public navbar (marketing + teacher subdomain)
+│       ├── PublicNavbarMobile.tsx        # Mobile sheet variant of PublicNavbar
+│       ├── StarRating.tsx                # Star display for teacher ratings
+│       ├── SubdomainPlanGate.tsx         # Server-resolves teacher plan state → 410/404 on hard-cancel; entry point for `resolveSubdomainGate()`
+│       ├── TestimonialsSection.tsx       # Landing-page testimonials block
+│       └── WaitlistForm.tsx              # Waitlist signup form on full cohorts
 │
 ├── hooks/                                # Client-side React hooks — ONLY in 'use client' components
 │   ├── useRealtime.ts                    # Supabase realtime subscription wrapper
@@ -338,19 +365,42 @@
 ├── components.json                      # shadcn CLI configuration (component paths, aliases, style)
 ├── middleware.ts                         # Subdomain routing
 │
-└── supabase/
-    ├── client.ts                         # Browser Supabase client (@supabase/supabase-js)
-    ├── server.ts                         # Server Supabase client (@supabase/ssr — uses getAll/setAll cookie pattern)
-    └── migrations/
-        ├── 001_initial_schema.sql
-        ├── 002_rls_policies.sql
-        ├── 003_indexes.sql
-        ├── 004_functions.sql             # enroll_student_atomic, credit_teacher_balance
-        ├── 005_seed_data.sql             # Plans, features, platform_settings
-        ├── 006_enrollment_unique.sql     # Unique constraint on enrollments
-        ├── 007_subscription_rejection_reason.sql  # Rejection reason field
-        ├── 008_payment_month_unique.sql  # Partial unique (enrollment_id, payment_month) for monthly loop
-        └── 009_backfill_payment_month.sql # Backfill payment_month on pre-existing confirmed monthly payments
+├── supabase/
+│   ├── client.ts                         # Browser Supabase client (@supabase/supabase-js)
+│   ├── server.ts                         # Server Supabase client (@supabase/ssr — uses getAll/setAll cookie pattern)
+│   └── migrations/
+│       ├── 001_initial_schema.sql
+│       ├── 002_rls_policies.sql
+│       ├── 003_indexes.sql
+│       ├── 004_functions.sql             # enroll_student_atomic, credit_teacher_balance
+│       ├── 005_seed_data.sql             # Plans, features, platform_settings
+│       ├── 006_enrollment_unique.sql     # Unique constraint on enrollments
+│       ├── 007_subscription_rejection_reason.sql  # Rejection reason field
+│       ├── 008_payment_month_unique.sql  # Partial unique (enrollment_id, payment_month) for monthly loop
+│       ├── 009_backfill_payment_month.sql # Backfill payment_month on pre-existing confirmed monthly payments
+│       ├── 010_messaging_and_notifications.sql # messages, message_threads, notifications_log, email_delivery_log
+│       ├── 011_retention_tables.sql      # Waitlist, dormant teacher tracking, retention nudges
+│       ├── 012_course_curriculum.sql     # course_modules + course_lessons tables
+│       ├── 013_student_guardian_email.sql # Optional guardian email on students table
+│       ├── 014_teacher_student_notes.sql # Private teacher notes per student
+│       ├── 015_student_last_login.sql    # students.last_login_at for dormancy detection
+│       ├── 016_certificates.sql          # certificates table + cert template fields on cohorts
+│       ├── 017_pagination_indexes.sql    # Composite indexes for keyset pagination on payments/enrollments
+│       ├── 018_attendance_edits.sql      # attendance_edits audit log (who changed what when)
+│       ├── 019_enable_messaging_realtime.sql # ALTER PUBLICATION supabase_realtime for messages
+│       ├── 020_soft_downgrade.sql        # teachers.downgraded_at + apply_soft_downgrade() RPC
+│       ├── 021_soft_downgrade_anchor_grace.sql # apply_soft_downgrade() anchors downgraded_at to grace_until (not now()) so a delayed cron doesn't drift the 30-day hard-cancel clock
+│       └── 022_trial_started_at.sql     # teachers.trial_started_at — set once on first trial start; tamper-proof eligibility lock
+│
+├── scripts/                              # One-off ops scripts (not part of runtime)
+│   └── set-r2-cors.mjs                   # Apply CORS policy to R2 bucket (run after bucket creation)
+│
+└── docs/
+    └── email-templates/                  # Supabase Auth email template HTML overrides (uploaded via Supabase dashboard)
+        ├── confirm-signup.html
+        ├── reset-password.html
+        ├── magic-link.html
+        └── change-email.html
 ```
 
 ---
@@ -659,6 +709,7 @@ export async function GET(request: Request) {
 | grace_until | timestamptz | nullable | 5 days after expiry; cleared on renewal |
 | downgraded_at | timestamptz | nullable | When soft-downgrade kicked in (anchor for the 30-day clock to hard-cancel). Set to `grace_until` (NOT `now()`) by `apply_soft_downgrade()` so a delayed cron doesn't drift the timeline. Cleared on renewal/admin manual change/trial expiry. |
 | trial_ends_at | timestamptz | nullable | Auto-downgrade to free |
+| trial_started_at | timestamptz | nullable | Set exactly once on first trial start; never cleared. Trial eligibility check: `trial_started_at IS NULL`. Tamper-proof defense-in-depth against double-trial exploits (e.g. cancel → re-subscribe to same plan). Set atomically via CAS in `startTrialAction` alongside `plan`/`trial_ends_at`. |
 | onboarding_completed | bool | default false | |
 | onboarding_steps_json | jsonb | default see below | Per-step completion tracking |
 | referral_code | text | UNIQUE, nullable | Generated at signup for referral program |
@@ -1732,9 +1783,15 @@ export const config = {
 > | `api/cloudflare/subdomain/route.ts` | Cloudflare DNS management |
 > | `api/r2/presign/route.ts` | R2 presigned upload URLs |
 > | `api/student/enroll/route.ts` | Atomic student enrollment |
+> | `api/student/certificate/[enrollmentId]/route.ts` | Stream student completion certificate PDF |
+> | `api/teacher/invoice/[subscriptionId]/route.ts` | Stream teacher subscription invoice PDF |
+> | `api/teacher/progress-report/[enrollmentId]/route.ts` | Stream per-student progress report PDF |
+> | `api/admin/view-as/route.ts` | Admin impersonation session |
+> | `api/admin/teachers/[id]/reset-password/route.ts` | Generate teacher recovery link |
+> | `api/admin/teachers/[id]/wipe-test-account/route.ts` | Destructive purge for test accounts |
 > | `api/explore/track/route.ts` | Explore page view tracking |
 > | `api/public/cohort/[token]/payment-info/route.ts` | Public payment info endpoint |
-> | `api/webhooks/payment/route.ts` | Payment gateway webhook (NOT YET BUILT) |
+> | `api/webhooks/payment/route.ts` | Payment gateway webhook (NOT YET BUILT — Phase 2) |
 > | `api/cron/*` | 8 cron jobs (see Cron Routes section below) |
 
 ### Auth API
