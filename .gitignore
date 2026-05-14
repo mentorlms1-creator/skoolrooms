@@ -43,3 +43,10 @@ yarn-error.log*
 next-env.d.ts
 .playwright-mcp/
 test-*.png
+
+# local tooling / scratch
+.claude/scheduled_tasks.lock
+.claude/settings.local.json
+claude.exe
+supabase/.temp/
+test-screenshots/
