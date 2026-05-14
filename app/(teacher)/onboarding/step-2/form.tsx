@@ -203,6 +203,23 @@ export function Step2Form({ defaultSubdomain, domain }: Step2FormProps) {
           </Button>
         )}
       </div>
+
+      {/* Escape hatch — lets teachers continue if subdomain creation is failing
+          (e.g. Cloudflare misconfig). They keep their temporary subdomain and
+          can set the real one later from Settings → Change Subdomain. */}
+      <div className="text-center">
+        <button
+          type="button"
+          onClick={() => {
+            if (confirming || isPending) return
+            router.push(ROUTES.PLATFORM.onboarding.step3)
+          }}
+          disabled={confirming || isPending}
+          className="text-sm text-muted-foreground hover:text-foreground transition-colors underline-offset-4 hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Skip for now — set this up later in Settings
+        </button>
+      </div>
     </div>
   )
 }
