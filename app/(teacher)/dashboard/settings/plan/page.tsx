@@ -2,10 +2,17 @@
  * app/(teacher)/dashboard/settings/plan/page.tsx — Teacher plan management page
  *
  * Server Component. Shows:
- * - Current plan name, price, expiry/trial status, grandfathered badge
- * - Full feature/limit table with check/lock icons + "Was" column when grandfathered
+ * - Current plan name, price, expiry/trial status
+ * - Feature/limit table with check/lock icons (effective values — snapshot
+ *   silently wins over live plan when one exists)
  * - Usage bars for plan limits
  * - Upgrade/renew CTA
+ *
+ * Note: grandfathering is intentionally hidden from the teacher (single
+ * "Your plan" column). The teacher_plan_snapshot mechanism still operates at
+ * the data layer for getLimit() / canUseFeature() — it just isn't surfaced
+ * here. See lib/db/subscriptions.ts::createPlanSnapshot.
+ *
  * Subscription history lives at /dashboard/settings/billing (Lane E2 split).
  */
 
@@ -22,7 +29,6 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { UsageBars } from '@/components/ui/UsageBars'
 import { PlanFeatureIcon } from '@/components/ui/PlanFeatureIcon'
-import { Badge } from '@/components/ui/badge'
 import { ROUTES } from '@/constants/routes'
 import { PLANS, UNLIMITED_VALUE } from '@/constants/plans'
 import { FEATURE_REGISTRY } from '@/constants/features'
@@ -106,15 +112,14 @@ export default async function PlanSettingsPage() {
     },
   ]
 
-  // Build feature/limit rows
+  // Build feature/limit rows. Values are "effective" — snapshot wins over live
+  // when one exists, mirroring runtime behavior of getLimit() / canUseFeature().
+  // Snapshot is purely an internal mechanism; teachers see one set of terms.
   type FeatureRow = {
     label: string
-    liveValue: string
-    snapshotValue: string | null
-    enabledLive: boolean | null
-    enabledSnapshot: boolean | null
+    value: string
+    enabled: boolean | null
     isLimit: boolean
-    deltaLabel: string | null
   }
 
   const rows: FeatureRow[] = []
@@ -123,51 +128,26 @@ export default async function PlanSettingsPage() {
     const key = feature.key as FeatureKey
     const live = planDetails?.features[key] ?? false
     const snap = snapshot ? snapshot.features[key] : undefined
-    const snapshotValue = snap === undefined ? null : snap ? 'Included' : 'Locked'
-    const deltaLabel =
-      snap !== undefined && snap !== live ? (snap ? 'Was: included' : 'Was: locked') : null
+    const effective = snap !== undefined ? snap : live
     rows.push({
       label: feature.displayName,
-      liveValue: live ? 'Included' : 'Locked',
-      snapshotValue,
-      enabledLive: live,
-      enabledSnapshot: snap === undefined ? null : snap,
+      value: effective ? 'Included' : 'Locked',
+      enabled: effective,
       isLimit: false,
-      deltaLabel,
     })
   }
 
   for (const limit of LIMIT_DISPLAY) {
     const liveRaw = planDetails?.limits[limit.key]
     const snapRaw = snapshot ? snapshot.limits[limit.key] : undefined
-    const liveStr = formatLimit(liveRaw, limit.suffix)
-    const snapStr = snapRaw === undefined ? null : formatLimit(snapRaw, limit.suffix)
-    const deltaLabel =
-      snapRaw !== undefined && liveRaw !== undefined && snapRaw !== liveRaw
-        ? `Was: ${snapStr}`
-        : null
+    const effectiveRaw = snapRaw !== undefined ? snapRaw : liveRaw
     rows.push({
       label: limit.label,
-      liveValue: liveStr,
-      snapshotValue: snapStr,
-      enabledLive: null,
-      enabledSnapshot: null,
+      value: formatLimit(effectiveRaw, limit.suffix),
+      enabled: null,
       isLimit: true,
-      deltaLabel,
     })
   }
-
-  const isGrandfathered = !!snapshot?.isGrandfathered
-  const showWasColumn = isGrandfathered && rows.some((r) => r.deltaLabel)
-
-  // What's-different list (snapshot has more than live)
-  const differences = isGrandfathered
-    ? rows.filter((r) => r.deltaLabel).map((r) => ({
-        label: r.label,
-        was: r.snapshotValue ?? '—',
-        now: r.liveValue,
-      }))
-    : []
 
   return (
     <div className="space-y-6">
@@ -180,18 +160,7 @@ export default async function PlanSettingsPage() {
       <Card className="p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-lg font-semibold text-foreground">{planInfo?.name ?? currentPlan} Plan</h2>
-              {isGrandfathered && (
-                <Badge variant="outline" title={
-                  snapshot?.capturedAt
-                    ? `On legacy terms captured ${formatPKT(snapshot.capturedAt, 'date')}.`
-                    : 'On legacy terms.'
-                }>
-                  Grandfathered
-                </Badge>
-              )}
-            </div>
+            <h2 className="text-lg font-semibold text-foreground">{planInfo?.name ?? currentPlan} Plan</h2>
             <p className="mt-1 text-sm text-muted-foreground">
               {planInfo && planInfo.price_pkr > 0
                 ? `Rs. ${planInfo.price_pkr.toLocaleString()} / month`
@@ -241,58 +210,22 @@ export default async function PlanSettingsPage() {
             <thead>
               <tr className="border-b border-border text-left text-muted-foreground">
                 <th className="pb-2 pr-4 font-medium">Feature / Limit</th>
-                <th className="pb-2 pr-4 font-medium">Live plan</th>
-                <th className="pb-2 pr-4 font-medium">Your effective</th>
-                {showWasColumn && <th className="pb-2 font-medium">Was</th>}
+                <th className="pb-2 font-medium">Your plan</th>
               </tr>
             </thead>
             <tbody>
-              {rows.map((row) => {
-                const effectiveValue = row.snapshotValue ?? row.liveValue
-                const effectiveEnabled =
-                  row.enabledSnapshot !== null
-                    ? row.enabledSnapshot
-                    : row.enabledLive
-                return (
-                  <tr key={row.label} className="border-b border-border/40">
-                    <td className="py-2 pr-4 text-foreground">{row.label}</td>
-                    <td className="py-2 pr-4 text-muted-foreground">
-                      <Cell value={row.liveValue} enabled={row.enabledLive} isLimit={row.isLimit} />
-                    </td>
-                    <td className="py-2 pr-4 text-foreground">
-                      <Cell value={effectiveValue} enabled={effectiveEnabled} isLimit={row.isLimit} />
-                    </td>
-                    {showWasColumn && (
-                      <td className="py-2 text-xs text-muted-foreground">
-                        {row.deltaLabel ?? ''}
-                      </td>
-                    )}
-                  </tr>
-                )
-              })}
+              {rows.map((row) => (
+                <tr key={row.label} className="border-b border-border/40">
+                  <td className="py-2 pr-4 text-foreground">{row.label}</td>
+                  <td className="py-2 text-foreground">
+                    <Cell value={row.value} enabled={row.enabled} isLimit={row.isLimit} />
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
       </Card>
-
-      {/* What's different — collapsible-style list */}
-      {isGrandfathered && differences.length > 0 && (
-        <Card className="p-6">
-          <h3 className="mb-3 text-base font-semibold text-foreground">
-            What&apos;s different from the current plan?
-          </h3>
-          <ul className="space-y-2 text-sm">
-            {differences.map((d) => (
-              <li key={d.label} className="flex items-center justify-between border-b border-border/40 pb-2">
-                <span className="text-foreground">{d.label}</span>
-                <span className="text-muted-foreground">
-                  Was <span className="font-medium text-foreground">{d.was}</span> · Now {d.now}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </Card>
-      )}
 
       {/* Pointer to billing history */}
       <p className="text-sm text-muted-foreground">
