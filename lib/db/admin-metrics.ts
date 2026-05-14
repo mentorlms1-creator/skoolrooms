@@ -18,7 +18,7 @@ export async function getMrrTimeSeries(months: number = 12): Promise<MrrDataPoin
   const { data, error } = await supabase
     .from('teacher_subscriptions')
     .select('amount_pkr, period_start')
-    .eq('status', 'confirmed')
+    .eq('status', 'active')
     .order('period_start', { ascending: false })
 
   if (error || !data) return []
@@ -58,7 +58,7 @@ export async function getChurnMetrics(): Promise<ChurnMetrics> {
   const { data: paidHistory } = await supabase
     .from('teacher_subscriptions')
     .select('teacher_id')
-    .eq('status', 'confirmed')
+    .eq('status', 'active')
 
   if (!paidHistory || paidHistory.length === 0) {
     return { churnRate: 0, churned: 0, baseSize: 0 }
@@ -103,7 +103,7 @@ export async function getConversionMetrics(): Promise<ConversionMetrics> {
   const { data: converted } = await supabase
     .from('teacher_subscriptions')
     .select('teacher_id')
-    .eq('status', 'confirmed')
+    .eq('status', 'active')
 
   const uniqueConverted = new Set((converted ?? []).map((r) => r.teacher_id as string)).size
   const total = totalTeachers ?? 0
@@ -136,7 +136,7 @@ export async function getAdminKpiMetrics(): Promise<KpiMetrics> {
   const { data: thisMonthSubs } = await supabase
     .from('teacher_subscriptions')
     .select('amount_pkr')
-    .eq('status', 'confirmed')
+    .eq('status', 'active')
     .gte('period_start', monthStart)
 
   const mrr = (thisMonthSubs ?? []).reduce((s, r) => s + (r.amount_pkr as number), 0)

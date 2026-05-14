@@ -145,7 +145,7 @@ export async function getNrrMetrics(): Promise<NrrMetrics> {
   const { data: subsRaw, error: subsErr } = await supabase
     .from('teacher_subscriptions')
     .select('teacher_id, plan, amount_pkr, period_start, period_end, created_at')
-    .eq('status', 'confirmed')
+    .eq('status', 'active')
     .gte('period_end', earliestCohortRange.startUtc.slice(0, 10))
 
   if (subsErr || !subsRaw) {
@@ -304,7 +304,7 @@ export async function getCohortRetentionTable(): Promise<CohortRetentionTable> {
     const { data: subsData } = await supabase
       .from('teacher_subscriptions')
       .select('teacher_id, plan, amount_pkr, period_start, period_end, created_at')
-      .eq('status', 'confirmed')
+      .eq('status', 'active')
       .gt('amount_pkr', 0)
       .in('teacher_id', allCohortIds)
       .lte('period_start', subsEnd)
