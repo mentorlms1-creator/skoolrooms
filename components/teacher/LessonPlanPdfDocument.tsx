@@ -28,6 +28,20 @@ import {
 // outputFileTracingIncludes pulls public/fonts/ into the function bundle
 // on Vercel so process.cwd()-relative paths resolve in production too.
 const FONTS_DIR = path.join(process.cwd(), 'public', 'fonts')
+// react-pdf's font registry persists across hot-module-reload (it lives
+// in the @react-pdf/font module, not this one), and `register()` only
+// pushes — no dedup. Before we (re-)register, wipe any prior sources for
+// our family so a stale entry from an earlier module-eval can't be
+// picked instead of the current one. Without this guard a dev hot-reload
+// can keep a broken Buffer src in the registry forever.
+const registry = Font.getRegisteredFonts() as Record<
+  string,
+  { sources?: unknown[] } | undefined
+>
+const existing = registry['DejaVu Sans']
+if (existing && Array.isArray(existing.sources)) {
+  existing.sources.length = 0
+}
 Font.register({
   family: 'DejaVu Sans',
   fonts: [
