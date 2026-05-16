@@ -88,7 +88,8 @@ export type LessonPlanPdfProps = {
   teacherName: string
   title: string
   bodyMarkdown: string
-  generatedAtPkt: string
+  /** When the plan content was last produced or revised (PKT). */
+  updatedAtPkt: string
 }
 
 export function LessonPlanPdfDocument(props: LessonPlanPdfProps) {
@@ -101,7 +102,7 @@ export function LessonPlanPdfDocument(props: LessonPlanPdfProps) {
             {props.teacherName} · {props.courseName}
           </Text>
           <Text style={s.title}>{props.title}</Text>
-          <Text style={s.meta}>Generated {props.generatedAtPkt} (PKT)</Text>
+          <Text style={s.meta}>Last updated {props.updatedAtPkt} (PKT)</Text>
         </View>
         {blocks.map((b, i) => {
           const t = stripInline(b.text)

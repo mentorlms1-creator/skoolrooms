@@ -49,7 +49,10 @@ export async function GET(
       teacherName={teacher.name || teacher.email}
       title={plan.title}
       bodyMarkdown={plan.body_markdown}
-      generatedAtPkt={formatPKT(new Date(), 'datetime')}
+      // Show when the AI last produced/revised this plan, NOT when this PDF
+      // was rendered. updated_at == created_at on never-revised plans, so
+      // this works for both first-version and revised exports.
+      updatedAtPkt={formatPKT(plan.updated_at, 'datetime')}
     />,
   )
 
