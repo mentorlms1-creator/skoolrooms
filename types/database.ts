@@ -1188,6 +1188,7 @@ export type Database = {
           is_active: boolean | null
           is_featured: boolean | null
           is_visible: boolean | null
+          lesson_plans_per_month: number
           max_cohorts_active: number
           max_courses: number
           max_storage_mb: number
@@ -1208,6 +1209,7 @@ export type Database = {
           is_active?: boolean | null
           is_featured?: boolean | null
           is_visible?: boolean | null
+          lesson_plans_per_month?: number
           max_cohorts_active: number
           max_courses: number
           max_storage_mb: number
@@ -1228,6 +1230,7 @@ export type Database = {
           is_active?: boolean | null
           is_featured?: boolean | null
           is_visible?: boolean | null
+          lesson_plans_per_month?: number
           max_cohorts_active?: number
           max_courses?: number
           max_storage_mb?: number

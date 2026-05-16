@@ -110,6 +110,7 @@ export const LimitKey = {
   MAX_COHORTS_ACTIVE: 'max_cohorts_active',
   MAX_STORAGE_MB: 'max_storage_mb',
   MAX_TEACHERS: 'max_teachers',
+  LESSON_PLANS_PER_MONTH: 'lesson_plans_per_month',
 } as const
 
 export type LimitKey = (typeof LimitKey)[keyof typeof LimitKey]

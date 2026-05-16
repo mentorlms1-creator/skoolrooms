@@ -43,7 +43,7 @@ export async function getLimit(
   // Get live plan limits
   const { data: plan } = await supabase
     .from('plans')
-    .select('max_courses, max_students, max_cohorts_active, max_storage_mb, max_teachers')
+    .select('max_courses, max_students, max_cohorts_active, max_storage_mb, max_teachers, lesson_plans_per_month')
     .eq('slug', effectivePlan)
     .single()
 
@@ -56,6 +56,7 @@ export async function getLimit(
     max_cohorts_active: plan.max_cohorts_active,
     max_storage_mb: plan.max_storage_mb,
     max_teachers: plan.max_teachers,
+    lesson_plans_per_month: plan.lesson_plans_per_month,
   }
 
   const liveLimit = liveLimitMap[limitKey]
