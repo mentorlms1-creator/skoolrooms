@@ -5,9 +5,11 @@
 // createLessonPlan uses a Postgres RPC (insert_lesson_plan_atomic) that holds
 // a transaction-scoped advisory lock per teacher, so the quota check and
 // insert can't race even across multiple Lambda instances.
+// NOTE: maxDuration cannot be exported from a 'use server' file. The page
+// route segment that invokes these actions governs the function timeout
+// — set `export const maxDuration` on the calling page if you need to
+// exceed Vercel's default for AI calls (60s is recommended for generate).
 // =============================================================================
-
-export const maxDuration = 60
 
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'

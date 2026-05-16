@@ -5,9 +5,10 @@
 // testAIProviderAction: dry-run a configuration (candidate values) before save.
 // saveAIProviderAction: upsert enabled/baseURL/model in platform_settings and
 // store the API key via the encrypted-settings helpers.
+// NOTE: maxDuration cannot be exported from a 'use server' file. The
+// timeout for these actions is governed by the route segment that invokes
+// them — set `export const maxDuration` on the calling page if needed.
 // =============================================================================
-
-export const maxDuration = 30
 
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'

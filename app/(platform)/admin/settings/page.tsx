@@ -15,6 +15,9 @@ export const metadata: Metadata = {
   title: 'Settings — Skool Rooms Admin',
 }
 
+// "Test connection" can take up to 15s; give the action room on Vercel Pro.
+export const maxDuration = 30
+
 export default async function AdminSettingsPage() {
   const [settings, aiEnabled, aiBaseURL, aiModel, hasAIKey] = await Promise.all([
     getPlatformSettings(),
