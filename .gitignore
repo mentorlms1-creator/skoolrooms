@@ -50,3 +50,6 @@ test-*.png
 claude.exe
 supabase/.temp/
 test-screenshots/
+
+# Brainstorming visual companion sessions
+.superpowers/
