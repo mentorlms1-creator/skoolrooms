@@ -26,6 +26,7 @@ import { getLimit } from '@/lib/plans/limits'
 import { getLessonPlanProvider } from '@/lib/ai/provider'
 import { parseAIOutput } from '@/lib/ai/anthropic'
 import { rateLimit } from '@/lib/rate-limit'
+import { THEME_SLUGS } from '@/lib/lesson-plan/themes/types'
 
 export const maxDuration = 60
 export const runtime = 'nodejs'
@@ -41,6 +42,8 @@ const PlanInputSchema = z.object({
   topic: z.string().min(1).max(200),
   learningGoals: z.string().min(1).max(2000),
   language: z.enum(['english', 'urdu', 'roman-urdu']),
+  /** null = teacher picked "Auto" (AI picks); slug = explicit pick; absent = legacy flow. */
+  themeSlug: z.enum(THEME_SLUGS).nullable().optional(),
 })
 
 function jsonErr(code: string, status: number, message?: string) {
@@ -144,7 +147,7 @@ export async function POST(req: NextRequest) {
         controller.close()
         return
       }
-      const { title, body: bodyMarkdown } = parseAIOutput(trimmed)
+      const { title, body: bodyMarkdown, themeSlug: aiThemeSlug } = parseAIOutput(trimmed)
       if (!bodyMarkdown.trim()) {
         controller.enqueue(
           encoder.encode(sseEvent('error', { code: 'AI_PROVIDER_ERROR', message: 'Empty plan body' })),
@@ -152,6 +155,11 @@ export async function POST(req: NextRequest) {
         controller.close()
         return
       }
+
+      // Resolve final theme: explicit teacher pick wins; otherwise AI's pick;
+      // otherwise default. (When input.themeSlug is null/undefined, the AI was
+      // asked to pick — aiThemeSlug should be populated.)
+      const finalThemeSlug = input.themeSlug ?? aiThemeSlug ?? 'classroom-classic'
 
       // Atomic insert under per-teacher advisory lock.
       const { data: rpcRows, error: rpcErr } = await admin.rpc(
@@ -165,6 +173,7 @@ export async function POST(req: NextRequest) {
           p_inputs: input as unknown as Record<string, unknown>,
           p_model: handle.model,
           p_limit: limitParam,
+          p_theme_slug: finalThemeSlug,
         },
       )
       if (rpcErr) {
