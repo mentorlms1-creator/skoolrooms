@@ -25,42 +25,44 @@ Teachers on Skool Rooms currently use external tools (ChatGPT, Claude.ai) to dra
 
 ## 3. Non-Goals (v1)
 
-- Sharing plans with students. Plans are teacher-private. (Section 5 lesson_plans RLS enforces this.)
+- Sharing plans with students. Plans are teacher-private.
 - Rich text / WYSIWYG editing. Editing happens only through AI chat revisions.
 - Per-teacher model selection. The platform admin picks one provider for everyone.
-- Multi-provider routing (e.g. "use cheap model for revisions, premium for first generation"). Single provider per platform.
+- Multi-provider routing. Single provider per platform.
 - Plan templates marketplace, collaborative editing, version branching. All deferred.
 - Image generation, diagram insertion, attached files. Plain markdown only.
+- PDF caching/archiving. PDFs are generated fresh on every download.
+- Urdu UI strings. Feature ships with English UI; generated content can be in English, Urdu, or Roman Urdu.
 
 ## 4. Architecture Overview
 
 Three new building blocks:
 
-1. **`lib/ai/`** — provider abstraction. Single adapter for Anthropic-compatible endpoints (which is what the user's chosen vendor offers). Configurable base URL + API key + model.
+1. **`lib/ai/`** — provider abstraction. Single adapter for Anthropic-compatible endpoints. Configurable base URL + API key + model.
 2. **`lesson_plans` table + `lesson_plan_usage` table** — Postgres storage. RLS-protected per teacher.
-3. **Course-scoped UI** — new "Lesson Plans" tab inside the existing course detail page, with list / new / detail views.
+3. **Course-scoped UI** — new sub-route `app/(teacher)/dashboard/courses/[courseId]/lesson-plans/` following the existing `curriculum/` sub-route pattern (no tabs).
 
 Data flow:
 
 ```
-Teacher opens course → "Lesson Plans" tab
+Teacher opens course → "Lesson Plans" sub-route
   ↓
-Server Component fetches plans via lib/db/lessonPlans.ts (RLS)
+Server Component fetches plans via lib/db/lessonPlans.ts (uses admin client; RLS enforced at DB)
   ↓
-Teacher clicks "New plan" → form → Server Action createLessonPlan()
+Teacher clicks "New plan" → form → Server Action lib/actions/lessonPlans.ts → createLessonPlan
   ↓
-Server Action: quota check → lib/ai/provider.generatePlan() → INSERT row → revalidatePath
+Server Action: advisory lock → enabled check → quota check → lib/ai/provider.generatePlan() → INSERT row → INSERT usage row → revalidatePath
   ↓
-Detail view streams chat. Teacher revisions → reviseLessonPlan() Server Action → AI call → UPDATE row
+Detail view shows plan + chat. Teacher revisions → reviseLessonPlan Server Action → AI call → UPDATE row
   ↓
-"Download PDF" → Server Action returns PDF bytes (react-pdf) → browser saves
+"Download PDF" → GET /api/lesson-plans/[id]/pdf (Route Handler) → streams PDF
 ```
 
-No new API routes. All mutations are Server Actions per CLAUDE.md rule 12.
+**API route exception:** The PDF download is the **only** new API route. This is a documented exception to CLAUDE.md rule 12 — the route serves a generated file response, not CRUD. All mutations remain Server Actions.
 
 ## 5. Database Schema
 
-Two new tables in a new migration `006_lesson_plans.sql`.
+Two new tables. Migrations `023_lesson_plans.sql` (schema + indexes) and `024_lesson_plans_rls.sql` (RLS policies + encryption helpers). Latest existing migration is `022_trial_started_at.sql`.
 
 ### `lesson_plans`
 
@@ -70,13 +72,13 @@ Two new tables in a new migration `006_lesson_plans.sql`.
 | `teacher_id` | `uuid not null references auth.users(id) on delete cascade` | Owner. RLS pivot. |
 | `course_id` | `uuid not null references courses(id) on delete cascade` | Parent course. |
 | `scope` | `text not null check (scope in ('session','unit'))` | Single class vs full unit. |
-| `title` | `text not null` | AI-generated or teacher-edited title shown in list. |
-| `body_markdown` | `text not null` | Current plan content. Overwritten on each revision. |
-| `inputs` | `jsonb not null` | Original form input (subject, grade, duration, topic, learning goals, language). |
-| `chat_history` | `jsonb not null default '[]'::jsonb` | Array of `{role: 'user' \| 'assistant', content, created_at}` turns. We store the user instruction and a short assistant ack (e.g. `"Plan updated."`) — NOT the full rewritten markdown, since `body_markdown` already holds the current state. |
-| `model` | `text not null` | Model name used (snapshot — provider could change later). |
-| `created_at` | `timestamptz not null default now()` | UTC, per CLAUDE.md rule 1. |
-| `updated_at` | `timestamptz not null default now()` | Bumped on every revision. |
+| `title` | `text not null` | AI-generated or fallback "Untitled plan". Max 200 chars. |
+| `body_markdown` | `text not null check (length(body_markdown) between 1 and 65536)` | Current plan content. Overwritten on each revision. ~64KB cap. |
+| `inputs` | `jsonb not null` | Original form input (subject, grade, duration/weeks, topic, learning goals, language). |
+| `chat_history` | `jsonb not null default '[]'::jsonb` | Array of `{role: 'user' \| 'assistant', content, created_at}` turns. Stores user instructions + short assistant acks (e.g. `"Plan updated."`) — NOT the full rewritten markdown, since `body_markdown` holds the current state. |
+| `model` | `text not null` | Model name snapshot (provider could change later). |
+| `created_at` | `timestamptz not null default now()` | UTC. |
+| `updated_at` | `timestamptz not null default now()` | Bumped on every revision. Trigger maintains this. |
 
 Indexes:
 - `(teacher_id, course_id, updated_at desc)` for list view.
@@ -84,32 +86,88 @@ Indexes:
 
 ### `lesson_plan_usage`
 
-Tracks plan-creation events for monthly quota enforcement.
+Tracks generation/revision events for monthly quota enforcement and cost analytics.
 
 | Column | Type | Notes |
 |---|---|---|
 | `id` | `uuid primary key default gen_random_uuid()` | |
 | `teacher_id` | `uuid not null references auth.users(id) on delete cascade` | |
-| `lesson_plan_id` | `uuid references lesson_plans(id) on delete set null` | Soft link; we keep usage row even if plan is deleted. |
-| `event` | `text not null check (event in ('generate','revise'))` | Only `generate` counts toward quota. `revise` is logged for analytics. |
+| `lesson_plan_id` | `uuid references lesson_plans(id) on delete set null` | Soft link; usage row survives plan deletion (so deletions don't reset quotas mid-month). |
+| `event` | `text not null check (event in ('generate','revise'))` | Only `generate` counts toward quota. `revise` is logged for analytics only. |
 | `model` | `text not null` | |
-| `input_tokens` | `int` | Nullable — best-effort if provider returns usage. |
+| `input_tokens` | `int` | NULL if provider didn't return usage or returned a malformed shape. |
 | `output_tokens` | `int` | Same. |
 | `created_at` | `timestamptz not null default now()` | |
 
-Index: `(teacher_id, created_at desc)`.
+Index: `(teacher_id, event, created_at desc)` — supports the quota query directly.
 
-Quota check is: `count(*) where teacher_id = $1 and event = 'generate' and created_at >= date_trunc('month', now() at time zone 'Asia/Karachi')`.
+### Quota query
+
+```sql
+SELECT count(*)
+FROM lesson_plan_usage
+WHERE teacher_id = $1
+  AND event = 'generate'
+  AND created_at >= (date_trunc('month', now() AT TIME ZONE 'Asia/Karachi')) AT TIME ZONE 'Asia/Karachi';
+```
+
+The inner expression returns the PKT month-start as a `timestamp`; the outer `AT TIME ZONE 'Asia/Karachi'` converts back to a `timestamptz` (UTC) for comparison against `created_at` (which is UTC). This means the quota cycle aligns with Pakistan calendar months.
 
 ### RLS Policies
 
-Add to migration `002_rls.sql` (or a follow-up `006_rls_lesson_plans.sql`):
+All new policies in `024_lesson_plans_rls.sql`:
 
-- `lesson_plans` SELECT/INSERT/UPDATE/DELETE: `teacher_id = auth.uid()` only.
-- `lesson_plan_usage` SELECT: `teacher_id = auth.uid()`. INSERT only via service role (Server Actions use service role for the insert? — no, Server Action runs under user session, so the policy is `with check (teacher_id = auth.uid())`).
-- Admin (service role) bypasses RLS as usual.
+- `lesson_plans`: SELECT/INSERT/UPDATE/DELETE WHERE `teacher_id = auth.uid()`.
+- `lesson_plan_usage`: SELECT and INSERT (with check) WHERE `teacher_id = auth.uid()`. No UPDATE/DELETE (history is immutable).
+- Service role (used by `createAdminClient()` in `lib/db/`) bypasses RLS as standard. `lib/db/lessonPlans.ts` and `lib/db/lessonPlanUsage.ts` must take `teacherId` as an arg and include it in every WHERE clause — same pattern as existing `lib/db/` files.
 
-Students have no policy = no access. Per non-goal: plans are teacher-private.
+Students have no policy = no access. Plans are teacher-private.
+
+### Encrypted platform_settings infrastructure
+
+This feature introduces a new pattern: secrets stored in `platform_settings` table, encrypted at rest. Existing secrets (Brevo, R2, Cloudflare) stay in env vars for now — only **new** AI provider settings use the encrypted pattern.
+
+Migration `024_lesson_plans_rls.sql` adds:
+
+```sql
+create extension if not exists pgcrypto;
+
+-- Marker column to distinguish encrypted values
+alter table platform_settings
+  add column if not exists is_encrypted boolean not null default false;
+
+-- Encrypt with pgp_sym_encrypt using a key passed in as a session GUC
+-- so we never store the encryption key in the database.
+create or replace function set_encrypted_setting(p_key text, p_value text, p_encryption_key text)
+returns void language plpgsql security definer as $$
+begin
+  insert into platform_settings (key, value, is_encrypted, updated_at)
+  values (p_key, encode(pgp_sym_encrypt(p_value, p_encryption_key), 'base64'), true, now())
+  on conflict (key) do update
+    set value = excluded.value,
+        is_encrypted = true,
+        updated_at = now();
+end;
+$$;
+
+create or replace function get_decrypted_setting(p_key text, p_encryption_key text)
+returns text language plpgsql security definer as $$
+declare v text;
+begin
+  select value into v from platform_settings where key = p_key and is_encrypted = true;
+  if v is null then return null; end if;
+  return pgp_sym_decrypt(decode(v, 'base64'), p_encryption_key);
+end;
+$$;
+```
+
+`SETTINGS_ENCRYPTION_KEY` env var (added to Vercel) is passed in as `p_encryption_key`. Server-only — never reaches the client. Key rotation deferred to a separate maintenance task (re-encrypt all rows with new key in a single transaction).
+
+`lib/platform/settings.ts` gets two new helpers:
+- `getEncryptedSetting(key: string): Promise<string | null>` — calls `get_decrypted_setting` RPC.
+- `setEncryptedSetting(key: string, value: string): Promise<void>` — calls `set_encrypted_setting` RPC.
+
+Both use `createAdminClient()` (service role).
 
 ## 6. AI Provider Layer (`lib/ai/`)
 
@@ -121,12 +179,25 @@ lib/ai/
   config.ts          // Reads platform_settings + env fallback
 ```
 
+### Dependencies to add
+
+`package.json`:
+- `ai` (Vercel AI SDK core)
+- `@ai-sdk/anthropic`
+- `@react-pdf/renderer` (already present per codebase audit)
+- `react-markdown` + `remark-gfm` (for in-app rendering)
+
 ### Interface
 
 ```ts
 export interface LessonPlanProvider {
   generatePlan(input: PlanInput): Promise<PlanResult>;
-  revisePlan(args: { currentMarkdown: string; chatHistory: ChatTurn[]; instruction: string }): Promise<PlanResult>;
+  revisePlan(args: {
+    currentMarkdown: string;
+    chatHistory: ChatTurn[];
+    instruction: string;
+  }): Promise<PlanResult>;
+  testConnection(): Promise<{ ok: true } | { ok: false; error: string }>;
 }
 
 export type PlanInput = {
@@ -153,7 +224,24 @@ export type ChatTurn = { role: 'user' | 'assistant'; content: string; created_at
 
 ### Anthropic-Compatible Adapter
 
-Uses `@ai-sdk/anthropic` with `createAnthropic({ baseURL, apiKey })`. Calls `generateText` with a structured prompt that instructs the model to return:
+Uses `@ai-sdk/anthropic`:
+
+```ts
+import { createAnthropic } from '@ai-sdk/anthropic';
+import { generateText } from 'ai';
+
+const anthropic = createAnthropic({ baseURL, apiKey });
+const result = await generateText({
+  model: anthropic(modelName),
+  system: SYSTEM_PROMPT,
+  prompt: userPrompt,
+  maxTokens: 4096,
+});
+```
+
+The adapter accepts `{ baseURL, apiKey, model }` from `config.ts`. Most third-party Anthropic-compatible providers work by simply pointing `baseURL` at their endpoint.
+
+**Output format:** AI must return:
 
 ```
 TITLE: <short title>
@@ -161,172 +249,242 @@ TITLE: <short title>
 <markdown body>
 ```
 
-We split on the first `---` to extract title + body. If the model misformats, we fall back to using the first H1 in the body as title, or "Untitled plan".
+We split on the first `---` line to extract title + body. Fallback parsing:
+1. If no `---`, use the first H1 in body as title; full output as body.
+2. If body is empty or whitespace-only after parsing → throw `AI_PROVIDER_ERROR` (treat as a bad response).
+3. If title is empty → use "Untitled plan".
+4. Title is truncated to 200 chars; body is truncated to 65536 bytes (64KB) with a `…(truncated)` marker if exceeded.
+
+**Token usage capture:** AI SDK's `generateText` returns `usage.{promptTokens,completionTokens,totalTokens}`. Third-party providers may not return usage or may return a different shape. The adapter wraps usage extraction in a try/catch and returns `undefined` for both fields if anything goes wrong. We never throw on missing usage.
+
+**`testConnection()`:** sends a 1-token "ping" prompt. Returns `{ok: true}` if any non-empty response, `{ok: false, error: <provider message or 'Unknown error'>}` otherwise.
 
 ### Config Resolution
 
-`lib/ai/config.ts` reads from `platform_settings` table (admin-controlled, runtime-mutable per CLAUDE.md rule on platform config) with env-var fallback:
+`lib/ai/config.ts` reads from `platform_settings` with env-var fallback. Re-read on every call (no module-scope caching) so admin changes take effect immediately:
 
-| Setting key | Env fallback | Notes |
-|---|---|---|
-| `ai_provider_base_url` | `AI_BASE_URL` | e.g. `https://api.anthropic.com` or the user's vendor URL. |
-| `ai_provider_api_key` | `AI_API_KEY` | Stored encrypted in `platform_settings` (see Section 11). |
-| `ai_provider_model` | `AI_MODEL` | e.g. `claude-haiku-4-5`. |
-| `ai_lesson_planner_enabled` | — | Default false. Master kill-switch. |
+| Setting key | Storage | Env fallback | Notes |
+|---|---|---|---|
+| `ai_lesson_planner_enabled` | plain | — | boolean. Default false. Master kill-switch. |
+| `ai_provider_base_url` | plain | `AI_BASE_URL` | e.g. `https://api.anthropic.com` |
+| `ai_provider_model` | plain | `AI_MODEL` | e.g. `claude-haiku-4-5` |
+| `ai_provider_api_key` | **encrypted** | `AI_API_KEY` | Stored via `set_encrypted_setting`; read via `get_decrypted_setting`. |
 
-The factory in `lib/ai/provider.ts` returns a single `LessonPlanProvider` built from these. No per-call switching.
+`getProviderConfig()` returns `{ enabled, baseURL, apiKey, model }`. If any required field is missing → returns `{ enabled: false, ... }`, which means `assertLessonPlannerEnabled()` throws `FEATURE_DISABLED`.
+
+`testConnection()` takes optional **candidate** values `{baseURL, apiKey, model}` so the admin can test new credentials before saving:
+
+```ts
+async function testProviderConnection(candidate?: Partial<ProviderConfig>) {
+  const config = { ...await getProviderConfig(), ...candidate };
+  return makeProvider(config).testConnection();
+}
+```
 
 ### Prompts (`prompts.ts`)
 
-System prompt sets the AI's role: "You are an assistant helping a Pakistani tutor draft a lesson plan." It includes formatting rules (markdown only, no preamble, specific section headings: Objectives / Materials / Warm-up / Main Activity / Assessment / Homework for sessions; Week 1 / Week 2 / … structure for units).
+System prompt sets the AI's role and formatting rules. Includes:
+- Markdown only, no preamble or trailing commentary.
+- Specific section headings for sessions: Objectives / Materials / Warm-up / Main Activity / Assessment / Homework.
+- Specific structure for units: Week 1 / Week 2 / … with weekly Objectives + Activities + Assessment.
+- Output format header (`TITLE: ... \n--- \n ...`).
+- Pakistani educational context note (CBSE/Cambridge/Federal Board awareness; metric units; PKR currency in any cost-related examples).
 
-Language handling: when `language === 'urdu'` or `'roman-urdu'`, the system prompt instructs the model to write the plan in that language.
+Language handling: when `language === 'urdu'` or `'roman-urdu'`, system prompt instructs the model to write the **body content** in that language. Section headings stay in English for consistent parsing. Roman Urdu = Urdu transliterated in Latin script (common with Pakistani teachers).
 
-Revision prompt: includes the **full current markdown** plus the chat history (last 5 turns) plus the new instruction. Returns the **full updated plan** — not a diff. Simpler to implement and store.
+Revision prompt: includes the **full current markdown** + the chat history (last 5 turns, each truncated to 500 chars) + the new instruction. Asks the model to return the **full updated plan** in the same TITLE/--- format. Not a diff.
 
 ## 7. UI
 
-### Navigation
+### Routing
 
-Inside the existing course detail page (`app/(teacher)/dashboard/courses/[courseId]/`), add a new tab "Lesson Plans" next to existing tabs (Cohorts / Content / Settings / etc — confirm against current course-page tab list during implementation).
+Sub-route under the existing course page, matching the `curriculum/` precedent:
 
-### List view — `courses/[courseId]/lesson-plans/page.tsx`
+```
+app/(teacher)/dashboard/courses/[courseId]/lesson-plans/page.tsx     # list
+app/(teacher)/dashboard/courses/[courseId]/lesson-plans/[planId]/page.tsx  # detail + chat
+```
+
+Course page navigation (existing breadcrumb / side links) gets a "Lesson Plans" link.
+
+### List view
 
 Server Component. Renders:
-- Header with course name + "New plan" button. The button is disabled with a tooltip if quota exhausted or feature disabled.
-- Quota chip: "3 of 10 used this month" (Premium shows "Unlimited").
-- Table/list of plans: title, scope, updated_at (PKT via `formatPKT()`), actions menu (Open / Download PDF / Delete).
-- Empty state: illustration + "Generate your first lesson plan with AI" CTA.
+- Header with course name + "New plan" button. Button is disabled (with tooltip) if quota exhausted, feature disabled, or course soft-deleted.
+- Quota chip: "3 of 10 used this month" — Academy/unlimited shows "Unlimited".
+- List of plans: title, scope badge, `updated_at` (PKT via `formatPKT()`), actions menu (Open / Download PDF / Delete).
+- Empty state: "Generate your first lesson plan with AI" CTA.
 
-### New plan dialog/page
+### New plan dialog
 
-Modal (shadcn `Dialog`) launched from the "New plan" button. Form fields:
-- Scope: radio (Session / Unit)
-- Subject: text
-- Grade level: text
-- Duration (minutes) — shown only if scope=session, default 60
-- Week count — shown only if scope=unit, default 4
-- Topic: text
-- Learning goals: textarea
+shadcn `Dialog` launched from the "New plan" button. Form fields:
+- Scope: radio (Session / Unit) — default Session
+- Subject: text (required, ≤100 chars)
+- Grade level: text (required, ≤50 chars)
+- Duration (minutes): number, shown only when Session, default 60, range 15–240
+- Week count: number, shown only when Unit, default 4, range 1–24
+- Topic: text (required, ≤200 chars)
+- Learning goals: textarea (required, ≤2000 chars)
 - Language: select (English / Urdu / Roman Urdu) — default English
 
-On submit: calls `createLessonPlan` Server Action, shows loading state with skeleton, redirects to the detail view on success. On failure (quota, AI error), shows inline error toast.
+On submit: optimistic loading state with a skeleton; calls `createLessonPlan` Server Action; on success redirects to detail page; on failure shows inline error toast with the message from the error table in Section 12.
 
-### Detail / chat view — `courses/[courseId]/lesson-plans/[planId]/page.tsx`
+### Detail view (desktop)
 
-Two-column layout on desktop, stacked on mobile (per CLAUDE.md mobile-first note):
-- **Left:** Rendered markdown plan. Use `react-markdown` with `remark-gfm`. Sticky header with title + "Download PDF" + "Delete".
-- **Right (or below on mobile):** Chat panel. Shows past turns (user instructions + AI rewrite acknowledgements — we display "Plan updated" rather than dumping the full markdown into chat bubbles, since the left pane already shows current state). Input box at bottom with "Send" button. Submitting calls `reviseLessonPlan` Server Action.
+Two-column layout:
+- **Left:** Rendered markdown plan via `react-markdown` + `remark-gfm`. Sticky header with title + "Download PDF" button + "Delete" menu.
+- **Right:** Chat panel. Past turns shown as bubbles (user instruction + a short `"Plan updated."` ack from the assistant). Input box at the bottom with "Send" button. Submitting calls `reviseLessonPlan`.
 
-While the AI is working, both the markdown pane and chat input are disabled with a "Revising plan…" indicator.
+While AI is working, both panels are disabled with a "Revising plan…" indicator and a cancel button (cancels the client-side loading state only; the server call still completes — its result will be reflected on the next page refresh via `revalidatePath`).
+
+### Detail view (mobile)
+
+The desktop two-column layout doesn't work on mobile — stacking chat below the markdown would force teachers to scroll past the entire plan to revise. Instead:
+
+- Full-width markdown view.
+- Floating action button bottom-right: "Revise with AI" with a sparkle icon.
+- Tapping it opens a shadcn `Sheet` (slide-up drawer, ~80% viewport height) containing the chat panel.
+- After a successful revision, the sheet stays open with the new turn visible; the markdown behind it refreshes via `revalidatePath`.
 
 ### Admin Platform Settings additions
 
-In `app/(platform)/admin/settings/` (the existing admin platform settings page), add a new section "AI Lesson Planner":
+New section "AI Lesson Planner" in the existing `app/(platform)/admin/settings/` form:
+
 - Master toggle: `ai_lesson_planner_enabled`
-- Base URL (text)
-- API key (password input, shows `••••••••` after save; "Replace key" button to enter new one)
-- Model name (text)
-- "Test connection" button — fires a tiny `generateText` ping against the configured provider/model and shows success or the provider's error message.
+- Base URL (text input)
+- Model name (text input)
+- API key: write-only password input. On load, shows `••••••••` if a key is set (server returns `{has_key: true}` not the value). A "Replace key" button reveals an empty input for a new value. The form submits the new key only when the input is non-empty (avoiding accidental clears).
+- "Test connection" button: submits **candidate values** from the current form state (even if unsaved) to a `testAIProviderAction` Server Action. Returns success or provider error message.
+- Save button: persists all four settings. Encrypted setting only updates if the API key input is non-empty.
 
 ## 8. Server Actions
 
-All in `app/(teacher)/dashboard/courses/[courseId]/lesson-plans/actions.ts`.
+All in `lib/actions/lessonPlans.ts` (matching existing convention — Server Actions live in `lib/actions/`, not colocated with pages).
+
+All Server Action files: `export const maxDuration = 60;` to allow up to 60s for AI calls (Vercel Pro supports this).
 
 ### `createLessonPlan(formData)`
 
-1. `requireTeacher()` — auth guard.
-2. Verify `courseId` belongs to the teacher (RLS will enforce too, but explicit check gives a clear error).
-3. Verify cohort archived rule does NOT apply — lesson plans are course-level, not cohort-level. (Plans are still creatable even if a course's cohorts are archived. Confirm during implementation that this matches intent.)
-4. `await assertLessonPlanQuota(teacherId)` — throws `QUOTA_EXCEEDED` if over limit.
-5. `await assertLessonPlannerEnabled()` — throws `FEATURE_DISABLED` if admin toggle is off.
-6. Validate form input with zod.
-7. `await provider.generatePlan(input)` — wrap with 60s timeout; on timeout throw `AI_TIMEOUT`.
-8. Insert `lesson_plans` row.
-9. Insert `lesson_plan_usage` row (`event='generate'`, with token counts if returned).
-10. `revalidatePath(...)` and redirect to detail page.
+1. `await requireTeacher()` — auth guard.
+2. `await pg.query('SELECT pg_advisory_xact_lock(hashtext($1::text))', [teacherId])` — serializes generations per teacher (race-condition fix). Wrapped in a Postgres transaction.
+3. Verify `courseId` belongs to the teacher (RLS will block too, but explicit check yields a cleaner error).
+4. `await assertLessonPlannerEnabled()` — throws `FEATURE_DISABLED` if admin toggle is off.
+5. `await assertLessonPlanQuota(teacherId)` — throws `QUOTA_EXCEEDED` if over limit (uses query from Section 5).
+6. `await rateLimit(teacherId + ':gen', 1, 10_000)` — 1 generation per 10s as a UX guard (cheap defense before AI cost is incurred).
+7. Validate form input with zod.
+8. `await getProviderConfig()` → build provider → `provider.generatePlan(input)`, with a 60s timeout. On timeout throw `AI_TIMEOUT`. On thrown provider error throw `AI_PROVIDER_ERROR` (full provider message logged server-side, generic message shown to user).
+9. INSERT `lesson_plans` row.
+10. INSERT `lesson_plan_usage` row (`event='generate'`, with token counts or NULL).
+11. Commit transaction → `revalidatePath(...)` → return `{ id }`.
+
+The advisory lock + transaction means: if a duplicate submit arrives while the first is mid-AI-call, it blocks until the first commits, then sees the freshly-inserted usage row in the quota count and throws `QUOTA_EXCEEDED` (if appropriate). No duplicate plans.
 
 ### `reviseLessonPlan(planId, instruction)`
 
-1. Auth + ownership check (RLS will block cross-teacher but we still want clean error messages).
-2. `assertLessonPlannerEnabled()`.
-3. Validate instruction is non-empty, ≤ 2000 chars.
-4. Load current plan.
-5. `await provider.revisePlan({ currentMarkdown, chatHistory: plan.chat_history.slice(-5), instruction })`.
-6. UPDATE `lesson_plans` SET `body_markdown`, `chat_history = chat_history || new_turns`, `updated_at = now()`.
-7. INSERT `lesson_plan_usage` (`event='revise'`).
-8. `revalidatePath`.
+1. `await requireTeacher()`.
+2. `await assertLessonPlannerEnabled()`.
+3. Validate `instruction`: non-empty, ≤2000 chars.
+4. Load current plan (filter by `teacher_id` for ownership — also enforced by RLS).
+5. `await rateLimit(teacherId + ':rev', 1, 5_000)` — 1 revision per 5s.
+6. `provider.revisePlan({ currentMarkdown, chatHistory: plan.chat_history.slice(-5), instruction })` with 60s timeout.
+7. UPDATE `lesson_plans` SET `body_markdown`, `title` (if AI revised it), `chat_history = chat_history || jsonb_build_array(<user_turn>, <assistant_ack_turn>)`, `updated_at = now()`.
+8. INSERT `lesson_plan_usage` (`event='revise'`).
+9. `revalidatePath`.
 
-**Revisions do NOT count against the monthly quota** (we logged separately for analytics). Rationale: once a plan exists, teachers should iterate freely. If revision costs become a problem we add a separate per-plan revision cap in v2.
+**Revisions do NOT count against the monthly quota.** Rationale: once a plan exists, teachers should iterate freely. If revision costs become a problem, v2 adds a per-plan revision cap.
 
 ### `deleteLessonPlan(planId)`
 
-Auth + ownership → `DELETE FROM lesson_plans WHERE id = $1 AND teacher_id = auth.uid()`. Cascade leaves `lesson_plan_usage` rows with null `lesson_plan_id` (still useful for quota counting).
+`requireTeacher()` → `DELETE FROM lesson_plans WHERE id = $1 AND teacher_id = $teacherId`. Cascade leaves `lesson_plan_usage` rows with `lesson_plan_id = null` so quotas remain accurate.
 
-### `exportLessonPlanPdf(planId)`
+### `testAIProviderAction(candidate)`
 
-Auth + ownership. Renders the plan via `@react-pdf/renderer`. Returns `Response` with `application/pdf` and `Content-Disposition: attachment; filename="<sanitized-title>.pdf"`.
+Admin-only (`requireAdmin()`). Accepts optional `{baseURL, apiKey, model}` candidate values. Calls `testProviderConnection(candidate)`. Returns `{ok, error?}`. Never logs or stores the candidate API key.
 
-## 9. Plan Limits
+## 9. PDF Generation
 
-Add to `constants/plans.ts` (or wherever existing tier definitions live):
+**Route Handler:** `app/api/lesson-plans/[id]/pdf/route.ts` (GET). Documented exception to CLAUDE.md rule 12 — this serves a generated file, not CRUD.
 
-| Tier | `lessonPlansPerMonth` |
-|---|---|
-| Free | 2 |
-| Starter | 10 |
-| Pro | 50 |
-| Premium | unlimited (sentinel: `null` or `Infinity` — match existing convention in `lib/plans/`) |
-
-Add `getLessonPlanLimit(plan)` to `lib/plans/limits.ts` (or extend existing `getLimit(feature, plan)` pattern).
-
-Server-side enforcement in `assertLessonPlanQuota` queries `lesson_plan_usage` for the current calendar month (PKT). UI displays counter via the same helper.
-
-Per CLAUDE.md rule 16: server-side enforcement is mandatory; the disabled "New plan" button is UX-only.
-
-## 10. PDF Generation
-
-Library: `@react-pdf/renderer` (no Chromium / Puppeteer).
+Handler flow:
+1. `await requireTeacher()` — same auth as Server Actions.
+2. Load plan by id, scoped to `teacher_id` (RLS + explicit filter).
+3. If not found → 404.
+4. Render via `@react-pdf/renderer` → `Response` with `application/pdf`, `Content-Disposition: attachment; filename="<sanitized-title>.pdf"`.
 
 PDF layout:
-- Header: course name + plan title + generated date (PKT).
-- Body: markdown rendered to PDF blocks. We **don't** support full markdown rendering in react-pdf out of the box — we'll write a small renderer that handles: H1/H2/H3, paragraphs, ul/ol, bold, italic, code spans. Tables and images are out of scope for v1 (lesson plans rarely need them).
+- Header: teacher display name + course name + plan title + generated date in PKT.
+- Body: a small markdown-to-react-pdf renderer (in `components/teacher/LessonPlanPdfDocument.tsx`) handling: H1/H2/H3, paragraphs, ul/ol (nested up to 2 levels), bold, italic, code spans. Tables and images: out of scope for v1.
 - Footer: "Generated with Skool Rooms" + page number.
 
-Branding: teacher's display name + subdomain shown in header. Logo support deferred (teachers don't upload logos yet in MVP).
+PDFs are regenerated on every download. No caching to R2 — plans change with every revision, so a cached PDF would be stale by definition.
+
+## 10. Plan Limits
+
+Existing plan tiers (verified in codebase): `free`, `solo`, `academy`.
+
+Add to plan limit definitions (`constants/plans.ts` or `lib/plans/limits.ts` per existing pattern):
+
+| Tier | `lesson_plans_per_month` |
+|---|---|
+| `free` | 2 |
+| `solo` | 25 |
+| `academy` | unlimited (sentinel: existing convention — likely `null` or `-1`, match what `max_courses`/`max_students` use) |
+
+`getLimit(teacherId, 'lesson_plans_per_month')` follows existing API. Add corresponding column to the `plans` table if that's the existing pattern (audit during implementation).
+
+`assertLessonPlanQuota(teacherId)`:
+1. Look up teacher's current plan via `teacher_subscriptions`. If no active subscription found → default to `free`.
+2. Get limit. If unlimited → return.
+3. Count `lesson_plan_usage` rows where `event='generate'` and `created_at >= PKT month start`.
+4. If count ≥ limit → throw `QUOTA_EXCEEDED`.
+
+UI displays the counter via the same helper. Per CLAUDE.md rule 16: server-side enforcement is mandatory; the disabled "New plan" button is UX-only.
 
 ## 11. Security & Secrets
 
-- **API key storage:** `platform_settings.ai_provider_api_key` stored encrypted using the same approach as other secrets in `platform_settings`. If no encryption layer exists yet, we use Postgres pgcrypto with a key from `SETTINGS_ENCRYPTION_KEY` env var. Confirm during implementation what existing settings (e.g. Brevo key, Cloudflare token) do — match that pattern, don't introduce a new one.
-- Service role only on the server. The API key never reaches the client.
-- The "Test connection" button does NOT echo the key back; only success/failure.
-- No prompt injection mitigation needed for v1 — the AI's output is rendered as markdown via `react-markdown` (sanitizes by default; no raw HTML), and the teacher is the only user who sees it. We do strip script-like content from the markdown before storing as a defense-in-depth measure.
-- Rate limit Server Actions per-teacher: 1 generation per 10 seconds, 1 revision per 5 seconds. Uses existing in-memory rate limiter per CLAUDE.md tech-stack notes.
+- **API key storage:** Encrypted in `platform_settings` via `pgp_sym_encrypt` (Section 5). Encryption key in `SETTINGS_ENCRYPTION_KEY` env var (added to Vercel). Decryption only happens server-side inside Server Actions / Route Handlers.
+- **Service role only on server.** The API key never reaches the client.
+- **"Test connection" button** does NOT echo the key back; only success/failure. Candidate key submitted via Server Action runs the test inline and is discarded.
+- **Markdown rendering:** `react-markdown` sanitizes by default (no raw HTML). We additionally strip `<script>`, `<iframe>`, and `javascript:` URI patterns before storing `body_markdown` (defense-in-depth, even though only the teacher sees their own plans).
+- **Rate limit Server Actions per-teacher:**
+  - Generation: 1 per 10 seconds (`rateLimit(teacherId + ':gen', 1, 10_000)`)
+  - Revision: 1 per 5 seconds (`rateLimit(teacherId + ':rev', 1, 5_000)`)
+  - Test connection (admin): 1 per 5 seconds
+  Uses existing `lib/rate-limit.ts`.
+- **Vercel function timeout:** `export const maxDuration = 60;` on all Server Action files and the PDF Route Handler. Requires Vercel Pro (already required for wildcard SSL).
 
 ## 12. Error Handling
 
-| Error | User-facing message | HTTP-ish code |
-|---|---|---|
-| Quota exhausted | "You've used all X plans for this month. Upgrade to create more." + upgrade CTA | `QUOTA_EXCEEDED` |
-| Feature disabled (admin off) | "AI lesson planning is currently unavailable. Please try later." | `FEATURE_DISABLED` |
-| AI timeout (>60s) | "The AI took too long to respond. Please try again." | `AI_TIMEOUT` |
-| AI provider error (4xx/5xx) | "Couldn't generate the plan right now. Please try again in a minute." (log full provider response server-side) | `AI_PROVIDER_ERROR` |
-| Malformed AI output (no TITLE/--- separator) | Salvage with fallback parser; never user-facing. Log a warning. | — |
-| Course not owned by teacher | "Course not found." (don't leak existence) | `NOT_FOUND` |
-| Plan deleted while revising | "This plan no longer exists." | `NOT_FOUND` |
-| Network failure on PDF download | Browser-handled; no Server Action specific handling. | — |
+All errors thrown by Server Actions are caught at the page/component level and surfaced via toast or inline error.
 
-All user-facing strings should read clearly in plain English (CLAUDE.md user-context note). Urdu translations deferred — feature ships in English UI even when generating Urdu content.
+| Error code | User-facing message | When |
+|---|---|---|
+| `QUOTA_EXCEEDED` | "You've used all X plans for this month. Upgrade to create more." + upgrade CTA | Quota check fails |
+| `FEATURE_DISABLED` | "AI lesson planning is currently unavailable. Please try again later." | Master toggle off or config missing |
+| `AI_TIMEOUT` | "The AI took too long to respond. Please try again." | 60s timeout |
+| `AI_PROVIDER_ERROR` | "Couldn't generate the plan right now. Please try again in a minute." | Provider 4xx/5xx, empty response, or malformed output. Full provider response logged server-side. |
+| `RATE_LIMITED` | "Slow down a bit — try again in a few seconds." | Hits rate limiter |
+| `NOT_FOUND` | "Lesson plan not found." | Plan ID invalid or not owned by teacher |
+| `COURSE_NOT_FOUND` | "Course not found." | Course missing or not owned |
+| `VALIDATION_FAILED` | Field-specific message from zod | Form input invalid |
+
+All user-facing strings in plain English (CLAUDE.md user-context note). Provider errors are NEVER passed through verbatim to the user (could leak internal details or be confusing).
 
 ## 13. Edge Cases
 
-- **Course deleted while plan exists:** Cascade deletes plans. No orphaning.
-- **Teacher downgrades plan mid-month:** Existing plans remain; new ones blocked once they hit the lower tier's quota. We do **not** retro-delete plans.
-- **Admin disables feature mid-revision:** The in-flight Server Action completes (already past the gate). New attempts after the toggle see `FEATURE_DISABLED`.
-- **Admin rotates the API key mid-revision:** Mid-flight call uses the old key (already loaded into the provider instance for that request). Next request loads new key. Provider config is read fresh on each Server Action — no long-lived module-scope provider.
-- **Teacher generates 2 plans simultaneously while at quota 1/2:** Quota check is read-then-write. Race condition possible. Mitigation: wrap quota check + insert in a single Postgres transaction using `SERIALIZABLE` isolation, OR rely on the in-memory rate limiter's 10s gap which makes this effectively impossible. v1 uses the rate-limiter approach; document the residual risk.
-- **AI returns 50KB of markdown:** Cap `body_markdown` at 32KB; if exceeded, truncate with a "…(truncated)" marker. Lesson plans are not novels.
-- **Teacher in Roman Urdu generates a plan, then revises with English instruction:** The current plan stays in Roman Urdu; the revision instruction in English is fine — model handles mixed-language context naturally. No special handling.
+- **Course deleted / soft-deleted while plan exists:** Hard delete cascades to plans. Soft delete (`deleted_at`) — list view filters `deleted_at IS NULL`; new-plan button disabled if course is soft-deleted.
+- **Teacher downgrades plan mid-month:** Existing plans remain; new ones blocked once they hit the lower tier's quota for the current month.
+- **Teacher with no active subscription:** Treated as `free`. (Confirm against existing `getLimit()` behavior — match it.)
+- **Admin disables feature mid-revision:** In-flight Server Action completes (already past the gate). Next attempt sees `FEATURE_DISABLED`.
+- **Admin rotates API key mid-revision:** In-flight call uses the loaded key. Next request loads new key from `platform_settings` (no module-scope caching in `lib/ai/config.ts`).
+- **Concurrent generations from one teacher (race condition):** Postgres advisory lock per teacher (Section 8) serializes them. Second request blocks ~5-30s waiting for the first; on resume sees fresh quota state.
+- **AI returns 100KB markdown:** Truncated to 64KB with a `…(truncated)` marker. Logged for analytics.
+- **AI returns empty / whitespace-only output:** Treated as `AI_PROVIDER_ERROR`. Plan is not created. Quota not consumed (transaction rolls back).
+- **Provider returns malformed usage object:** Token fields stored as NULL; no error.
+- **Teacher in Roman Urdu generates a plan, then revises with English instruction:** Mixed-language context — model handles naturally. No special handling.
+- **Client-side timeout but server completed (idempotency):** Not addressed in v1. Documented limitation: teacher refreshes → may see the plan was created. If they re-submit before seeing it, advisory lock + the freshly-inserted usage row will trigger `QUOTA_EXCEEDED` for Free tier (limit was 2, now 1 was used by the orphan attempt) — surfacing a confusing message. v2: idempotency key based on form hash.
+- **Encryption key (`SETTINGS_ENCRYPTION_KEY`) missing or wrong:** Decryption returns NULL. `getProviderConfig()` returns `enabled: false`. Feature gracefully disables. Admin sees a clear "configuration error" state.
+- **First-time setup (settings rows don't exist yet):** All `get*` helpers return NULL. Feature is disabled. Admin form shows empty inputs; saving creates the rows.
 
 ## 14. Files to Create / Modify
 
@@ -337,45 +495,54 @@ All user-facing strings should read clearly in plain English (CLAUDE.md user-con
 - `lib/ai/config.ts`
 - `lib/db/lessonPlans.ts`
 - `lib/db/lessonPlanUsage.ts`
-- `supabase/migrations/006_lesson_plans.sql`
-- `supabase/migrations/006_lesson_plans_rls.sql` (or fold into the above)
+- `lib/actions/lessonPlans.ts` (Server Actions)
+- `lib/actions/adminAIProvider.ts` (test connection action)
+- `supabase/migrations/023_lesson_plans.sql`
+- `supabase/migrations/024_lesson_plans_rls.sql` (includes pgcrypto + encrypted-settings helpers)
 - `app/(teacher)/dashboard/courses/[courseId]/lesson-plans/page.tsx`
 - `app/(teacher)/dashboard/courses/[courseId]/lesson-plans/[planId]/page.tsx`
-- `app/(teacher)/dashboard/courses/[courseId]/lesson-plans/actions.ts`
+- `app/api/lesson-plans/[id]/pdf/route.ts`
 - `components/teacher/LessonPlanList.tsx`
 - `components/teacher/NewLessonPlanDialog.tsx`
 - `components/teacher/LessonPlanChat.tsx`
-- `components/teacher/LessonPlanPdfDocument.tsx` (react-pdf doc)
+- `components/teacher/LessonPlanChatSheet.tsx` (mobile drawer)
+- `components/teacher/LessonPlanPdfDocument.tsx`
+- `components/admin/AIProviderSettings.tsx`
 
 **Modify:**
-- `constants/plans.ts` — add `lessonPlansPerMonth` to each tier
-- `lib/plans/limits.ts` — add `getLessonPlanLimit`
+- `package.json` — add `ai`, `@ai-sdk/anthropic`, `react-markdown`, `remark-gfm`
+- `lib/platform/settings.ts` — add `getEncryptedSetting` / `setEncryptedSetting`
+- Existing plan limits file (`constants/plans.ts` or `lib/plans/limits.ts`) — add `lesson_plans_per_month` to free/solo/academy
+- Existing course detail page — add "Lesson Plans" link
+- Existing admin platform settings form / page — embed `<AIProviderSettings />`
 - `types/database.ts` — regenerate after migration
-- Course detail page — add "Lesson Plans" tab link
-- Admin platform settings page — add AI Provider section
-- `nav-items.ts` if course-tab list is centralized there
+- `.env.example` — add `AI_BASE_URL`, `AI_API_KEY`, `AI_MODEL`, `SETTINGS_ENCRYPTION_KEY`
 
 ## 15. Testing
 
 End-to-end happy path:
-1. Admin enables feature, sets base URL/key/model, "Test connection" succeeds.
-2. Teacher creates a course, opens Lesson Plans tab, generates a session plan → PDF downloads correctly.
-3. Teacher revises the plan → updated markdown renders, chat history shows the revision.
-4. Free teacher generates 2 plans → 3rd attempt shows quota message.
+1. Admin sets `SETTINGS_ENCRYPTION_KEY` in Vercel, enables feature, sets base URL/key/model, "Test connection" succeeds.
+2. Free teacher creates a course, opens Lesson Plans, generates a session plan → PDF downloads with correct branded header.
+3. Teacher revises ("make it 30 min") → markdown updates; chat shows the instruction + ack.
+4. Free teacher generates 2 plans → 3rd attempt shows `QUOTA_EXCEEDED`.
+5. Admin rotates the API key → teacher's next generation uses new key (verify by intentionally setting wrong base URL and seeing `AI_PROVIDER_ERROR`).
+
+Race-condition test:
+- Free teacher with 1/2 used. Open two browser tabs, generate simultaneously. Verify exactly one plan is created and the other tab shows `QUOTA_EXCEEDED`.
 
 RLS verification:
-- Teacher A creates a plan in Course A. Teacher B (different account) cannot fetch it by ID. Confirmed by hitting `lib/db/lessonPlans.ts` from Teacher B's session.
+- Teacher A creates a plan. Teacher B (different account, same course id used in URL) cannot fetch it via the detail page or the PDF route → 404.
 
-Provider swap test:
-- With base URL pointed at vendor X and a valid key, generation works.
-- Change base URL/key to vendor Y in admin (no deploy). Next generation uses vendor Y. Token usage logged correctly.
+Mobile check (Chrome on a real Android device, since teachers are mobile-heavy):
+- Detail view: markdown full-width, "Revise with AI" FAB visible, tapping opens Sheet, revision works, PDF download works.
 
-Mobile check:
-- Detail view stacks chat below markdown. Buttons remain tappable. PDF download works on mobile Chrome.
+Encryption check:
+- After setting the API key, verify the row in `platform_settings` contains base64-encoded ciphertext, not the plaintext key.
+- Rotate `SETTINGS_ENCRYPTION_KEY` in env (without re-encrypting rows) → feature disables gracefully (decryption fails, returns NULL).
 
 ## 16. Rollout
 
-- Ship behind `ai_lesson_planner_enabled = false` default. Admin flips on after smoke-testing in production with their own teacher account.
-- No migration data backfill needed.
-- No breaking changes to existing tables — purely additive.
-- Document in `LESSONS.md` any provider-specific quirks discovered during the first week (e.g. token-limit differences, response-format variance).
+- Ship behind `ai_lesson_planner_enabled = false` by default. Admin enables after smoke-testing on production with their own teacher account.
+- Add `SETTINGS_ENCRYPTION_KEY` to Vercel **before** deploy (32+ random bytes, base64-encoded).
+- No data backfill. Purely additive.
+- Document in `LESSONS.md` any provider quirks discovered during the first week (token-limit differences, response-format variance, latency outliers).
