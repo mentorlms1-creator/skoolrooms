@@ -1921,6 +1921,7 @@ export type Database = {
           p_model: string
           p_scope: string
           p_teacher_id: string
+          p_theme_slug?: string
           p_title: string
         }
         Returns: {
