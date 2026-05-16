@@ -86,8 +86,20 @@ export async function POST(
   const onClientAbort = () => abortController.abort()
   req.signal.addEventListener('abort', onClientAbort, { once: true })
 
+  // Pass theme through so the prompt pre-locks it and the AI cannot
+  // accidentally change theme across revisions.
+  const themeSlug = (plan.theme_slug ?? undefined) as
+    | import('@/lib/lesson-plan/themes/types').ThemeSlug
+    | undefined
   const handle = provider.streamRevision(
-    { currentMarkdown: plan.body_markdown, chatHistory: history, instruction },
+    {
+      currentMarkdown: plan.body_markdown,
+      chatHistory: history,
+      instruction,
+      themeSlug,
+      // docType isn't stored on the row yet — default lesson-plan.
+      docType: 'lesson-plan',
+    },
     abortController.signal,
   )
   const encoder = new TextEncoder()
