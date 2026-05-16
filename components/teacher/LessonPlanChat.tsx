@@ -16,6 +16,7 @@ import {
   reviseLessonPlan,
   type LessonPlanErrorCode,
 } from '@/lib/actions/lessonPlans'
+import { LessonPlanGenerating } from './LessonPlanGenerating'
 
 const ERROR_MESSAGES: Record<LessonPlanErrorCode, string> = {
   QUOTA_EXCEEDED: "You've used all your plans for this month.",
@@ -91,9 +92,7 @@ export function LessonPlanChat({ planId, chatHistory }: Props) {
             <div>{t.content}</div>
           </div>
         ))}
-        {pending && (
-          <div className="text-sm text-muted-foreground">Revising plan…</div>
-        )}
+        {pending && <LessonPlanGenerating variant="inline" mode="revise" />}
       </div>
       <div className="border-t border-border p-3">
         <Textarea

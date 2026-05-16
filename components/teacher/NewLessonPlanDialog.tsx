@@ -35,6 +35,7 @@ import {
   createLessonPlan,
   type LessonPlanErrorCode,
 } from '@/lib/actions/lessonPlans'
+import { LessonPlanGenerating } from './LessonPlanGenerating'
 
 const ERROR_MESSAGES: Record<LessonPlanErrorCode, string> = {
   QUOTA_EXCEEDED:
@@ -109,7 +110,11 @@ export function NewLessonPlanDialog({ courseId, disabled, disabledReason }: Prop
           New plan
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-lg">
+      <DialogContent
+        className="max-w-lg"
+        onPointerDownOutside={(e) => pending && e.preventDefault()}
+        onEscapeKeyDown={(e) => pending && e.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle>New lesson plan</DialogTitle>
           <DialogDescription>
@@ -117,6 +122,9 @@ export function NewLessonPlanDialog({ courseId, disabled, disabledReason }: Prop
             outline you can revise afterwards.
           </DialogDescription>
         </DialogHeader>
+        {pending ? (
+          <LessonPlanGenerating variant="full" mode="generate" />
+        ) : (
         <div className="space-y-4">
           <div>
             <Label>Scope</Label>
@@ -223,10 +231,11 @@ export function NewLessonPlanDialog({ courseId, disabled, disabledReason }: Prop
               Cancel
             </Button>
             <Button onClick={submit} disabled={pending || !canSubmit}>
-              {pending ? 'Generating…' : 'Generate'}
+              Generate
             </Button>
           </div>
         </div>
+        )}
       </DialogContent>
     </Dialog>
   )
