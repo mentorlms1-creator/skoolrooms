@@ -142,6 +142,9 @@ export async function createLessonPlan(
   const limitParam = limit >= 9999 ? null : limit
 
   // Atomic insert with quota check, under per-teacher advisory lock.
+  // The Server Action path doesn't expose theme picking yet — defaults to
+  // classroom-classic for new plans. (Streaming generate route handles
+  // the themed flow.)
   const { data: rpcRows, error: rpcErr } = await admin.rpc(
     'insert_lesson_plan_atomic',
     {
@@ -153,6 +156,7 @@ export async function createLessonPlan(
       p_inputs: input as unknown as Record<string, unknown>,
       p_model: result.model,
       p_limit: limitParam,
+      p_theme_slug: 'classroom-classic',
     },
   )
   if (rpcErr) {
