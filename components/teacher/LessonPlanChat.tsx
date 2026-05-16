@@ -8,6 +8,7 @@
  */
 
 import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -40,6 +41,7 @@ type Props = {
 }
 
 export function LessonPlanChat({ planId, chatHistory }: Props) {
+  const router = useRouter()
   const [pending, start] = useTransition()
   const [text, setText] = useState('')
 
@@ -50,6 +52,9 @@ export function LessonPlanChat({ planId, chatHistory }: Props) {
       const res = await reviseLessonPlan({ planId, instruction })
       if (res.success) {
         setText('')
+        // Force the Server Component to re-fetch — revalidatePath alone
+        // doesn't update an already-rendered page.
+        router.refresh()
       } else {
         const code = (res.code as LessonPlanErrorCode) ?? 'AI_PROVIDER_ERROR'
         toast.error("Couldn't revise", {

@@ -129,8 +129,17 @@ export function makeAnthropicProvider(config: AdapterConfig): LessonPlanProvider
 
     revisePlan: (args) =>
       callAI({
-        system:
-          "You are revising an existing lesson plan. Keep the user's intent. Return the FULL updated plan in the required format.",
+        system: [
+          "You are revising an existing lesson plan. Keep the teacher's intent and the existing structure unless the instruction says otherwise.",
+          '',
+          'You MUST respond in exactly this format and nothing else:',
+          '',
+          'TITLE: <a short descriptive title, max 200 characters>',
+          '---',
+          '<the full updated lesson plan body in markdown>',
+          '',
+          'Do not include any preamble, commentary, or trailing notes outside this format.',
+        ].join('\n'),
         prompt: buildRevisePrompt(args),
       }),
 

@@ -8,6 +8,7 @@
 
 import Link from 'next/link'
 import { useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { formatPKT } from '@/lib/time/pkt'
@@ -27,13 +28,16 @@ type Props = {
 }
 
 export function LessonPlanList({ courseId, plans }: Props) {
+  const router = useRouter()
   const [pending, start] = useTransition()
 
   function onDelete(planId: string) {
     if (!confirm('Delete this lesson plan? This cannot be undone.')) return
     start(async () => {
       const res = await deleteLessonPlanAction({ planId, courseId })
-      if (!res.success) {
+      if (res.success) {
+        router.refresh()
+      } else {
         toast.error("Couldn't delete", { description: res.error })
       }
     })

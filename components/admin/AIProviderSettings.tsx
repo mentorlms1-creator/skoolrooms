@@ -83,7 +83,8 @@ export function AIProviderSettings({
         </h2>
         <p className="text-sm text-muted-foreground">
           Configure the AI provider used to generate lesson plans. Works with
-          any Anthropic-compatible endpoint.
+          any Anthropic-compatible endpoint. The base URL must include the
+          version prefix (the SDK appends <code>/messages</code> to it).
         </p>
       </header>
 
@@ -103,7 +104,7 @@ export function AIProviderSettings({
           id="ai-base-url"
           value={baseURL}
           onChange={(e) => setBaseURL(e.target.value)}
-          placeholder="https://api.anthropic.com"
+          placeholder="https://api.anthropic.com/v1"
           disabled={pending}
         />
       </div>
