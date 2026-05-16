@@ -7,10 +7,10 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
 import { requireTeacher } from '@/lib/auth/guards'
 import { getLessonPlanById } from '@/lib/db/lessonPlans'
+import { getCourseById } from '@/lib/db/courses'
+import { formatPKT } from '@/lib/time/pkt'
 import { Button } from '@/components/ui/button'
 import { ROUTES } from '@/constants/routes'
 import {
@@ -18,6 +18,8 @@ import {
   type ChatTurn,
 } from '@/components/teacher/LessonPlanChat'
 import { LessonPlanChatSheet } from '@/components/teacher/LessonPlanChatSheet'
+import { LessonPlanThemed } from '@/lib/lesson-plan/LessonPlanThemed'
+import { getTheme } from '@/lib/lesson-plan/themes'
 
 export const metadata: Metadata = {
   title: 'Lesson Plan — Skool Rooms',
@@ -41,6 +43,10 @@ export default async function LessonPlanDetailPage({ params }: PageProps) {
     ? (plan.chat_history as unknown as ChatTurn[])
     : []
 
+  const theme = getTheme(plan.theme_slug)
+  const course = await getCourseById(courseId)
+  const courseName = course?.title ?? 'Course'
+
   return (
     <div className="flex h-[calc(100vh-4rem)] flex-col p-4">
       <div className="mb-3 flex items-center justify-between">
@@ -61,26 +67,17 @@ export default async function LessonPlanDetailPage({ params }: PageProps) {
       </div>
 
       <div className="grid flex-1 grid-cols-1 gap-4 overflow-hidden md:grid-cols-[1fr_360px]">
-        <article
-          className="
-            overflow-y-auto rounded-lg border border-border bg-card p-6
-            text-sm leading-relaxed text-foreground
-            [&_h1]:mb-3 [&_h1]:mt-4 [&_h1]:text-xl [&_h1]:font-semibold
-            [&_h2]:mb-2 [&_h2]:mt-4 [&_h2]:text-lg [&_h2]:font-semibold
-            [&_h3]:mb-2 [&_h3]:mt-3 [&_h3]:text-base [&_h3]:font-semibold
-            [&_p]:mb-2
-            [&_ul]:mb-2 [&_ul]:list-disc [&_ul]:pl-6
-            [&_ol]:mb-2 [&_ol]:list-decimal [&_ol]:pl-6
-            [&_li]:mb-1
-            [&_strong]:font-semibold
-            [&_code]:rounded [&_code]:bg-muted [&_code]:px-1 [&_code]:py-0.5
-            [&_code]:text-xs
-          "
-        >
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-            {plan.body_markdown}
-          </ReactMarkdown>
-        </article>
+        <div className="overflow-y-auto rounded-lg border border-border bg-card p-6">
+          <LessonPlanThemed
+            theme={theme}
+            context="web"
+            title={plan.title}
+            bodyMarkdown={plan.body_markdown}
+            courseName={courseName}
+            teacherName={teacher.name || teacher.email}
+            updatedAtPkt={formatPKT(plan.updated_at, 'datetime')}
+          />
+        </div>
         <aside className="hidden md:block">
           <LessonPlanChat planId={plan.id} chatHistory={history} />
         </aside>
