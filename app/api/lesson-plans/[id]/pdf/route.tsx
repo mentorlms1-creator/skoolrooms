@@ -21,32 +21,19 @@ export async function GET(
   ctx: { params: Promise<{ id: string }> },
 ) {
   const { id } = await ctx.params
-  console.log('[pdf] GET request, planId=', id)
 
   // Auth — must be the owning teacher
   const supabase = await createClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
-  if (!user) {
-    console.log('[pdf] no auth user → 401')
-    return new Response('Unauthorized', { status: 401 })
-  }
-  console.log('[pdf] auth user id=', user.id, 'email=', user.email)
+  if (!user) return new Response('Unauthorized', { status: 401 })
 
   const teacher = await getTeacherByAuthId(user.id)
-  if (!teacher) {
-    console.log('[pdf] no teacher row for auth user → 401')
-    return new Response('Unauthorized', { status: 401 })
-  }
-  console.log('[pdf] teacher id=', teacher.id, 'name=', teacher.name)
+  if (!teacher) return new Response('Unauthorized', { status: 401 })
 
   const plan = await getLessonPlanById(teacher.id, id)
-  if (!plan) {
-    console.log('[pdf] plan lookup returned null for teacher=', teacher.id, 'plan=', id, '→ 404')
-    return new Response('Not found', { status: 404 })
-  }
-  console.log('[pdf] plan found, rendering PDF')
+  if (!plan) return new Response('Not found', { status: 404 })
 
   // Fetch course title for the header
   const admin = createAdminClient()

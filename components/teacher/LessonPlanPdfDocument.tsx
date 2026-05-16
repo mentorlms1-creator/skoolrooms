@@ -81,6 +81,12 @@ const s = StyleSheet.create({
     color: '#999',
     textAlign: 'center',
   },
+  hr: {
+    marginVertical: 8,
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#bbb',
+    borderBottomStyle: 'solid',
+  },
   // ─── Table ─────────────────────────────────────────────────────────
   table: {
     marginVertical: 6,
@@ -119,6 +125,7 @@ type Block =
   | { kind: 'h1' | 'h2' | 'h3' | 'p'; text: string }
   | { kind: 'li'; text: string; ordered: boolean }
   | { kind: 'table'; header: string[]; rows: string[][] }
+  | { kind: 'hr' }
 
 function parseTableRow(line: string): string[] {
   // Strip leading/trailing pipe, split, trim.
@@ -162,6 +169,8 @@ export function parseMarkdown(md: string): Block[] {
 
     if (!line.trim()) {
       blocks.push({ kind: 'p', text: '' })
+    } else if (/^\s*(---|\*\*\*|___)\s*$/.test(line)) {
+      blocks.push({ kind: 'hr' })
     } else if (line.startsWith('### ')) {
       blocks.push({ kind: 'h3', text: line.slice(4) })
     } else if (line.startsWith('## ')) {
@@ -188,11 +197,20 @@ export function parseMarkdown(md: string): Block[] {
   return blocks
 }
 
+// Codepoints that aren't in DejaVu Sans render as missing-glyph placeholders.
+// Emoji (📄, ✨, ✅, etc.) are the most common offender in AI-generated
+// markdown. Strip them rather than ship a second emoji-capable font.
+const EMOJI_RE = /\p{Extended_Pictographic}/gu
+
 function stripInline(text: string): string {
   return text
+    .replace(EMOJI_RE, '')
     .replace(/`([^`]+)`/g, '$1')
     .replace(/\*\*([^*]+)\*\*/g, '$1')
     .replace(/\*([^*]+)\*/g, '$1')
+    // Collapse any whitespace gaps left behind by removed emoji.
+    .replace(/\s{2,}/g, ' ')
+    .trim()
 }
 
 // ─── Component ──────────────────────────────────────────────────────────
@@ -219,9 +237,16 @@ export function LessonPlanPdfDocument(props: LessonPlanPdfProps) {
           <Text style={s.meta}>Last updated {props.updatedAtPkt} (PKT)</Text>
         </View>
         {blocks.map((b, i) => {
+          if (b.kind === 'hr') {
+            return <View key={i} style={s.hr} />
+          }
           if (b.kind === 'table') {
             return (
-              <View key={i} style={s.table} wrap={false}>
+              // No wrap={false}: a small table that doesn't fit on the
+              // remaining page used to bump entirely to the next page,
+              // orphaning its heading. Allowing the table to break
+              // naturally keeps it next to its label paragraph.
+              <View key={i} style={s.table}>
                 <View style={s.tableRow}>
                   {b.header.map((h, hi) => (
                     <Text key={hi} style={s.tableHeaderCell}>
