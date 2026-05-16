@@ -11,7 +11,6 @@
 // doesn't support per-glyph styling inside a single Text.
 // =============================================================================
 
-import fs from 'node:fs'
 import path from 'node:path'
 import {
   Document,
@@ -23,23 +22,17 @@ import {
 } from '@react-pdf/renderer'
 
 // ─── Font registration ──────────────────────────────────────────────────
-// Module-level: runs once per server instance. The TTFs are read off the
-// filesystem (see next.config.ts outputFileTracingIncludes which pulls
-// public/fonts/ into the function bundle on Vercel).
+// Module-level: runs once per server instance. react-pdf's `src` accepts
+// a filesystem path string (fontkit.open() handles it). Passing a Buffer
+// here breaks isDataUrl checks at load time. next.config.ts
+// outputFileTracingIncludes pulls public/fonts/ into the function bundle
+// on Vercel so process.cwd()-relative paths resolve in production too.
 const FONTS_DIR = path.join(process.cwd(), 'public', 'fonts')
-// react-pdf accepts a Buffer for `src` at runtime even though the
-// TypeScript types only declare `string`. Cast through `unknown`.
 Font.register({
   family: 'DejaVu Sans',
   fonts: [
-    {
-      src: fs.readFileSync(path.join(FONTS_DIR, 'DejaVuSans.ttf')) as unknown as string,
-      fontWeight: 400,
-    },
-    {
-      src: fs.readFileSync(path.join(FONTS_DIR, 'DejaVuSans-Bold.ttf')) as unknown as string,
-      fontWeight: 700,
-    },
+    { src: path.join(FONTS_DIR, 'DejaVuSans.ttf'), fontWeight: 400 },
+    { src: path.join(FONTS_DIR, 'DejaVuSans-Bold.ttf'), fontWeight: 700 },
   ],
 })
 // Disable hyphenation — splits Greek/math poorly and looks bad in print.
