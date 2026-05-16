@@ -28,13 +28,31 @@ export type ChatTurn = {
   created_at: string
 }
 
+export type StreamHandle = {
+  /** Yields text chunks as the model produces them. */
+  textStream: AsyncIterable<string>
+  /** Resolves to the model identifier this stream was run against. */
+  model: string
+  /** Resolves to usage stats once the stream has fully finished. May be null on providers that don't report. */
+  usage: Promise<{ inputTokens?: number; outputTokens?: number } | null>
+}
+
 export interface LessonPlanProvider {
+  /** Blocking call — returns the full plan in one go. Used by the legacy Server Action path. */
   generatePlan(input: PlanInput): Promise<PlanResult>
+  /** Blocking revise — full plan returned in one go. */
   revisePlan(args: {
     currentMarkdown: string
     chatHistory: ChatTurn[]
     instruction: string
   }): Promise<PlanResult>
+  /** Streaming generate — caller iterates `textStream` and resolves `usage` after end. */
+  streamPlan(input: PlanInput, signal?: AbortSignal): StreamHandle
+  /** Streaming revise. */
+  streamRevision(
+    args: { currentMarkdown: string; chatHistory: ChatTurn[]; instruction: string },
+    signal?: AbortSignal,
+  ): StreamHandle
   testConnection(): Promise<{ ok: true } | { ok: false; error: string }>
 }
 

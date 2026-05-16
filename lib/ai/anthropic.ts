@@ -6,13 +6,15 @@
 // =============================================================================
 
 import { createAnthropic } from '@ai-sdk/anthropic'
-import { generateText } from 'ai'
+import { generateText, streamText } from 'ai'
 import { buildSystemPrompt, buildGeneratePrompt, buildRevisePrompt } from './prompts'
 import type {
   LessonPlanProvider,
   PlanInput,
   PlanResult,
   AdapterConfig,
+  StreamHandle,
+  ChatTurn,
 } from './provider'
 
 const MAX_BODY_BYTES = 65_536
@@ -30,7 +32,7 @@ export class AIError extends Error {
   }
 }
 
-function parseAIOutput(raw: string): { title: string; body: string } {
+export function parseAIOutput(raw: string): { title: string; body: string } {
   const idx = raw.indexOf('---')
   let title = ''
   let body = raw
@@ -120,6 +122,41 @@ export function makeAnthropicProvider(config: AdapterConfig): LessonPlanProvider
     }
   }
 
+  const REVISE_SYSTEM = [
+    "You are revising an existing lesson plan. Keep the teacher's intent and the existing structure unless the instruction says otherwise.",
+    '',
+    'You MUST respond in exactly this format and nothing else:',
+    '',
+    'TITLE: <a short descriptive title, max 200 characters>',
+    '---',
+    '<the full updated lesson plan body in markdown>',
+    '',
+    'Do not include any preamble, commentary, or trailing notes outside this format.',
+  ].join('\n')
+
+  function openStream(args: {
+    system: string
+    prompt: string
+    signal?: AbortSignal
+  }): StreamHandle {
+    const result = streamText({
+      model,
+      system: args.system,
+      prompt: args.prompt,
+      maxOutputTokens: 4096,
+      abortSignal: args.signal,
+    })
+    return {
+      textStream: result.textStream,
+      model: config.model,
+      // `result.usage` is PromiseLike — wrap in Promise.resolve so we can
+      // attach a tolerant catch (some providers don't return usage).
+      usage: Promise.resolve(result.usage)
+        .then((u) => safeUsage(u) as { inputTokens?: number; outputTokens?: number })
+        .catch(() => null),
+    }
+  }
+
   return {
     generatePlan: (input: PlanInput) =>
       callAI({
@@ -129,18 +166,25 @@ export function makeAnthropicProvider(config: AdapterConfig): LessonPlanProvider
 
     revisePlan: (args) =>
       callAI({
-        system: [
-          "You are revising an existing lesson plan. Keep the teacher's intent and the existing structure unless the instruction says otherwise.",
-          '',
-          'You MUST respond in exactly this format and nothing else:',
-          '',
-          'TITLE: <a short descriptive title, max 200 characters>',
-          '---',
-          '<the full updated lesson plan body in markdown>',
-          '',
-          'Do not include any preamble, commentary, or trailing notes outside this format.',
-        ].join('\n'),
+        system: REVISE_SYSTEM,
         prompt: buildRevisePrompt(args),
+      }),
+
+    streamPlan: (input: PlanInput, signal?: AbortSignal) =>
+      openStream({
+        system: buildSystemPrompt(input),
+        prompt: buildGeneratePrompt(input),
+        signal,
+      }),
+
+    streamRevision: (
+      args: { currentMarkdown: string; chatHistory: ChatTurn[]; instruction: string },
+      signal?: AbortSignal,
+    ) =>
+      openStream({
+        system: REVISE_SYSTEM,
+        prompt: buildRevisePrompt(args),
+        signal,
       }),
 
     async testConnection() {
