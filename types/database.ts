@@ -1046,6 +1046,7 @@ export type Database = {
           model: string
           scope: string
           teacher_id: string
+          theme_slug: string
           title: string
           updated_at: string
         }
@@ -1059,6 +1060,7 @@ export type Database = {
           model: string
           scope: string
           teacher_id: string
+          theme_slug?: string
           title: string
           updated_at?: string
         }
@@ -1072,6 +1074,7 @@ export type Database = {
           model?: string
           scope?: string
           teacher_id?: string
+          theme_slug?: string
           title?: string
           updated_at?: string
         }
