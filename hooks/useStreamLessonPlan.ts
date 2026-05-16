@@ -123,63 +123,84 @@ export function useStreamLessonPlan(callbacks: StreamCallbacks = {}) {
     }
 
     // ─── SSE parser ───────────────────────────────────────────────
-    // Spec: events are separated by blank lines (\n\n). Each event has
-    // optional `event:` field and one or more `data:` fields. We only
-    // emit named events from the server, so we expect both.
+    // Spec: events are separated by blank lines (\n\n or \r\n\r\n). Each
+    // event has an optional `event:` field and one or more `data:` fields.
+    // We only emit named events from the server, so we expect both.
     const reader = res.body.getReader()
     const decoder = new TextDecoder()
     let buffer = ''
     let done = false
 
-    while (!done) {
-      const { value, done: streamDone } = await reader.read()
-      done = streamDone
-      if (value) buffer += decoder.decode(value, { stream: true })
+    try {
+      while (!done) {
+        const { value, done: streamDone } = await reader.read()
+        done = streamDone
+        if (value) buffer += decoder.decode(value, { stream: true })
 
-      let sepIdx = buffer.indexOf('\n\n')
-      while (sepIdx !== -1) {
-        const rawEvent = buffer.slice(0, sepIdx)
-        buffer = buffer.slice(sepIdx + 2)
-        sepIdx = buffer.indexOf('\n\n')
+        // Normalize CRLF → LF so the rest of the parser doesn't have to care.
+        if (buffer.includes('\r')) buffer = buffer.replace(/\r\n?/g, '\n')
 
-        let eventName = 'message'
-        let dataLine = ''
-        for (const line of rawEvent.split('\n')) {
-          if (line.startsWith('event:')) eventName = line.slice(6).trim()
-          else if (line.startsWith('data:')) dataLine = line.slice(5).trim()
-        }
-        if (!dataLine) continue
+        let sepIdx = buffer.indexOf('\n\n')
+        while (sepIdx !== -1) {
+          const rawEvent = buffer.slice(0, sepIdx)
+          buffer = buffer.slice(sepIdx + 2)
+          sepIdx = buffer.indexOf('\n\n')
 
-        let payload: unknown
-        try {
-          payload = JSON.parse(dataLine)
-        } catch {
-          continue
-        }
+          let eventName = 'message'
+          let dataLine = ''
+          for (const line of rawEvent.split('\n')) {
+            if (line.startsWith('event:')) eventName = line.slice(6).trim()
+            else if (line.startsWith('data:')) dataLine = line.slice(5).trim()
+          }
+          if (!dataLine) continue
 
-        if (eventName === 'text') {
-          const chunk = (payload as { chunk?: string }).chunk ?? ''
-          accumulated += chunk
-          setMarkdown(accumulated)
-          cbRef.current.onText?.({ chunk, accumulated })
-        } else if (eventName === 'done') {
-          const planId = (payload as { planId?: string }).planId ?? ''
-          if (planId) succeed(planId)
-          else failWith('AI_PROVIDER_ERROR', 'Missing planId in done event')
-          reader.cancel().catch(() => {})
-          abortRef.current = null
-          return
-        } else if (eventName === 'error') {
-          const p = payload as { code?: string; message?: string }
-          failWith(
-            (p.code as StreamErrorCode) || 'AI_PROVIDER_ERROR',
-            p.message,
-          )
-          reader.cancel().catch(() => {})
-          abortRef.current = null
-          return
+          let payload: unknown
+          try {
+            payload = JSON.parse(dataLine)
+          } catch {
+            continue
+          }
+
+          if (eventName === 'text') {
+            const chunk = (payload as { chunk?: string }).chunk ?? ''
+            accumulated += chunk
+            setMarkdown(accumulated)
+            cbRef.current.onText?.({ chunk, accumulated })
+          } else if (eventName === 'done') {
+            const planId = (payload as { planId?: string }).planId ?? ''
+            if (planId) succeed(planId)
+            else failWith('AI_PROVIDER_ERROR', 'Missing planId in done event')
+            reader.cancel().catch(() => {})
+            abortRef.current = null
+            return
+          } else if (eventName === 'error') {
+            const p = payload as { code?: string; message?: string }
+            failWith(
+              (p.code as StreamErrorCode) || 'AI_PROVIDER_ERROR',
+              p.message,
+            )
+            reader.cancel().catch(() => {})
+            abortRef.current = null
+            return
+          }
         }
       }
+    } catch (e) {
+      // reader.read() rejects with AbortError when the fetch is aborted
+      // via stop(). Treat that as a clean cancellation, not a provider
+      // failure — the UI is already in the "stopped" state.
+      const isAbort =
+        controller.signal.aborted ||
+        (e as Error)?.name === 'AbortError'
+      if (!isAbort && !finalized) {
+        failWith('AI_PROVIDER_ERROR', (e as Error)?.message ?? 'Stream read failed')
+      } else if (!finalized) {
+        // Aborted before `done` fired — clear streaming state without an error.
+        finalized = true
+        setIsStreaming(false)
+      }
+      abortRef.current = null
+      return
     }
 
     // Stream closed without emitting `done` — treat as provider error.

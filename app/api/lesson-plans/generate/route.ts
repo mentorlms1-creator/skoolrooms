@@ -100,7 +100,8 @@ export async function POST(req: NextRequest) {
 
   // ─── Open AI stream + build SSE response ──────────────────────────
   const abortController = new AbortController()
-  req.signal.addEventListener('abort', () => abortController.abort())
+  const onClientAbort = () => abortController.abort()
+  req.signal.addEventListener('abort', onClientAbort, { once: true })
 
   const handle = provider.streamPlan(input, abortController.signal)
   const encoder = new TextEncoder()
@@ -114,6 +115,14 @@ export async function POST(req: NextRequest) {
           controller.enqueue(encoder.encode(sseEvent('text', { chunk })))
         }
       } catch (e) {
+        // Client aborts surface here as the AI SDK propagates the signal.
+        // Log so wasted-token mid-stream cancels are visible to operators.
+        const isAbort = abortController.signal.aborted || (e as Error)?.name === 'AbortError'
+        if (isAbort) {
+          console.warn('[lesson-plans/generate] client aborted mid-stream, no plan persisted')
+        } else {
+          console.error('[lesson-plans/generate] stream error:', e)
+        }
         controller.enqueue(
           encoder.encode(
             sseEvent('error', {
@@ -198,6 +207,9 @@ export async function POST(req: NextRequest) {
       controller.close()
     },
     cancel() {
+      // Browser disconnected or aborted the stream — propagate to the
+      // upstream AI call so we don't keep producing tokens for nobody.
+      req.signal.removeEventListener('abort', onClientAbort)
       abortController.abort()
     },
   })

@@ -83,7 +83,8 @@ export async function POST(
 
   // ─── Open stream ──────────────────────────────────────────────────
   const abortController = new AbortController()
-  req.signal.addEventListener('abort', () => abortController.abort())
+  const onClientAbort = () => abortController.abort()
+  req.signal.addEventListener('abort', onClientAbort, { once: true })
 
   const handle = provider.streamRevision(
     { currentMarkdown: plan.body_markdown, chatHistory: history, instruction },
@@ -100,6 +101,12 @@ export async function POST(
           controller.enqueue(encoder.encode(sseEvent('text', { chunk })))
         }
       } catch (e) {
+        const isAbort = abortController.signal.aborted || (e as Error)?.name === 'AbortError'
+        if (isAbort) {
+          console.warn('[lesson-plans/revise] client aborted mid-stream, no revision persisted')
+        } else {
+          console.error('[lesson-plans/revise] stream error:', e)
+        }
         controller.enqueue(
           encoder.encode(
             sseEvent('error', {
@@ -175,6 +182,7 @@ export async function POST(
       controller.close()
     },
     cancel() {
+      req.signal.removeEventListener('abort', onClientAbort)
       abortController.abort()
     },
   })

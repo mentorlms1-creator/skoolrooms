@@ -8,7 +8,7 @@
  * (quota exceeded, validation, feature flag) surface as toasts.
  */
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import ReactMarkdown from 'react-markdown'
@@ -63,6 +63,14 @@ type Props = {
 export function NewLessonPlanDialog({ courseId, disabled, disabledReason }: Props) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
+  const navigateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Clear any pending post-done navigation if the component unmounts.
+  useEffect(() => {
+    return () => {
+      if (navigateTimerRef.current) clearTimeout(navigateTimerRef.current)
+    }
+  }, [])
 
   const [scope, setScope] = useState<'session' | 'unit'>('session')
   const [subject, setSubject] = useState('')
@@ -78,7 +86,10 @@ export function NewLessonPlanDialog({ courseId, disabled, disabledReason }: Prop
   const stream = useStreamLessonPlan({
     onDone: ({ planId }) => {
       // Briefly let the user see the finished output before navigating away.
-      setTimeout(() => {
+      // The timeout is tracked so unmount/close cancels it cleanly.
+      if (navigateTimerRef.current) clearTimeout(navigateTimerRef.current)
+      navigateTimerRef.current = setTimeout(() => {
+        navigateTimerRef.current = null
         setOpen(false)
         router.push(ROUTES.TEACHER.lessonPlanDetail(courseId, planId))
       }, 400)
@@ -115,7 +126,15 @@ export function NewLessonPlanDialog({ courseId, disabled, disabledReason }: Prop
       // Closing while streaming = cancel the stream.
       stream.stop()
     }
-    if (!next) stream.reset()
+    if (!next) {
+      // Closing dialog: cancel any pending post-done navigation so the
+      // user isn't whisked off to the detail page after dismissing it.
+      if (navigateTimerRef.current) {
+        clearTimeout(navigateTimerRef.current)
+        navigateTimerRef.current = null
+      }
+      stream.reset()
+    }
     setOpen(next)
   }
 
