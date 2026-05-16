@@ -3,6 +3,8 @@
 // Single adapter (Anthropic-compatible) is built from getProviderConfig().
 // =============================================================================
 
+import type { ThemeSlug, DocType } from '@/lib/lesson-plan/themes/types'
+
 export type PlanInput = {
   scope: 'session' | 'unit'
   subject: string
@@ -12,6 +14,8 @@ export type PlanInput = {
   topic: string
   learningGoals: string
   language: 'english' | 'urdu' | 'roman-urdu'
+  /** null = "Auto" (AI picks); slug = teacher's explicit pick; undefined = legacy non-themed flow. */
+  themeSlug?: ThemeSlug | null
 }
 
 export type PlanResult = {
@@ -20,6 +24,10 @@ export type PlanResult = {
   model: string
   inputTokens?: number
   outputTokens?: number
+  /** Theme the AI picked when teacher selected "Auto". Absent in legacy flow. */
+  themeSlug?: ThemeSlug
+  /** Document type the AI declared. Absent in legacy flow. */
+  docType?: DocType
 }
 
 export type ChatTurn = {
@@ -48,9 +56,16 @@ export interface LessonPlanProvider {
   }): Promise<PlanResult>
   /** Streaming generate — caller iterates `textStream` and resolves `usage` after end. */
   streamPlan(input: PlanInput, signal?: AbortSignal): StreamHandle
-  /** Streaming revise. */
+  /** Streaming revise. Themed callers pass themeSlug + docType so the
+   *  prompt pre-locks them and the AI does not change them across revisions. */
   streamRevision(
-    args: { currentMarkdown: string; chatHistory: ChatTurn[]; instruction: string },
+    args: {
+      currentMarkdown: string
+      chatHistory: ChatTurn[]
+      instruction: string
+      themeSlug?: ThemeSlug
+      docType?: DocType
+    },
     signal?: AbortSignal,
   ): StreamHandle
   testConnection(): Promise<{ ok: true } | { ok: false; error: string }>

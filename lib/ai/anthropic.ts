@@ -7,7 +7,10 @@
 
 import { createAnthropic } from '@ai-sdk/anthropic'
 import { generateText, streamText } from 'ai'
-import { buildSystemPrompt, buildGeneratePrompt, buildRevisePrompt } from './prompts'
+import {
+  buildSystemPrompt, buildGeneratePrompt, buildRevisePrompt,
+  buildSystemPromptThemed, buildRevisePromptThemed,
+} from './prompts'
 import type {
   LessonPlanProvider,
   PlanInput,
@@ -16,6 +19,10 @@ import type {
   StreamHandle,
   ChatTurn,
 } from './provider'
+import {
+  THEME_SLUGS, DOC_TYPES,
+  type ThemeSlug, type DocType,
+} from '@/lib/lesson-plan/themes/types'
 
 const MAX_BODY_BYTES = 65_536
 const GENERATE_TIMEOUT_MS = 60_000
@@ -32,25 +39,53 @@ export class AIError extends Error {
   }
 }
 
-export function parseAIOutput(raw: string): { title: string; body: string } {
+export function parseAIOutput(raw: string): {
+  title: string
+  body: string
+  themeSlug?: ThemeSlug
+  docType?: DocType
+} {
   const idx = raw.indexOf('---')
+  const head = idx >= 0 ? raw.slice(0, idx) : ''
+  let body = idx >= 0 ? raw.slice(idx + 3).trim() : raw
+
   let title = ''
-  let body = raw
-  if (idx >= 0) {
-    const head = raw.slice(0, idx)
-    body = raw.slice(idx + 3).trim()
-    const m = head.match(/TITLE:\s*(.+)/i)
-    if (m) title = m[1].trim()
+  let themeSlug: ThemeSlug | undefined
+  let docType: DocType | undefined
+  for (const line of head.split('\n')) {
+    const t = line.trim()
+    if (!t) continue
+    const themeMatch = t.match(/^THEME:\s*([\w-]+)/i)
+    if (themeMatch) {
+      const cand = themeMatch[1].toLowerCase()
+      if ((THEME_SLUGS as readonly string[]).includes(cand)) {
+        themeSlug = cand as ThemeSlug
+      }
+      continue
+    }
+    const docMatch = t.match(/^DOC_TYPE:\s*([\w-]+)/i)
+    if (docMatch) {
+      const cand = docMatch[1].toLowerCase()
+      if ((DOC_TYPES as readonly string[]).includes(cand)) {
+        docType = cand as DocType
+      }
+      continue
+    }
+    const titleMatch = t.match(/^TITLE:\s*(.+)/i)
+    if (titleMatch) title = titleMatch[1].trim()
   }
+
   if (!title) {
     const h1 = body.match(/^#\s+(.+)/m)
     title = h1 ? h1[1].trim() : 'Untitled plan'
   }
   title = title.slice(0, 200)
+
   if (body.length > MAX_BODY_BYTES) {
     body = body.slice(0, MAX_BODY_BYTES - 16) + '\n\n…(truncated)'
   }
-  return { title, body }
+
+  return { title, body, themeSlug, docType }
 }
 
 function safeUsage(
@@ -111,12 +146,14 @@ export function makeAnthropicProvider(config: AdapterConfig): LessonPlanProvider
     }
     const text = (result?.text ?? '').trim()
     if (!text) throw new AIError('Empty response from provider')
-    const { title, body } = parseAIOutput(text)
+    const { title, body, themeSlug, docType } = parseAIOutput(text)
     if (!body.trim()) throw new AIError('Empty plan body after parsing')
     const usage = safeUsage(result.usage)
     return {
       title,
       bodyMarkdown: body,
+      themeSlug,
+      docType,
       model: config.model,
       ...usage,
     }
@@ -170,22 +207,45 @@ export function makeAnthropicProvider(config: AdapterConfig): LessonPlanProvider
         prompt: buildRevisePrompt(args),
       }),
 
-    streamPlan: (input: PlanInput, signal?: AbortSignal) =>
-      openStream({
-        system: buildSystemPrompt(input),
+    streamPlan: (input: PlanInput, signal?: AbortSignal) => {
+      // When the caller provides themeSlug (null=Auto, slug=fixed), use the
+      // themed prompt. Otherwise fall back to the legacy non-themed prompt.
+      const useThemed = input.themeSlug !== undefined
+      return openStream({
+        system: useThemed
+          ? buildSystemPromptThemed(input, input.themeSlug ?? null)
+          : buildSystemPrompt(input),
         prompt: buildGeneratePrompt(input),
         signal,
-      }),
+      })
+    },
 
     streamRevision: (
-      args: { currentMarkdown: string; chatHistory: ChatTurn[]; instruction: string },
+      args: {
+        currentMarkdown: string
+        chatHistory: ChatTurn[]
+        instruction: string
+        themeSlug?: ThemeSlug
+        docType?: DocType
+      },
       signal?: AbortSignal,
-    ) =>
-      openStream({
+    ) => {
+      if (args.themeSlug) {
+        const { system, prompt } = buildRevisePromptThemed({
+          themeSlug: args.themeSlug,
+          docType: args.docType ?? 'lesson-plan',
+          currentMarkdown: args.currentMarkdown,
+          chatHistory: args.chatHistory,
+          instruction: args.instruction,
+        })
+        return openStream({ system, prompt, signal })
+      }
+      return openStream({
         system: REVISE_SYSTEM,
         prompt: buildRevisePrompt(args),
         signal,
-      }),
+      })
+    },
 
     async testConnection() {
       try {
