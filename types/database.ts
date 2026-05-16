@@ -1026,6 +1026,13 @@ export type Database = {
             referencedRelation: "lesson_plans"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "lesson_plan_usage_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
         ]
       }
       lesson_plans: {
@@ -1074,6 +1081,13 @@ export type Database = {
             columns: ["course_id"]
             isOneToOne: false
             referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_plans_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
             referencedColumns: ["id"]
           },
         ]
@@ -1895,6 +1909,22 @@ export type Database = {
         Returns: string
       }
       increment_discount_use: { Args: { p_code_id: string }; Returns: boolean }
+      insert_lesson_plan_atomic: {
+        Args: {
+          p_body_markdown: string
+          p_course_id: string
+          p_inputs: Json
+          p_limit: number
+          p_model: string
+          p_scope: string
+          p_teacher_id: string
+          p_title: string
+        }
+        Returns: {
+          plan_id: string
+          status: string
+        }[]
+      }
       set_encrypted_setting: {
         Args: { p_encryption_key: string; p_key: string; p_value: string }
         Returns: undefined
