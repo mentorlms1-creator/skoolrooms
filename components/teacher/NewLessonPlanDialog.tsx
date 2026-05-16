@@ -35,6 +35,8 @@ import {
 } from '@/components/ui/select'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { ROUTES } from '@/constants/routes'
+import { ThemePickerField, type ThemePickerValue } from './ThemePickerField'
+import { THEMES } from '@/lib/lesson-plan/themes'
 import {
   useStreamLessonPlan,
   type StreamErrorCode,
@@ -82,6 +84,7 @@ export function NewLessonPlanDialog({ courseId, disabled, disabledReason }: Prop
   const [language, setLanguage] = useState<'english' | 'urdu' | 'roman-urdu'>(
     'english',
   )
+  const [themeSlug, setThemeSlug] = useState<ThemePickerValue>(null) // null = Auto
 
   const stream = useStreamLessonPlan({
     onDone: ({ planId }) => {
@@ -117,6 +120,7 @@ export function NewLessonPlanDialog({ courseId, disabled, disabledReason }: Prop
         topic,
         learningGoals: goals,
         language,
+        themeSlug,
       },
     })
   }
@@ -182,6 +186,10 @@ export function NewLessonPlanDialog({ courseId, disabled, disabledReason }: Prop
               </Button>
             </div>
             <article
+              style={themeSlug ? {
+                fontFamily: THEMES[themeSlug].tokens.font.body,
+                color: THEMES[themeSlug].tokens.color.text,
+              } : undefined}
               className="
                 max-h-[60vh] overflow-y-auto rounded-lg border border-border bg-card p-5
                 text-sm leading-relaxed text-foreground
@@ -303,6 +311,7 @@ export function NewLessonPlanDialog({ courseId, disabled, disabledReason }: Prop
                 </SelectContent>
               </Select>
             </div>
+            <ThemePickerField value={themeSlug} onChange={setThemeSlug} />
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="ghost" onClick={() => handleOpenChange(false)}>
                 Cancel
