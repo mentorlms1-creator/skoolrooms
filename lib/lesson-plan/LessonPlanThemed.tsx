@@ -65,13 +65,14 @@ function renderBody(blocks: Block[], theme: Theme): React.ReactNode[] {
   while (i < blocks.length) {
     const block = blocks[i]
     if (block.kind === 'li') {
+      const listStart = i  // ← key off the list's first index, not the post-loop one
       const items: { text: string; ordered: boolean; marks?: number }[] = []
       while (i < blocks.length && blocks[i].kind === 'li') {
         const b = blocks[i] as Extract<Block, { kind: 'li' }>
         items.push({ text: b.text, ordered: b.ordered, marks: b.marks })
         i++
       }
-      nodes.push(<List key={i} items={items} theme={theme} />)
+      nodes.push(<List key={`list-${listStart}`} items={items} theme={theme} />)
     } else {
       nodes.push(renderBlock(block, theme, i))
       i++
