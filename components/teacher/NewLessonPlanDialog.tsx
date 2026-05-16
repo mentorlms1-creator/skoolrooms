@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -111,6 +112,10 @@ export function NewLessonPlanDialog({ courseId, disabled, disabledReason }: Prop
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>New lesson plan</DialogTitle>
+          <DialogDescription>
+            Tell the AI what to plan. It will generate a structured markdown
+            outline you can revise afterwards.
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div>
