@@ -4,7 +4,9 @@
 // page.setContent → page.pdf.
 // =============================================================================
 
-import { renderToString } from 'react-dom/server'
+// Static `react-dom/server` import is flagged by Next.js in route handlers
+// (potential client-bundle leak). Import dynamically inside the function —
+// runtime is unchanged.
 import { getBrowser } from './browser'
 import { LessonPlanThemed } from '@/lib/lesson-plan/LessonPlanThemed'
 import { getTheme } from '@/lib/lesson-plan/themes'
@@ -20,6 +22,10 @@ export async function renderThemedPdf(args: {
 }): Promise<Buffer> {
   const { plan, courseName, teacherName } = args
   const theme = getTheme(plan.theme_slug)
+
+  // Dynamic import keeps Next.js's route-handler import linter happy
+  // (react-dom/server flagged statically as a potential client-bundle leak).
+  const { renderToString } = await import('react-dom/server')
 
   // renderToString returns the rendered React tree. The component renders a
   // full <html>/<head>/<body> when context='pdf'. Prepend the doctype.
