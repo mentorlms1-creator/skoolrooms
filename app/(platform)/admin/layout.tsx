@@ -6,6 +6,8 @@
  */
 
 import { requireAdmin } from '@/lib/auth/guards'
+
+export const dynamic = 'force-dynamic'
 import { SidebarShell } from '@/components/ui/SidebarShell'
 import { UIProvider } from '@/providers/UIProvider'
 import { signOut } from '@/lib/auth/actions'

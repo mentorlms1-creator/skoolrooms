@@ -10,6 +10,9 @@
 
 import { redirect } from 'next/navigation'
 import { createClient } from '@/supabase/server'
+
+export const dynamic = 'force-dynamic'
+
 import { getStudentByAuthId } from '@/lib/db/students'
 import { getEnrollmentsByStudentWithTeacher } from '@/lib/db/enrollments'
 import { UIProvider } from '@/providers/UIProvider'

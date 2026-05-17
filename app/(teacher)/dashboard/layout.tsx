@@ -10,6 +10,9 @@
 
 import { redirect } from 'next/navigation'
 import { requireTeacher } from '@/lib/auth/guards'
+
+export const dynamic = 'force-dynamic'
+
 import { getTeacherPlanDetails, getTeacherUsage } from '@/lib/db/teachers'
 import { getLatestSubscription } from '@/lib/db/subscriptions'
 import { SidebarShell } from '@/components/ui/SidebarShell'
