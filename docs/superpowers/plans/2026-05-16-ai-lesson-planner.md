@@ -12,6 +12,25 @@
 
 **Testing convention:** The project has no automated test framework. Each task's "verify" step describes how to manually check the change. Don't add a test framework — that's out of scope.
 
+## Verified Codebase Conventions (use these exact imports/names)
+
+These were verified by inspecting the codebase. The plan's earlier code samples may show old/wrong paths — when in doubt, use these:
+
+| Need | Exact import / API |
+|---|---|
+| Admin Supabase client (service role) | `import { createAdminClient } from '@/supabase/server'` |
+| Auth guards | `import { requireTeacher, requireAdmin } from '@/lib/auth/guards'` |
+| Platform settings | `import { getPlatformSetting } from '@/lib/platform/settings'` — returns `Promise<string \| null>` |
+| Rate limiter | `import { rateLimit } from '@/lib/rate-limit'` — `rateLimit(key, maxRequests, windowMs)` returns `{ allowed, remaining }` |
+| Plan limit lookup | `import { getLimit } from '@/lib/plans/limits'` — `getLimit(teacherId, limitKey)`. **Existing `LimitKey` union must be extended** to add `'lesson_plans_per_month'`. |
+| PKT formatter | `import { formatPKT } from '@/lib/time/pkt'` — signature is `formatPKT(date, format)` where format is `'date' \| 'time' \| 'datetime' \| 'relative'`. Use `'datetime'` for full timestamps, `'date'` for date-only. |
+| Toasts | Sonner. `import { toast } from 'sonner'`. Use `toast.success('...')`, `toast.error('...', { description })`. **No `useToast` hook exists** — replace all uses of `useToast()` in the plan samples accordingly. |
+| Plan tier column | `plans.slug` (NOT `tier` or `name`). Values: `'free'`, `'solo'`, `'academy'`. Type: `PlanSlug` in `types/domain.ts`. |
+| Path alias `@/` | Resolves to project root (`tsconfig.json paths: { "@/*": ["./*"] }`). |
+| Migration command | No project script. Run `npx supabase db push` manually after writing each migration. |
+| tsx runner | Not installed as devDep; use `npx tsx` ad hoc (matches existing `validate-env` script). |
+| Missing shadcn primitive | `radio-group` is NOT in `components/ui/`. Task 17 must install it: `npx shadcn@latest add radio-group`. All other primitives this plan needs (dialog, select, textarea, sheet, switch, label, input, button) are already present. |
+
 ---
 
 ## File Map

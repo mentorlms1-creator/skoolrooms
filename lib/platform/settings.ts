@@ -124,3 +124,82 @@ export async function getUploadLimitMb(type: FileType): Promise<number> {
 
   return defaults[type] ?? 5
 }
+
+// -----------------------------------------------------------------------------
+// Encrypted settings helpers
+// Encrypted reads are NEVER cached — admin changes must take effect immediately.
+// -----------------------------------------------------------------------------
+
+/**
+ * Reads SETTINGS_ENCRYPTION_KEY from environment.
+ * Throws if the variable is not set so callers never handle missing keys.
+ */
+function requireEncryptionKey(): string {
+  const key = process.env.SETTINGS_ENCRYPTION_KEY
+  if (!key) {
+    throw new Error('SETTINGS_ENCRYPTION_KEY environment variable is not set')
+  }
+  return key
+}
+
+/**
+ * Fetches and decrypts a platform setting stored with encryption.
+ * Calls the Postgres RPC get_decrypted_setting using SETTINGS_ENCRYPTION_KEY.
+ * Returns null on any failure (missing row, wrong key, RPC error).
+ * Results are NOT cached — encrypted settings reflect admin changes immediately.
+ */
+export async function getEncryptedSetting(key: string): Promise<string | null> {
+  try {
+    const encryptionKey = requireEncryptionKey()
+    const supabase = createAdminClient()
+    const { data, error } = await supabase.rpc('get_decrypted_setting', {
+      p_key: key,
+      p_encryption_key: encryptionKey,
+    })
+    if (error || data === null || data === undefined) return null
+    return data as string
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Encrypts and stores a platform setting using SETTINGS_ENCRYPTION_KEY.
+ * Calls the Postgres RPC set_encrypted_setting.
+ * Throws if value is empty or if the RPC returns an error.
+ */
+export async function setEncryptedSetting(key: string, value: string): Promise<void> {
+  if (!value) {
+    throw new Error('setEncryptedSetting: value must not be empty')
+  }
+  const encryptionKey = requireEncryptionKey()
+  const supabase = createAdminClient()
+  const { error } = await supabase.rpc('set_encrypted_setting', {
+    p_key: key,
+    p_value: value,
+    p_encryption_key: encryptionKey,
+  })
+  if (error) {
+    throw new Error(`setEncryptedSetting RPC error: ${error.message}`)
+  }
+}
+
+/**
+ * Returns true if an encrypted row exists for the given key in platform_settings.
+ * Returns false on any error (missing row, query failure, etc.).
+ */
+export async function hasEncryptedSetting(key: string): Promise<boolean> {
+  try {
+    const supabase = createAdminClient()
+    const { data, error } = await supabase
+      .from('platform_settings')
+      .select('key')
+      .eq('key', key)
+      .eq('is_encrypted', true)
+      .maybeSingle()
+    if (error) return false
+    return data !== null
+  } catch {
+    return false
+  }
+}

@@ -39,6 +39,9 @@ export const ROUTES = {
     courseDetail: (id: string) => `/dashboard/courses/${id}` as const,
     courseEdit: (id: string) => `/dashboard/courses/${id}/edit` as const,
     courseCurriculum: (id: string) => `/dashboard/courses/${id}/curriculum` as const,
+    courseLessonPlans: (id: string) => `/dashboard/courses/${id}/lesson-plans` as const,
+    lessonPlanDetail: (courseId: string, planId: string) =>
+      `/dashboard/courses/${courseId}/lesson-plans/${planId}` as const,
     cohortNew: (courseId: string) => `/dashboard/courses/${courseId}/cohorts/new` as const,
     cohortDetail: (courseId: string, cohortId: string) =>
       `/dashboard/courses/${courseId}/cohorts/${cohortId}` as const,

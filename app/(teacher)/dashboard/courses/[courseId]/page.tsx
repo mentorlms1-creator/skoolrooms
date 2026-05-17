@@ -62,6 +62,9 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
         action={
           <div className="flex items-center gap-3">
             <StatusBadge status={course.status} />
+            <Link href={ROUTES.TEACHER.courseLessonPlans(course.id)}>
+              <Button variant="secondary">Lesson Plans</Button>
+            </Link>
             <Link href={ROUTES.TEACHER.courseEdit(course.id)}>
               <Button variant="secondary">Edit Course</Button>
             </Link>
