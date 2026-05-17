@@ -66,6 +66,12 @@ RUN npm run build
 FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
+# Next.js standalone server.js defaults to binding localhost only, which
+# makes the container unreachable from outside (including Railway's
+# healthchecker). HOSTNAME=0.0.0.0 makes it listen on all interfaces.
+ENV HOSTNAME=0.0.0.0
+# PORT default — Railway overrides at runtime via its injected PORT var,
+# and server.js honors process.env.PORT.
 ENV PORT=3000
 
 # Chromium + fonts for puppeteer-core (system browser, not bundled).
