@@ -67,7 +67,7 @@ export default async function LessonPlanDetailPage({ params }: PageProps) {
       </div>
 
       <div className="grid flex-1 grid-cols-1 gap-4 overflow-hidden md:grid-cols-[1fr_360px]">
-        <div className="overflow-y-auto rounded-lg border border-border bg-card p-6">
+        <div className="overflow-y-auto rounded-lg border border-border">
           <LessonPlanThemed
             theme={theme}
             context="web"

@@ -95,10 +95,14 @@ function buildFontFaceCss(faces: FontFace[] | undefined): string {
 }
 
 function buildPrintCss(theme: Theme): string {
+  // @page margin must be 0 so the themed surface fills page edge-to-edge.
+  // Chrome never paints body/article background into the @page margin area,
+  // so any non-zero @page margin shows the printer's white. We restore the
+  // intended whitespace as internal padding on the article (see component).
   return `
     @page {
       size: ${theme.tokens.page.size};
-      margin: ${theme.tokens.page.margin};
+      margin: 0;
     }
     @media print {
       body { font-size: 11pt; }
@@ -117,10 +121,14 @@ export function LessonPlanThemed(props: Props) {
       fontFamily: theme.tokens.font.body,
       color: theme.tokens.color.text,
       background: theme.tokens.color.surface,
-      maxWidth: context === 'pdf' ? 'none' : '760px',
-      margin: context === 'pdf' ? '0' : '0 auto',
-      padding: context === 'pdf' ? '0' : '0',
+      // Web: fill the parent (let the page control width); PDF: full page.
+      maxWidth: 'none',
+      margin: '0',
+      // PDF padding replaces the removed @page margin. Web padding gives the
+      // themed surface breathing room from its container's edge.
+      padding: context === 'pdf' ? theme.tokens.page.margin : '32px 40px',
       lineHeight: 1.55,
+      minHeight: context === 'pdf' ? '100vh' : 'auto',
     }}>
       {context === 'pdf' && (
         <CoverHeader
