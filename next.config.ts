@@ -1,6 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Standalone output produces a minimal self-contained server bundle that
+  // Railway's Docker runner can ship. Replaces Vercel's outputFileTracing —
+  // standalone copies public/ and node_modules dependencies automatically,
+  // so the previous outputFileTracingIncludes for PDF fonts is no longer needed.
+  output: 'standalone',
   images: {
     remotePatterns: [
       {
@@ -12,12 +17,6 @@ const nextConfig: NextConfig = {
         hostname: "*.r2.dev",
       },
     ],
-  },
-  // Include lesson plan PDF font files in serverless function bundles so
-  // fs.readFileSync('public/fonts/...') works on Vercel (public/ is normally
-  // served via the static CDN, NOT included in function bundles by default).
-  outputFileTracingIncludes: {
-    '/api/lesson-plans/**': ['./public/fonts/**'],
   },
 };
 
