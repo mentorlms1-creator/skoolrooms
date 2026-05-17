@@ -60,17 +60,25 @@ function getZoneId(): string {
 /**
  * Creates a CNAME DNS record for a teacher subdomain.
  *
- * Steps:
- * 1. Validate subdomain format (lowercase alphanumeric + hyphens, 3-30 chars)
- * 2. Check not reserved (www, students, admin, api, etc.)
- * 3. POST to Cloudflare DNS API with CNAME pointing to cname.vercel-dns.com
- * 4. DNS propagates immediately (Cloudflare proxied records)
+ * Target host is read from SUBDOMAIN_CNAME_TARGET env var. On Railway this
+ * is the Railway-issued CNAME (e.g. dex9ih41.up.railway.app). The Railway
+ * wildcard custom domain (*.skoolrooms.site) already covers all subdomains
+ * at the SSL/routing layer, so this per-teacher record is mostly redundant —
+ * kept for explicit auditability of which subdomains exist.
+ *
+ * If SUBDOMAIN_CNAME_TARGET is unset the call no-ops with success: true
+ * (lets local dev work without touching Cloudflare).
  *
  * @returns { success: true } or { success: false, error: string }
  */
 export async function createSubdomainRecord(
   subdomain: string,
 ): Promise<{ success: boolean; error?: string }> {
+  const target = process.env.SUBDOMAIN_CNAME_TARGET
+  if (!target) {
+    return { success: true }
+  }
+
   // Validate format
   if (!SUBDOMAIN_REGEX.test(subdomain)) {
     return {
@@ -96,7 +104,7 @@ export async function createSubdomainRecord(
         body: JSON.stringify({
           type: 'CNAME',
           name: `${subdomain}.${platformDomain()}`,
-          content: 'cname.vercel-dns.com',
+          content: target,
           proxied: true,
           ttl: 1, // Auto TTL when proxied
         }),

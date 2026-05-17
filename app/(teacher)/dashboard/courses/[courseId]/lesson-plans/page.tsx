@@ -20,9 +20,6 @@ export const metadata: Metadata = {
   title: 'Lesson Plans — Skool Rooms',
 }
 
-// Allow AI generations triggered from this page up to 60s on Vercel Pro.
-export const maxDuration = 60
-
 type PageProps = {
   params: Promise<{ courseId: string }>
 }

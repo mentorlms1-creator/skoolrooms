@@ -1,6 +1,0 @@
-{
-  "crons": [
-    { "path": "/api/cron/archive-cohorts", "schedule": "0 0 * * *" },
-    { "path": "/api/cron/grace-period", "schedule": "0 7 * * *" }
-  ]
-}

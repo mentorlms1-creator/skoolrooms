@@ -20,7 +20,6 @@ import { parseAIOutput } from '@/lib/ai/anthropic'
 import { rateLimit } from '@/lib/rate-limit'
 import type { ChatTurn } from '@/lib/ai/provider'
 
-export const maxDuration = 60
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 

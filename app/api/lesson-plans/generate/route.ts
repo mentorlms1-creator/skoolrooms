@@ -28,7 +28,6 @@ import { parseAIOutput } from '@/lib/ai/anthropic'
 import { rateLimit } from '@/lib/rate-limit'
 import { THEME_SLUGS } from '@/lib/lesson-plan/themes/types'
 
-export const maxDuration = 60
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 

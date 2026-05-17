@@ -17,7 +17,6 @@ import { getLessonPlanById } from '@/lib/db/lessonPlans'
 import { renderThemedPdf } from '@/lib/pdf/render-themed'
 import { renderReactPdf } from '@/lib/pdf/render-fallback'
 
-export const maxDuration = 30
 export const runtime = 'nodejs'
 
 export async function GET(
