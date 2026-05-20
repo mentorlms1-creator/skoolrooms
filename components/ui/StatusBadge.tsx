@@ -77,11 +77,13 @@ export function StatusBadge({ status, size = 'md', className }: StatusBadgeProps
     <Badge
       variant="outline"
       className={cn(
+        'gap-1.5',
         colorClasses[color],
         size === 'sm' ? 'text-xs px-2 py-0.5' : 'text-sm px-2.5 py-1',
         className
       )}
     >
+      <span className="h-1.5 w-1.5 rounded-full bg-current shrink-0" />
       {formatStatusText(status)}
     </Badge>
   )
