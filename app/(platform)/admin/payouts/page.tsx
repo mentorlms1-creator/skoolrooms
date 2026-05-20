@@ -7,7 +7,7 @@
 
 import type { Metadata } from 'next'
 import { Link } from 'next-view-transitions'
-import { AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react'
+import { AlertTriangle, ChevronLeft, ChevronRight, Info } from 'lucide-react'
 import { getAllPendingPayouts, getPayoutHistoryPage } from '@/lib/db/payouts'
 import { formatPKT } from '@/lib/time/pkt'
 import { PageHeader } from '@/components/ui/PageHeader'
@@ -46,6 +46,24 @@ export default async function AdminPayoutsPage({
         title="Payouts"
         description="Review and process teacher payout requests"
       />
+
+      {/* Screenshot-mode notice */}
+      <div className="mb-6 rounded-[2rem] border-none shadow-sm ring-1 ring-foreground/5 bg-muted/40 p-5">
+        <div className="flex items-start gap-3">
+          <Info className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
+          <div className="text-sm">
+            <p className="font-medium text-foreground">
+              Payouts are not active in screenshot-payment mode.
+            </p>
+            <p className="mt-1 text-muted-foreground">
+              Students pay teachers&apos; bank accounts directly, so the platform never
+              holds money to disburse. This page is preserved for historical records
+              and will be re-enabled when the Phase 2 payment gateway is live. New
+              payout requests cannot be created from the teacher dashboard right now.
+            </p>
+          </div>
+        </div>
+      </div>
 
       {/* Pending queue */}
       <Card className="border-none shadow-sm ring-1 ring-foreground/5 rounded-[2rem] overflow-hidden bg-card mb-6">

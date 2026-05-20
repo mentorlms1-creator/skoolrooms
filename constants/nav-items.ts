@@ -13,7 +13,6 @@ import {
   Settings,
   Shield,
   Calendar,
-  ArrowUpRight,
   MessageSquare,
   TrendingUp,
   Layers,
@@ -45,7 +44,9 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
   { label: 'Dashboard', href: ROUTES.ADMIN.dashboard, icon: LayoutDashboard },
   { label: 'Teachers', href: ROUTES.ADMIN.teachers, icon: Users },
   { label: 'Payments', href: ROUTES.ADMIN.payments, icon: CreditCard, group: 'Management' },
-  { label: 'Payouts', href: ROUTES.ADMIN.payouts, icon: ArrowUpRight, group: 'Management' },
+  // 'Payouts' link intentionally hidden: in screenshot-payment mode the platform
+  // never holds student money, so payouts are ceremonial. Route + DB tables
+  // still exist; reinstate this entry when Phase 2 gateway integration goes live.
   { label: 'Earnings', href: ROUTES.ADMIN.earnings, icon: Wallet, group: 'Management' },
   { label: 'Plans', href: ROUTES.ADMIN.plans, icon: Layers, group: 'Management' },
   { label: 'Metrics', href: '/admin/metrics', icon: TrendingUp, group: 'Management' },

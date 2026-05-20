@@ -6,7 +6,7 @@
  */
 
 import type { Metadata } from 'next'
-import { DollarSign, TrendingUp, ArrowUpRight, AlertCircle } from 'lucide-react'
+import { DollarSign, TrendingUp, AlertCircle } from 'lucide-react'
 import { getAdminEarningsSummary, getTeachersWithOutstandingDebit } from '@/lib/db/payouts'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -29,8 +29,11 @@ export default async function AdminEarningsPage() {
         description="Platform-wide revenue and payout summary"
       />
 
-      {/* Stat cards */}
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-6">
+      {/* Stat cards. "Payouts Processed" card is intentionally omitted —
+          in screenshot-payment mode teachers receive money directly, so the
+          metric is always 0 and would mislead. Re-add when Phase 2 gateway
+          flows actually move money through the platform. */}
+      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 mb-6">
         <EarningsCard
           label="Gross Collected"
           value={`PKR ${summary.grossCollectedPkr.toLocaleString()}`}
@@ -46,14 +49,6 @@ export default async function AdminEarningsPage() {
           icon={TrendingUp}
           iconColor="text-accent"
           iconBg="bg-accent/10"
-        />
-        <EarningsCard
-          label="Payouts Processed"
-          value={`PKR ${summary.totalPayoutsProcessedPkr.toLocaleString()}`}
-          subtitle="Total paid out to teachers (completed payouts)"
-          icon={ArrowUpRight}
-          iconColor="text-success"
-          iconBg="bg-success/10"
         />
         <EarningsCard
           label="Net Revenue"
