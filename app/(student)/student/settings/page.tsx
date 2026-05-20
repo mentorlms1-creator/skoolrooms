@@ -33,8 +33,10 @@ export default async function StudentSettingsPage() {
             <h2 className="text-xl font-bold text-foreground">Profile</h2>
           </div>
           <StudentSettingsForm
+            studentId={student.id as string}
             defaultName={student.name as string}
             defaultPhone={student.phone as string}
+            defaultPhotoUrl={(student.profile_photo_url as string | null) ?? ''}
             email={student.email as string}
             memberSince={formatPKT(student.created_at as string, 'date')}
             guardianDefaults={{

@@ -6,12 +6,16 @@ import { Mail, CalendarDays } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { FileUpload } from '@/components/ui/FileUpload'
+import { StudentAvatar } from '@/components/ui/StudentAvatar'
 import { updateStudentProfileAction } from '@/lib/actions/student-settings'
 import { updateOwnGuardianContact } from '@/lib/actions/students'
 
 type Props = {
+  studentId: string
   defaultName: string
   defaultPhone: string
+  defaultPhotoUrl: string
   email: string
   memberSince: string
   guardianDefaults: {
@@ -21,11 +25,12 @@ type Props = {
   }
 }
 
-export function StudentSettingsForm({ defaultName, defaultPhone, email, memberSince, guardianDefaults }: Props) {
+export function StudentSettingsForm({ studentId, defaultName, defaultPhone, defaultPhotoUrl, email, memberSince, guardianDefaults }: Props) {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [photoUrl, setPhotoUrl] = useState(defaultPhotoUrl)
   const [parentName, setParentName] = useState(guardianDefaults.parent_name ?? '')
   const [parentPhone, setParentPhone] = useState(guardianDefaults.parent_phone ?? '')
   const [parentEmail, setParentEmail] = useState(guardianDefaults.parent_email ?? '')
@@ -37,6 +42,7 @@ export function StudentSettingsForm({ defaultName, defaultPhone, email, memberSi
     setLoading(true)
 
     const formData = new FormData(e.currentTarget)
+    formData.set('profile_photo_url', photoUrl)
     const profileResult = await updateStudentProfileAction(formData)
 
     if (!profileResult.success) {
@@ -70,6 +76,30 @@ export function StudentSettingsForm({ defaultName, defaultPhone, email, memberSi
       {success && (
         <div className="rounded-2xl bg-success/10 px-4 py-3 text-sm text-success">Profile updated.</div>
       )}
+
+      <div className="rounded-2xl bg-container ring-1 ring-foreground/[0.03] p-4 flex items-center gap-4">
+        <StudentAvatar
+          id={studentId}
+          name={defaultName}
+          photoUrl={photoUrl || null}
+          size="lg"
+        />
+        <div className="flex-1 min-w-0">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/50 mb-2">
+            Profile Photo
+          </p>
+          <FileUpload
+            fileType="profile"
+            entityId={studentId}
+            onUploadComplete={(url) => setPhotoUrl(url)}
+            onRemove={() => setPhotoUrl('')}
+            currentUrl={photoUrl || undefined}
+          />
+          <p className="mt-2 text-xs text-muted-foreground">
+            Optional. JPEG, PNG, or WebP. Max 2MB.
+          </p>
+        </div>
+      </div>
 
       <div className="space-y-2">
         <Label htmlFor="name" className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/50">
