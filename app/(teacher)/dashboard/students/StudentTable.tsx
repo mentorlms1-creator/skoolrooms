@@ -84,7 +84,7 @@ export function StudentTable({
     }
     const qs = params.toString()
     startTransition(() => {
-      router.replace(qs ? `/dashboard/students?${qs}` : '/dashboard/students', {
+      router.replace(qs ? `${ROUTES.TEACHER.students}?${qs}` : ROUTES.TEACHER.students, {
         scroll: false,
       })
     })
@@ -108,7 +108,12 @@ export function StudentTable({
   const isFilteredEmpty = data.length === 0 && hasActiveFilter
 
   return (
-    <div className="flex flex-col gap-5">
+    <div
+      className={cn(
+        'flex flex-col gap-5 transition-opacity duration-200',
+        isPending && 'opacity-50 pointer-events-none',
+      )}
+    >
       {/* Toolbar */}
       <form
         onSubmit={onSubmit}
@@ -147,6 +152,7 @@ export function StudentTable({
                   <button
                     key={item.value}
                     type="button"
+                    aria-pressed={isActive}
                     onClick={() =>
                       updateUrl({
                         status: item.value === '_all' ? '' : item.value,
@@ -184,7 +190,7 @@ export function StudentTable({
               setSearch('')
               if (debounceTimer.current) clearTimeout(debounceTimer.current)
               startTransition(() => {
-                router.replace('/dashboard/students', { scroll: false })
+                router.replace(ROUTES.TEACHER.students, { scroll: false })
               })
             }}
             className="mt-2 text-xs text-primary hover:underline"
@@ -193,12 +199,7 @@ export function StudentTable({
           </button>
         </div>
       ) : (
-        <div
-          className={cn(
-            'transition-opacity duration-200',
-            isPending && 'opacity-50 pointer-events-none',
-          )}
-        >
+        <div>
           {/* DESKTOP TABLE — sm+ */}
           <div className="hidden sm:block rounded-2xl bg-card ring-1 ring-border/40 shadow-[0_1px_2px_rgba(0,0,0,0.03)] overflow-hidden">
             <div className="grid grid-cols-[2.4fr_1.6fr_1fr_0.9fr] px-5 py-3 border-b border-border/40 text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">

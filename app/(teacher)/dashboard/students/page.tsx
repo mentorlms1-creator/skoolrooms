@@ -51,7 +51,7 @@ export default async function TeacherStudentsPage({
     name: e.students.name,
     email: e.students.email,
     phone: e.students.phone,
-    photoUrl: (e.students as { profile_photo_url?: string | null }).profile_photo_url ?? null,
+    photoUrl: e.students.profile_photo_url ?? null,
     courseTitle: e.cohorts.courses.title,
     cohortName: e.cohorts.name,
     status: e.status,
