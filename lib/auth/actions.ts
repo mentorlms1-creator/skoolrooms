@@ -343,8 +343,13 @@ export async function resetPassword(
 
   const supabase = await createClient()
 
+  // Route through /api/auth/callback so the PKCE `?code=...` from Supabase's
+  // recovery link gets exchanged for a session BEFORE the user lands on the
+  // reset form. Without this, supabase.auth.updateUser() on the form throws
+  // "Auth session missing!". The `next` param tells the callback where to send
+  // the user after the exchange completes.
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: platformUrl('/auth/reset-password'),
+    redirectTo: platformUrl('/api/auth/callback?next=/auth/reset-password'),
   })
 
   if (error) {

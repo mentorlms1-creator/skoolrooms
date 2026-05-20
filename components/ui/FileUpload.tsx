@@ -11,8 +11,8 @@
  * 5. Calls onUploadComplete with the public URL
  */
 
-import { useState, useRef, useCallback, type DragEvent, type ChangeEvent } from 'react'
-import { Upload, FileText } from 'lucide-react'
+import { useState, useRef, useCallback, type DragEvent, type ChangeEvent, type MouseEvent } from 'react'
+import { Upload, FileText, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Spinner } from '@/components/ui/Spinner'
 import { UPLOAD_LIMITS, UPLOAD_LIMIT_LABELS, UPLOAD_ALLOWED_FORMATS, type UploadFileType } from '@/constants/plans'
@@ -21,6 +21,12 @@ type FileUploadProps = {
   fileType: UploadFileType
   entityId: string
   onUploadComplete: (url: string) => void
+  /**
+   * When provided, a remove button appears once a file is uploaded/loaded.
+   * The parent is responsible for clearing whatever it tracks (URL in state,
+   * form field, etc.); this component just resets its own preview state.
+   */
+  onRemove?: () => void
   accept?: string
   maxSizeMb?: number
   currentUrl?: string
@@ -32,6 +38,7 @@ export function FileUpload({
   fileType,
   entityId,
   onUploadComplete,
+  onRemove,
   accept,
   maxSizeMb,
   currentUrl,
@@ -96,18 +103,25 @@ export function FileUpload({
       }
 
       try {
-        // Request presigned URL from server
-        const presignResponse = await fetch('/api/r2/presign', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            fileType,
-            contentType: file.type,
-            fileName: file.name,
-            sizeBytes: file.size,
-            entityId,
-          }),
-        })
+        // Step 1: Request presigned URL from our server
+        let presignResponse: Response
+        try {
+          presignResponse = await fetch('/api/r2/presign', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              fileType,
+              contentType: file.type,
+              fileName: file.name,
+              sizeBytes: file.size,
+              entityId,
+            }),
+          })
+        } catch (networkErr) {
+          // fetch() only throws for network-layer failures (offline, DNS, etc.)
+          console.error('[FileUpload] Presign request failed at network layer:', networkErr)
+          throw new Error("Couldn't reach the server. Check your internet connection and try again.")
+        }
 
         const presignBody = (await presignResponse.json().catch(() => ({}))) as {
           success?: boolean
@@ -127,18 +141,29 @@ export function FileUpload({
           throw new Error('Failed to prepare upload. Please try again.')
         }
 
-        // Upload directly to R2
-        const uploadResponse = await fetch(uploadUrl, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': file.type,
-            'Content-Length': String(file.size),
-          },
-          body: file,
-        })
+        // Step 2: Upload directly to R2. fetch() throwing here almost always
+        // means the R2 bucket's CORS doesn't allow this origin — browsers
+        // report that as "Failed to fetch", which is useless to the user.
+        let uploadResponse: Response
+        try {
+          uploadResponse = await fetch(uploadUrl, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': file.type,
+              'Content-Length': String(file.size),
+            },
+            body: file,
+          })
+        } catch (networkErr) {
+          console.error(
+            '[FileUpload] Upload to R2 failed at network layer (likely CORS).',
+            { uploadUrl, origin: window.location.origin, error: networkErr },
+          )
+          throw new Error("Upload couldn't reach storage. This usually means the storage bucket isn't accepting uploads from this site — please contact support.")
+        }
 
         if (!uploadResponse.ok) {
-          throw new Error('Upload failed. Please try again.')
+          throw new Error(`Upload failed (HTTP ${uploadResponse.status}). Please try again.`)
         }
 
         setState('success')
@@ -176,22 +201,36 @@ export function FileUpload({
     if (file) uploadFile(file)
   }
 
+  function handleRemove(e: MouseEvent<HTMLButtonElement>) {
+    // Stop the drop-zone's onClick from firing and opening the file picker.
+    e.stopPropagation()
+    setState('idle')
+    setPreview(null)
+    setFileName(null)
+    setFileSize(null)
+    setError(null)
+    if (inputRef.current) inputRef.current.value = ''
+    onRemove?.()
+  }
+
   function formatFileSize(bytes: number): string {
     if (bytes < 1024) return `${bytes} B`
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
   }
 
+  const canRemove = onRemove && (preview !== null || fileName !== null) && state !== 'uploading'
+
   return (
     <div className="flex flex-col gap-2">
-      {/* Drop zone */}
+      {/* Drop zone (positioned relative so the remove button can absolutely overlay it) */}
       <div
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onClick={() => inputRef.current?.click()}
         className={cn(
-          'flex cursor-pointer flex-col items-center justify-center',
+          'relative flex cursor-pointer flex-col items-center justify-center',
           'rounded-lg border-2 border-dashed p-6',
           'transition-colors duration-150',
           isDragOver
@@ -209,6 +248,24 @@ export function FileUpload({
         }}
         aria-label="Upload file"
       >
+        {canRemove && (
+          <button
+            type="button"
+            onClick={handleRemove}
+            className={cn(
+              'absolute right-2 top-2 z-10',
+              'flex h-7 w-7 items-center justify-center rounded-full',
+              'bg-background/80 text-muted-foreground backdrop-blur-sm',
+              'border border-border shadow-sm',
+              'hover:bg-destructive hover:text-destructive-foreground hover:border-destructive',
+              'focus:outline-none focus:ring-2 focus:ring-destructive focus:ring-offset-2 focus:ring-offset-background',
+              'transition-colors',
+            )}
+            aria-label="Remove file"
+          >
+            <X className="h-4 w-4" aria-hidden="true" />
+          </button>
+        )}
         {state === 'uploading' ? (
           <div className="flex flex-col items-center gap-2">
             <Spinner size="md" />

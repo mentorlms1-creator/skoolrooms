@@ -118,8 +118,12 @@ export async function saveOnboardingStep3(
     onboarding_completed: allStepsComplete(stepsJson),
   }
 
-  if (profilePhotoUrl) {
-    updates.profile_photo_url = profilePhotoUrl
+  // Tri-state on the photo URL:
+  //   field absent  → no change (legacy callers)
+  //   empty string  → clear (user clicked Remove)
+  //   non-empty     → set to value
+  if (profilePhotoUrl !== null) {
+    updates.profile_photo_url = profilePhotoUrl.trim() || null
   }
 
   const updated = await updateTeacher(teacher.id, updates)

@@ -5,6 +5,18 @@
 
 ---
 
+### 2026-05-20 — Profile photo upload showed "Failed to fetch"
+**What happened:** Tester uploaded a profile photo on `/onboarding/step-3`; the local FileReader preview rendered but the upload bar shifted to error state with the message "Failed to fetch".
+**Root cause:** `FileUpload.tsx` does a cross-origin `PUT` to the R2 presigned URL. The R2 bucket's CORS rules only listed the platform domain that was set in env when `scripts/set-r2-cors.mjs` was last run. During the `.site` → `.com` cutover, the live origin no longer matches the configured CORS, so browsers reject the preflight and `fetch()` throws "Failed to fetch" — which we surfaced verbatim to the user.
+**Fix:** Updated `set-r2-cors.mjs` to accept a `CORS_EXTRA_DOMAINS` comma-separated env var so multiple domains can be allowed at once during transitions. Tightened `FileUpload.tsx` to wrap each `fetch()` separately and replace the bare "Failed to fetch" with a domain-specific message (and a console error pointing at the likely CORS cause).
+**Rule going forward:** Any time the platform domain changes (Vercel ↔ Railway, `.site` ↔ `.com`, etc.), re-run `set-r2-cors.mjs` with `CORS_EXTRA_DOMAINS` covering BOTH the old and new domain until the cutover is fully complete. Add the same step to any future custom-domain migration checklist (R2 isn't behind our DNS — Cloudflare DNS changes do NOT propagate to R2 CORS automatically).
+
+### 2026-05-20 — Password reset showed "Auth session missing!" on submit
+**What happened:** Testers clicked the reset-password email link, landed on the form, submitted a new password, and got "Auth session missing!" from `supabase.auth.updateUser()`.
+**Root cause:** `resetPassword` in `lib/auth/actions.ts` set `redirectTo` directly to `/auth/reset-password`. With `@supabase/ssr`'s default PKCE flow, the recovery link arrives as `?code=...` — the bare page never called `exchangeCodeForSession`, so no session cookies were set before the form submission.
+**Fix:** Routed `redirectTo` through `/api/auth/callback?next=/auth/reset-password`. The existing API callback exchanges the PKCE code, sets session cookies, then redirects to the reset form — by which point `updateUser({ password })` has a session to attach to.
+**Rule going forward:** ANY Supabase email-link flow (`resetPasswordForEmail`, `signInWithOtp`, magic links, etc.) where the next step needs an authenticated session MUST send `redirectTo` through `/api/auth/callback` (PKCE) or `/auth/callback` (implicit / `admin.generateLink`). Never land directly on a page that assumes a session — the URL alone doesn't create one.
+
 ### 2026-03-30 — Seed data diverged from ARCHITECTURE.md Section 13
 **What happened:** Plan limits in 005_seed_data.sql used different values than ARCHITECTURE.md Section 13 (e.g., Free max_courses was 3 instead of 1).
 **Root cause:** The seed data was generated from Section 3 (which had aspirational/future values) instead of Section 13 (the authoritative business rules).

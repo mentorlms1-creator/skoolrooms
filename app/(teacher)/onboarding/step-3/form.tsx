@@ -45,9 +45,9 @@ export function Step3Form({
     startTransition(async () => {
       const formData = new FormData()
       formData.set('bio', bio.trim())
-      if (photoUrl) {
-        formData.set('profile_photo_url', photoUrl)
-      }
+      // Always send the field so the server can distinguish "set a photo" from
+      // "clear the existing photo". Empty string = clear; non-empty = use as URL.
+      formData.set('profile_photo_url', photoUrl)
 
       const result = await saveOnboardingStep3(formData)
 
@@ -72,6 +72,7 @@ export function Step3Form({
             fileType="profile"
             entityId={teacherId}
             onUploadComplete={(url) => setPhotoUrl(url)}
+            onRemove={() => setPhotoUrl('')}
             currentUrl={photoUrl || undefined}
           />
         </div>
