@@ -1957,6 +1957,18 @@ Supabase Realtime used for live UI updates. All subscriptions go through `useRea
 
 ## 7. Payment Flows
 
+> **Phase 1 reality note (2026-05) — read first.**
+>
+> The flows below describe both the *current* screenshot-only world and the *target* gateway-driven world. They are accurate as written for Phase 2, but in Phase 1 a few pieces are intentionally inert:
+>
+> - **No "Request Payout" UI.** Students pay the teacher's bank/JazzCash/EasyPaisa **directly** for screenshot enrollments, so by the time a teacher approves a screenshot they already have the cash. The `Payout Flow` below (`teacher_payouts` row → admin "Complete") is therefore disabled at the UI level — the form is removed from `/dashboard/earnings` and the "Payouts" entry is removed from the admin sidebar. The DB tables, server actions (`requestPayoutAction`, `completePayoutAction`), and the entire `Payout Flow` section are preserved unchanged so Phase 2 can re-enable them with a one-line nav restore.
+>
+> - **Platform cut is *recorded*, not *collected*.** Every confirmed `student_payments` row still gets `platform_cut_pkr` calculated and persisted (so `/admin/earnings` can sum the platform's claim). But there is no mechanism in Phase 1 that actually moves those rupees from the teacher to the platform — the "collected at payout time" mechanism described in CLAUDE.md Rule 17 was the gateway-era design. Phase 1 effectively absorbs the per-transaction cut; revenue comes from teacher subscriptions only.
+>
+> - **`teacher_balances` is still maintained.** Approvals still call `credit_teacher_balance(net)`, refunds still debit it, `outstanding_debit_pkr` is still surfaced. It now acts as a verified-earnings ledger ("how much money you received via the platform") rather than an "amount available to withdraw" balance.
+>
+> When the Phase 2 gateway is wired up, the payout UI is re-enabled and the cut-collection mechanism in `### Payout Flow` becomes live again. Nothing in the surrounding sections needs to change at that point.
+
 ### Flow A — Teacher Subscription via Gateway (Phase 2+)
 
 ```
@@ -2178,6 +2190,8 @@ On Reject: rejectMonthlyPaymentAction(paymentId, reason)
 > **Why payment_month is set at creation, not at approval:** the `fee-reminders` cron's idempotency check is `payment_month = current billing month AND status IN ('confirmed', 'pending_verification')`. If we only set `payment_month` at approval, a student who uploaded a screenshot on Apr 2 but isn't approved until Apr 6 would receive an Apr 5 reminder asking them to pay again. Setting it at creation closes this window.
 
 ### Payout Flow
+
+> **Phase 1 status: UI disabled.** The flow below is fully implemented in the DB and server actions, but the teacher's "Request Payout" form and the admin "Payouts" sidebar entry are hidden because Phase 1 screenshot mode means the teacher already has the money. Re-enable by restoring the nav entry (`constants/nav-items.ts`) and re-mounting `PayoutForm` on `/dashboard/earnings`. See the §7 head callout for the full rationale.
 
 ```
 Teacher sees available_balance ≥ min_payout_amount_pkr

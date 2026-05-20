@@ -132,7 +132,7 @@ supabase/
 16. **Plan limits enforced server-side.** `PlanLimitGuard` is UI-only feedback. Every write route MUST also call `getLimit()` and check. Never trust client-side checks alone.
 
 ### Business Rules
-17. **Screenshots go directly to teacher's bank.** Platform never holds this money. `teacher_balances` is credited with the net amount (after cut). Platform cut is collected at payout time.
+17. **Screenshots go directly to teacher's bank.** Platform never holds this money. `teacher_balances` is credited with the net amount (after cut). Platform cut is collected at payout time. **Phase 1 reality (2026-05):** payout UI is hidden — teachers already have the cash from the direct screenshot transfer, so `platform_cut_pkr` is *recorded* per payment but not *collected* anywhere yet. The collection mechanism returns when the Phase 2 gateway is live. See ARCHITECTURE.md §7 head callout for details.
 18. **Manual "Mark as Paid" enrollments set `platform_cut_pkr = 0`.** Balance NOT credited. Cash went directly to teacher outside the platform.
 19. **Refund deducts `teacher_payout_amount_pkr`** (not full `amount_pkr`). Prevents negative balances.
 20. **One active payout request at a time.** Reject new payout if existing one has status `pending` or `processing`.
