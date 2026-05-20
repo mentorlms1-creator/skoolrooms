@@ -18,6 +18,7 @@ export type StudentRow = {
   phone: string
   email: string
   pending_email: string | null
+  profile_photo_url: string | null
   parent_name: string | null
   parent_phone: string | null
   parent_email: string | null
