@@ -26,6 +26,18 @@
   --border: oklch(0.90 0.005 260);
   --input: oklch(0.90 0.005 260);
   --ring: oklch(0.55 0.25 285);
+  /* Avatar palette — 8 deterministic hues + foreground for colored-initial circles.
+     OKLCH lightness in the 0.55–0.70 band stays legible on both bg-card modes,
+     so no per-mode override is needed below. */
+  --avatar-1: oklch(0.62 0.18 25);
+  --avatar-2: oklch(0.65 0.16 50);
+  --avatar-3: oklch(0.70 0.14 90);
+  --avatar-4: oklch(0.62 0.17 145);
+  --avatar-5: oklch(0.62 0.14 195);
+  --avatar-6: oklch(0.58 0.17 250);
+  --avatar-7: oklch(0.55 0.20 285);
+  --avatar-8: oklch(0.62 0.16 340);
+  --avatar-foreground: oklch(1 0 0);
   --sidebar: oklch(0.98 0.005 260);
   --sidebar-foreground: oklch(0.15 0.02 260);
   --sidebar-accent: oklch(0.97 0.005 260);
@@ -66,6 +78,15 @@
   --border: oklch(0.28 0.02 275);
   --input: oklch(0.28 0.02 275);
   --ring: oklch(0.65 0.25 285);
+  --avatar-1: oklch(0.62 0.18 25);
+  --avatar-2: oklch(0.65 0.16 50);
+  --avatar-3: oklch(0.70 0.14 90);
+  --avatar-4: oklch(0.62 0.17 145);
+  --avatar-5: oklch(0.62 0.14 195);
+  --avatar-6: oklch(0.58 0.17 250);
+  --avatar-7: oklch(0.55 0.20 285);
+  --avatar-8: oklch(0.62 0.16 340);
+  --avatar-foreground: oklch(1 0 0);
   --sidebar: oklch(0.15 0.02 275);
   --sidebar-foreground: oklch(0.65 0.01 260);
   --sidebar-accent: oklch(0.22 0.02 275);
@@ -105,6 +126,15 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-avatar-1: var(--avatar-1);
+  --color-avatar-2: var(--avatar-2);
+  --color-avatar-3: var(--avatar-3);
+  --color-avatar-4: var(--avatar-4);
+  --color-avatar-5: var(--avatar-5);
+  --color-avatar-6: var(--avatar-6);
+  --color-avatar-7: var(--avatar-7);
+  --color-avatar-8: var(--avatar-8);
+  --color-avatar-foreground: var(--avatar-foreground);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-accent: var(--sidebar-accent);
