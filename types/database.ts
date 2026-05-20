@@ -1429,6 +1429,7 @@ export type Database = {
           parent_phone: string | null
           pending_email: string | null
           phone: string
+          profile_photo_url: string | null
           supabase_auth_id: string | null
           updated_at: string | null
         }
@@ -1443,6 +1444,7 @@ export type Database = {
           parent_phone?: string | null
           pending_email?: string | null
           phone: string
+          profile_photo_url?: string | null
           supabase_auth_id?: string | null
           updated_at?: string | null
         }
@@ -1457,6 +1459,7 @@ export type Database = {
           parent_phone?: string | null
           pending_email?: string | null
           phone?: string
+          profile_photo_url?: string | null
           supabase_auth_id?: string | null
           updated_at?: string | null
         }
@@ -2066,3 +2069,4 @@ export const Constants = {
     Enums: {},
   },
 } as const
+
