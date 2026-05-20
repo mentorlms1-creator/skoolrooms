@@ -128,6 +128,7 @@ export type EnrollmentWithStudentAndCohort = EnrollmentRow & {
     name: string
     email: string
     phone: string
+    profile_photo_url: string | null
   }
   cohorts: {
     id: string
@@ -511,7 +512,7 @@ export async function getAllStudentsByTeacher(
     .from('enrollments')
     .select(`
       *,
-      students!inner(id, name, email, phone),
+      students!inner(id, name, email, phone, profile_photo_url),
       cohorts!inner(
         id, name, fee_pkr, fee_type, status,
         courses!inner(id, title)
@@ -644,7 +645,7 @@ export async function getStudentsByTeacherPage(input: {
     .from('enrollments')
     .select(`
       *,
-      students!inner(id, name, email, phone),
+      students!inner(id, name, email, phone, profile_photo_url),
       cohorts!inner(
         id, name, fee_pkr, fee_type, status,
         courses!inner(id, title)
@@ -680,6 +681,9 @@ export async function getStudentStatsByTeacher(teacherId: string): Promise<{
   uniqueStudents: number
   active: number
   pending: number
+  newThisMonth: number
+  activePct: number
+  oldestPendingDays: number | null
 }> {
   const supabase = createAdminClient()
 
@@ -691,36 +695,90 @@ export async function getStudentStatsByTeacher(teacherId: string): Promise<{
 
   const cohortIds = (cohorts ?? []).map((c) => c.id as string)
   if (cohortIds.length === 0) {
-    return { uniqueStudents: 0, active: 0, pending: 0 }
+    return {
+      uniqueStudents: 0,
+      active: 0,
+      pending: 0,
+      newThisMonth: 0,
+      activePct: 0,
+      oldestPendingDays: null,
+    }
   }
 
-  const [{ count: active }, { count: pending }, { data: distinctRows }] =
-    await Promise.all([
-      supabase
-        .from('enrollments')
-        .select('*', { count: 'exact', head: true })
-        .in('cohort_id', cohortIds)
-        .in('status', ['active', 'enrolled']),
-      supabase
-        .from('enrollments')
-        .select('*', { count: 'exact', head: true })
-        .in('cohort_id', cohortIds)
-        .eq('status', 'pending'),
-      supabase
-        .from('enrollments')
-        .select('student_id')
-        .in('cohort_id', cohortIds),
-    ])
+  // Start-of-month in PKT (UTC+5). All timestamps in DB are UTC, so we compute
+  // the UTC instant that corresponds to 00:00 PKT on the 1st of the current
+  // PKT month, then compare against created_at.
+  const nowUtc = new Date()
+  const nowPkt = new Date(nowUtc.getTime() + 5 * 60 * 60 * 1000)
+  const startOfMonthPktUtc = new Date(
+    Date.UTC(nowPkt.getUTCFullYear(), nowPkt.getUTCMonth(), 1) - 5 * 60 * 60 * 1000,
+  ).toISOString()
+
+  const [
+    { count: active },
+    { count: pending },
+    { data: distinctRows },
+    { count: newThisMonth },
+    { data: oldestPendingRow },
+  ] = await Promise.all([
+    supabase
+      .from('enrollments')
+      .select('*', { count: 'exact', head: true })
+      .in('cohort_id', cohortIds)
+      .in('status', ['active', 'enrolled']),
+    supabase
+      .from('enrollments')
+      .select('*', { count: 'exact', head: true })
+      .in('cohort_id', cohortIds)
+      .eq('status', 'pending'),
+    supabase
+      .from('enrollments')
+      .select('student_id')
+      .in('cohort_id', cohortIds),
+    supabase
+      .from('enrollments')
+      .select('*', { count: 'exact', head: true })
+      .in('cohort_id', cohortIds)
+      .gte('created_at', startOfMonthPktUtc),
+    supabase
+      .from('enrollments')
+      .select('created_at')
+      .in('cohort_id', cohortIds)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: true })
+      .limit(1),
+  ])
 
   const distinct = new Set<string>()
   for (const row of (distinctRows ?? []) as Array<{ student_id: string }>) {
     distinct.add(row.student_id)
   }
 
+  const uniqueStudents = distinct.size
+  const activeCount = active ?? 0
+  const pendingCount = pending ?? 0
+
+  const activePct =
+    uniqueStudents > 0
+      ? Math.round((activeCount / uniqueStudents) * 100)
+      : 0
+
+  let oldestPendingDays: number | null = null
+  if (oldestPendingRow && oldestPendingRow.length > 0) {
+    const createdAt = new Date(
+      (oldestPendingRow[0] as { created_at: string }).created_at,
+    )
+    const ms = nowUtc.getTime() - createdAt.getTime()
+    oldestPendingDays = Math.max(0, Math.floor(ms / (1000 * 60 * 60 * 24)))
+  }
+
   return {
-    uniqueStudents: distinct.size,
-    active: active ?? 0,
-    pending: pending ?? 0,
+    uniqueStudents,
+    active: activeCount,
+    pending: pendingCount,
+    newThisMonth: newThisMonth ?? 0,
+    activePct,
+    oldestPendingDays,
   }
 }
 
@@ -834,7 +892,7 @@ export async function getEnrollmentsByStudentForTeacher(
     .from('enrollments')
     .select(`
       *,
-      students!inner(id, name, email, phone),
+      students!inner(id, name, email, phone, profile_photo_url),
       cohorts!inner(
         id, name, fee_pkr, fee_type, status,
         courses!inner(id, title)
