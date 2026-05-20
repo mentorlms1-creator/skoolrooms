@@ -1,12 +1,11 @@
 /**
  * app/(teacher)/dashboard/students/page.tsx — All Students page (Server Component)
  *
- * Cursor-paginated. Header stat cards come from cheap count queries (no row
- * pull); table data comes from a server-paginated DataTable.
+ * iCloud-Web redesign: PageHeader + KPI hero card + StudentTable.
+ * Stats come from a cheap aggregate query; table data is server-paginated.
  */
 
 import type { Metadata } from 'next'
-import { Users, UserCheck, Clock } from 'lucide-react'
 import { requireTeacher } from '@/lib/auth/guards'
 import {
   getStudentsByTeacherPage,
@@ -18,7 +17,7 @@ import { StudentTable, type StudentTableRow } from './StudentTable'
 import { DEFAULT_PAGE_SIZE } from '@/lib/pagination/limits'
 
 export const metadata: Metadata = {
-  title: 'Students \u2014 Skool Rooms',
+  title: 'Students — Skool Rooms',
 }
 
 type SearchParams = {
@@ -52,6 +51,7 @@ export default async function TeacherStudentsPage({
     name: e.students.name,
     email: e.students.email,
     phone: e.students.phone,
+    photoUrl: (e.students as { profile_photo_url?: string | null }).profile_photo_url ?? null,
     courseTitle: e.cohorts.courses.title,
     cohortName: e.cohorts.name,
     status: e.status,
@@ -65,23 +65,37 @@ export default async function TeacherStudentsPage({
         description="All students enrolled across your courses"
       />
 
-      <div className="flex flex-wrap items-center gap-6 mb-6 text-sm">
-        <div className="flex items-center gap-2">
-          <Users className="h-4 w-4 text-muted-foreground" />
-          <span className="text-2xl font-extrabold">{stats.uniqueStudents}</span>
-          <span className="text-muted-foreground">unique students</span>
-        </div>
-        <div className="h-4 w-px bg-border" />
-        <div className="flex items-center gap-2">
-          <UserCheck className="h-4 w-4 text-primary" />
-          <span className="text-2xl font-extrabold text-primary">{stats.active}</span>
-          <span className="text-muted-foreground">active</span>
-        </div>
-        <div className="h-4 w-px bg-border" />
-        <div className="flex items-center gap-2">
-          <Clock className="h-4 w-4 text-warning" />
-          <span className="text-2xl font-extrabold">{stats.pending}</span>
-          <span className="text-muted-foreground">pending</span>
+      {/* KPI hero — 3 stats divided by hairlines */}
+      <div className="mb-6 rounded-2xl bg-card ring-1 ring-border/40 shadow-[0_1px_2px_rgba(0,0,0,0.03)] p-5 sm:p-6">
+        <div className="grid grid-cols-3 gap-0">
+          <KpiStat
+            value={stats.uniqueStudents}
+            label="Total"
+            delta={stats.newThisMonth > 0 ? `+${stats.newThisMonth} this month` : null}
+            tone="neutral"
+          />
+          <KpiStat
+            value={stats.active}
+            label="Active"
+            delta={
+              stats.uniqueStudents > 0 && stats.activePct > 0
+                ? `${stats.activePct}% of total`
+                : null
+            }
+            tone="success"
+            divided
+          />
+          <KpiStat
+            value={stats.pending}
+            label="Pending"
+            delta={
+              stats.oldestPendingDays !== null && stats.pending > 0
+                ? `Oldest ${stats.oldestPendingDays} day${stats.oldestPendingDays === 1 ? '' : 's'}`
+                : null
+            }
+            tone="warning"
+            divided
+          />
         </div>
       </div>
 
@@ -101,5 +115,46 @@ export default async function TeacherStudentsPage({
         />
       )}
     </>
+  )
+}
+
+type KpiTone = 'neutral' | 'success' | 'warning'
+
+function KpiStat({
+  value,
+  label,
+  delta,
+  tone,
+  divided = false,
+}: {
+  value: number
+  label: string
+  delta: string | null
+  tone: KpiTone
+  divided?: boolean
+}) {
+  const toneClass =
+    tone === 'success'
+      ? 'text-success'
+      : tone === 'warning'
+        ? 'text-warning'
+        : 'text-foreground'
+
+  return (
+    <div className={divided ? 'pl-4 sm:pl-6 border-l border-border/40' : 'pr-4 sm:pr-6'}>
+      <div
+        className={`text-[26px] sm:text-[34px] font-semibold tracking-[-0.025em] leading-none ${toneClass}`}
+      >
+        {value}
+      </div>
+      <div className="mt-2 text-[11px] font-medium uppercase tracking-[0.06em] text-muted-foreground">
+        {label}
+      </div>
+      {delta && (
+        <div className="mt-1 hidden sm:block text-[11px] text-muted-foreground/80">
+          {delta}
+        </div>
+      )}
+    </div>
   )
 }
