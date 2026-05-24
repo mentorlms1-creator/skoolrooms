@@ -143,6 +143,36 @@ export type EnrollmentWithStudentAndCohort = EnrollmentRow & {
   }
 }
 
+// Payment history row — verified/rejected/refunded payment joined with
+// the enrollment's student + cohort context (for teacher history view).
+export type PaymentHistoryWithDetails = {
+  id: string
+  amount_pkr: number
+  discounted_amount_pkr: number
+  payment_method: string
+  screenshot_url: string | null
+  status: string
+  created_at: string
+  updated_at: string | null
+  verified_at: string | null
+  refunded_at: string | null
+  rejection_reason: string | null
+  enrollments: {
+    id: string
+    reference_code: string
+    students: {
+      name: string
+      email: string
+      phone: string
+    }
+    cohorts: {
+      id: string
+      name: string
+      fee_pkr: number
+    }
+  }
+}
+
 // Enrollment joined with student info + payment info (for pending review)
 export type PendingEnrollmentWithDetails = EnrollmentRow & {
   students: {
@@ -382,6 +412,46 @@ export async function getPendingEnrollmentsByTeacher(
 
   if (error || !data) return []
   return data as PendingEnrollmentWithDetails[]
+}
+
+// -----------------------------------------------------------------------------
+// getPaymentHistoryByTeacher — Verified / rejected / refunded payments
+// across all the teacher's cohorts. Most-recent-decision first.
+// -----------------------------------------------------------------------------
+export async function getPaymentHistoryByTeacher(
+  teacherId: string,
+  limit: number = 100,
+): Promise<PaymentHistoryWithDetails[]> {
+  const supabase = createAdminClient()
+
+  // Step 1: list this teacher's cohort IDs (filtering payments by a nested
+  // join path can choke PostgREST; this two-step keeps it simple and fast).
+  const { data: cohortRows } = await supabase
+    .from('cohorts')
+    .select('id')
+    .eq('teacher_id', teacherId)
+    .is('deleted_at', null)
+
+  const cohortIds = cohortRows?.map((c) => c.id as string) ?? []
+  if (cohortIds.length === 0) return []
+
+  const { data, error } = await supabase
+    .from('student_payments')
+    .select(`
+      id, amount_pkr, discounted_amount_pkr, payment_method, screenshot_url, status, created_at, updated_at, verified_at, refunded_at, rejection_reason,
+      enrollments!inner(
+        id, reference_code,
+        students!inner(name, email, phone),
+        cohorts!inner(id, name, fee_pkr)
+      )
+    `)
+    .in('status', ['verified', 'rejected', 'refunded'])
+    .in('enrollments.cohort_id', cohortIds)
+    .order('updated_at', { ascending: false, nullsFirst: false })
+    .limit(limit)
+
+  if (error || !data) return []
+  return data as unknown as PaymentHistoryWithDetails[]
 }
 
 // -----------------------------------------------------------------------------

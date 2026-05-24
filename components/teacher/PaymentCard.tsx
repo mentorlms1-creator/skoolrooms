@@ -7,6 +7,7 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
+import { CheckCircle2, XCircle, RotateCcw } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/ui/StatusBadge'
@@ -21,6 +22,10 @@ type PaymentCardPayment = {
   screenshot_url: string | null
   status: string
   created_at: string
+  verified_at?: string | null
+  refunded_at?: string | null
+  rejection_reason?: string | null
+  updated_at?: string | null
 }
 
 type PaymentCardProps = {
@@ -36,8 +41,9 @@ type PaymentCardProps = {
     fee_pkr: number
   }
   payment: PaymentCardPayment
-  onApprove: (enrollmentId: string) => void
-  onReject: (enrollmentId: string) => void
+  /** Provide both to render Approve/Reject actions (pending review mode). Omit for history mode. */
+  onApprove?: (enrollmentId: string) => void
+  onReject?: (enrollmentId: string) => void
   disabled?: boolean
 }
 
@@ -132,27 +138,79 @@ export function PaymentCard({
           </div>
         </div>
 
-        {/* Action buttons */}
-        <div className="mt-4 flex items-center justify-end gap-3 border-t border-foreground/[0.03] pt-4">
-          <Button
-            variant="danger"
-            size="sm"
-            onClick={() => onReject(enrollmentId)}
-            disabled={disabled}
-            className="rounded-xl"
-          >
-            Reject
-          </Button>
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => onApprove(enrollmentId)}
-            disabled={disabled}
-            className="rounded-xl"
-          >
-            Approve
-          </Button>
-        </div>
+        {/* Footer — action buttons in pending mode, decision summary otherwise */}
+        {payment.status === 'pending' && onApprove && onReject ? (
+          <div className="mt-4 flex items-center justify-end gap-3 border-t border-foreground/[0.03] pt-4">
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={() => onReject(enrollmentId)}
+              disabled={disabled}
+              className="rounded-xl"
+            >
+              Reject
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => onApprove(enrollmentId)}
+              disabled={disabled}
+              className="rounded-xl"
+            >
+              Approve
+            </Button>
+          </div>
+        ) : (
+          <div className="mt-4 border-t border-foreground/[0.03] pt-4">
+            {payment.status === 'verified' && (
+              <div className="flex items-center gap-2 text-sm text-success">
+                <CheckCircle2 className="h-4 w-4 shrink-0" />
+                <span>
+                  Approved
+                  {payment.verified_at && (
+                    <span className="text-muted-foreground">
+                      {' '}· {formatPKT(payment.verified_at, 'datetime')}
+                    </span>
+                  )}
+                </span>
+              </div>
+            )}
+            {payment.status === 'rejected' && (
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2 text-sm text-destructive">
+                  <XCircle className="h-4 w-4 shrink-0" />
+                  <span>
+                    Rejected
+                    {payment.updated_at && (
+                      <span className="text-muted-foreground">
+                        {' '}· {formatPKT(payment.updated_at, 'datetime')}
+                      </span>
+                    )}
+                  </span>
+                </div>
+                {payment.rejection_reason && (
+                  <p className="rounded-xl bg-destructive/5 px-3 py-2 text-xs text-muted-foreground">
+                    <span className="font-medium text-foreground">Reason: </span>
+                    {payment.rejection_reason}
+                  </p>
+                )}
+              </div>
+            )}
+            {payment.status === 'refunded' && (
+              <div className="flex items-center gap-2 text-sm text-warning">
+                <RotateCcw className="h-4 w-4 shrink-0" />
+                <span>
+                  Refunded
+                  {payment.refunded_at && (
+                    <span className="text-muted-foreground">
+                      {' '}· {formatPKT(payment.refunded_at, 'datetime')}
+                    </span>
+                  )}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
       </Card>
 
       {/* Screenshot full-size dialog */}

@@ -25,6 +25,7 @@ const statusColorMap: Record<string, StatusColor> = {
   enrolled: 'success',
   reviewed: 'success',
   approved: 'success',
+  verified: 'success',
 
   // Warning states
   pending: 'warning',
