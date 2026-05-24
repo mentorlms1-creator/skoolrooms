@@ -18,6 +18,7 @@ import { StatusBadge } from '@/components/ui/StatusBadge'
 import { ROUTES } from '@/constants/routes'
 import { formatPKT } from '@/lib/time/pkt'
 import { TeacherDetailActions } from '@/components/admin/TeacherDetailActions'
+import { LastSeenIndicator } from '@/components/admin/LastSeenIndicator'
 
 export default async function AdminTeacherDetailPage(
   props: { params: Promise<{ teacherId: string }> }
@@ -36,6 +37,13 @@ export default async function AdminTeacherDetailPage(
         description={teacher.email}
         backHref={ROUTES.ADMIN.teachers}
       />
+
+      <div className="mb-6 inline-flex items-center gap-2 rounded-2xl bg-card ring-1 ring-foreground/5 px-3.5 py-2 shadow-sm">
+        <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/60">
+          Last active
+        </span>
+        <LastSeenIndicator lastSeenAt={teacher.last_seen_at} size="md" />
+      </div>
 
       <div className="grid gap-5 lg:grid-cols-3">
         {/* Left column — Profile info */}

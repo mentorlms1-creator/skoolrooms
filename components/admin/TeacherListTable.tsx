@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/select'
 import { ROUTES } from '@/constants/routes'
 import { formatPKT } from '@/lib/time/pkt'
+import { LastSeenIndicator } from './LastSeenIndicator'
 
 type TeacherTableRow = {
   id: string
@@ -34,6 +35,7 @@ type TeacherTableRow = {
   status: string
   student_count: number
   created_at: string
+  last_seen_at: string | null
 }
 
 const columns: ColumnDef<TeacherTableRow, unknown>[] = [
@@ -73,6 +75,13 @@ const columns: ColumnDef<TeacherTableRow, unknown>[] = [
     header: 'Students',
     cell: ({ getValue }) => (
       <span className="font-semibold">{getValue() as number}</span>
+    ),
+  },
+  {
+    accessorKey: 'last_seen_at',
+    header: 'Last active',
+    cell: ({ getValue }) => (
+      <LastSeenIndicator lastSeenAt={getValue() as string | null} size="sm" />
     ),
   },
   {

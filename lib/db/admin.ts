@@ -25,6 +25,7 @@ export type AdminTeacherListItem = {
   is_suspended: boolean
   created_at: string
   updated_at: string
+  last_seen_at: string | null
   student_count: number
 }
 
@@ -49,6 +50,7 @@ export type AdminTeacherDetail = {
   suspended_at: string | null
   created_at: string
   updated_at: string
+  last_seen_at: string | null
   student_count: number
   subscription_history: SubscriptionHistoryItem[]
   activity_log: ActivityLogItem[]
@@ -118,7 +120,7 @@ export async function getAllTeachers(): Promise<AdminTeacherListItem[]> {
   // Get all teachers
   const { data: teachers, error } = await supabase
     .from('teachers')
-    .select('id, name, email, subdomain, plan, is_suspended, created_at, updated_at')
+    .select('id, name, email, subdomain, plan, is_suspended, created_at, updated_at, last_seen_at')
     .order('created_at', { ascending: false })
 
   if (error || !teachers) return []
@@ -179,6 +181,7 @@ export async function getAllTeachers(): Promise<AdminTeacherListItem[]> {
       is_suspended: t.is_suspended as boolean,
       created_at: t.created_at as string,
       updated_at: t.updated_at as string,
+      last_seen_at: (t.last_seen_at as string | null) ?? null,
       student_count: studentCount,
     }
   })
@@ -255,6 +258,7 @@ export async function getTeacherDetail(
     suspended_at: teacher.suspended_at as string | null,
     created_at: teacher.created_at as string,
     updated_at: teacher.updated_at as string,
+    last_seen_at: (teacher.last_seen_at as string | null) ?? null,
     student_count: studentCount,
     subscription_history: (subscriptions ?? []).map((s) => ({
       id: s.id as string,
@@ -381,7 +385,7 @@ export async function getAdminTeachersPage(
 
   let query = supabase
     .from('teachers')
-    .select('id, name, email, subdomain, plan, is_suspended, created_at, updated_at')
+    .select('id, name, email, subdomain, plan, is_suspended, created_at, updated_at, last_seen_at')
     .order('created_at', { ascending: false })
     .order('id', { ascending: false })
 
@@ -409,6 +413,7 @@ export async function getAdminTeachersPage(
     is_suspended: boolean
     created_at: string
     updated_at: string
+    last_seen_at: string | null
   }>
 
   // Compute student counts for the visible page only.
@@ -453,6 +458,7 @@ export async function getAdminTeachersPage(
     is_suspended: t.is_suspended,
     created_at: t.created_at,
     updated_at: t.updated_at,
+    last_seen_at: t.last_seen_at,
     student_count: studentCountByTeacher.get(t.id) ?? 0,
   }))
 

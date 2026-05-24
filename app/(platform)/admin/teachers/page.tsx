@@ -52,6 +52,7 @@ export default async function AdminTeachersPage({
     status: t.is_suspended ? 'suspended' : 'active',
     student_count: t.student_count,
     created_at: t.created_at,
+    last_seen_at: t.last_seen_at,
   }))
 
   return (

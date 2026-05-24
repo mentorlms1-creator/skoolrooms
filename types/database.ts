@@ -1803,6 +1803,7 @@ export type Database = {
           id: string
           is_publicly_listed: boolean | null
           is_suspended: boolean | null
+          last_seen_at: string | null
           name: string
           notification_preferences_json: Json | null
           onboarding_completed: boolean | null
@@ -1833,6 +1834,7 @@ export type Database = {
           id?: string
           is_publicly_listed?: boolean | null
           is_suspended?: boolean | null
+          last_seen_at?: string | null
           name: string
           notification_preferences_json?: Json | null
           onboarding_completed?: boolean | null
@@ -1863,6 +1865,7 @@ export type Database = {
           id?: string
           is_publicly_listed?: boolean | null
           is_suspended?: boolean | null
+          last_seen_at?: string | null
           name?: string
           notification_preferences_json?: Json | null
           onboarding_completed?: boolean | null

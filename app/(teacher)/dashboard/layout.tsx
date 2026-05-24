@@ -27,6 +27,7 @@ import { getUnreadCountForUser, getNotificationsForUser } from '@/lib/db/notific
 import { getUnreadCountForTeacher } from '@/lib/db/messages'
 import { ViewAsBar } from '@/components/admin/ViewAsBar'
 import { getViewAsSession } from '@/lib/admin/view-as-session'
+import { touchTeacherLastSeen } from '@/lib/auth/last-seen'
 
 export default async function DashboardLayout({
   children,
@@ -56,6 +57,13 @@ export default async function DashboardLayout({
     getViewAsSession(),
     getLatestSubscription(teacherId),
   ])
+
+  // Touch last_seen_at (debounced 5 min) so admin "Last active" stays current.
+  // Skip when an admin is viewing-as — that's admin activity, not the teacher's
+  // own presence. Fire-and-forget; never blocks the render.
+  if (!viewAsSession) {
+    touchTeacherLastSeen(teacherId, teacher.last_seen_at as string | null)
+  }
 
   const latestSubscription: LatestSubscription | null = latestSubRow
     ? {
