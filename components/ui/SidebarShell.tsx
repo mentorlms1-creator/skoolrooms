@@ -15,6 +15,7 @@
 import { Link } from 'next-view-transitions'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import { LogOut, Plus, Search } from 'lucide-react'
 import { TEACHER_NAV_ITEMS, ADMIN_NAV_ITEMS, STUDENT_NAV_ITEMS, type NavItem } from '@/constants/nav-items'
 
@@ -42,7 +43,7 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
-import { CommandPalette, useCommandPalette } from '@/components/ui/CommandPalette'
+import { CommandPalette, useCommandPalette, type AdminSearchHit } from '@/components/ui/CommandPalette'
 
 type SidebarShellProps = {
   role: 'teacher' | 'admin' | 'student'
@@ -58,6 +59,8 @@ type SidebarShellProps = {
   ctaHref?: string
   /** Map of nav-item href → badge count. Renders a small pill on matching items when count > 0. */
   navBadges?: Record<string, number>
+  /** Optional server action: when provided, CommandPalette uses it for live search. */
+  searchAction?: (query: string) => Promise<AdminSearchHit[]>
   signOutAction: () => Promise<void>
   children: React.ReactNode
 }
@@ -91,6 +94,7 @@ export function SidebarShell({
   ctaLabel,
   ctaHref = '#',
   navBadges,
+  searchAction,
   signOutAction,
   children,
 }: SidebarShellProps) {
@@ -98,6 +102,14 @@ export function SidebarShell({
   const pathname = usePathname()
   const { open: openCommandPalette } = useCommandPalette()
   const navGroups = groupNavItems(navItems)
+
+  // OS detection for the search shortcut hint. Defaults to Ctrl (safe for SSR
+  // and for Linux/Windows users); flips to ⌘ on Mac after hydration.
+  const [isMac, setIsMac] = useState(false)
+  useEffect(() => {
+    if (typeof navigator === 'undefined') return
+    setIsMac(/Mac|iPhone|iPad|iPod/i.test(navigator.platform || navigator.userAgent))
+  }, [])
 
   function isActive(href: string): boolean {
     if (href === '/dashboard' || href === '/admin' || href === '/student') {
@@ -202,8 +214,12 @@ export function SidebarShell({
                     </button>
                     <div className="flex items-center gap-1.5 ml-auto">
                       <kbd className="flex h-7 items-center gap-1 rounded bg-foreground/[0.05] px-1.5 font-mono text-[11px] font-semibold text-muted-foreground">
-                        <span className="text-[14px]">⌘</span>
-                        <span>F</span>
+                        {isMac ? (
+                          <span className="text-[14px]">⌘</span>
+                        ) : (
+                          <span>Ctrl</span>
+                        )}
+                        <span>K</span>
                       </kbd>
                     </div>
                   </div>
@@ -245,7 +261,7 @@ export function SidebarShell({
             </div>
           </SidebarInset>
 
-          <CommandPalette navItems={navItems} />
+          <CommandPalette navItems={navItems} searchAction={searchAction} />
         </SidebarProvider>
       </div>
     </div>

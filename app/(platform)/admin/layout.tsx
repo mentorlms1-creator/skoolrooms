@@ -13,6 +13,7 @@ import { UIProvider } from '@/providers/UIProvider'
 import { signOut } from '@/lib/auth/actions'
 import { getOperationsStats } from '@/lib/db/admin'
 import { ROUTES } from '@/constants/routes'
+import { searchAdminEntitiesAction } from '@/lib/actions/admin-search'
 
 export default async function AdminLayout({
   children,
@@ -31,6 +32,7 @@ export default async function AdminLayout({
         user={{ name: 'Admin' }}
         roleBadge="Admin"
         signOutAction={signOut}
+        searchAction={searchAdminEntitiesAction}
         navBadges={{ [ROUTES.ADMIN.payments]: ops.pendingPaymentCount }}
       >
         {children}

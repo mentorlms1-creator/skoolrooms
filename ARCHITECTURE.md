@@ -234,13 +234,16 @@
 │       ├── assignments.ts
 │       ├── plans.ts
 │       ├── waitlist.ts
-│       ├── notifications.ts
 │       ├── messages.ts
 │       ├── referrals.ts
 │       ├── feedback.ts
+│       ├── admin.ts                      # Admin teacher list, dashboard stats, ops, activity card, alerts (legacy single-alert variant)
+│       ├── admin-earnings.ts             # /admin/earnings — subscription revenue KPIs, monthly series, recent approvals
+│       ├── admin-dashboard.ts            # /admin bento widgets — multi-alert feed, conversion funnel, today's ticker, top teachers, global search
 │       └── notifications.ts              # notifications_log + email_delivery_log queries
 │   └── actions/                          # Server Actions — all mutations go here (NOT API routes)
 │       ├── admin.ts                      # Admin panel mutations
+│       ├── admin-search.ts               # Admin command-palette global search (teachers/students/cohorts) — requireAdmin → lib/db/admin-dashboard.searchAdminEntities
 │       ├── announcements.ts              # Create/update announcements
 │       ├── assignments.ts                # Create/update assignments
 │       ├── attendance.ts                 # Save attendance records
@@ -3039,7 +3042,8 @@ Dark mode is fully supported across the platform:
 
 Bento grid layout for all dashboards:
 ```
-Grid: grid-cols-1 md:grid-cols-2 lg:grid-cols-4
+Grid: grid-cols-1 md:grid-cols-2 lg:grid-cols-4   (teacher / student)
+Grid: grid-cols-12 auto-rows-min                  (admin — 5-row bento, see below)
 Card types:
   - Stat card (1x1) — single metric with trend indicator
   - Chart card (2x1) — Recharts line/bar/area via dynamic import (no SSR)
@@ -3047,9 +3051,29 @@ Card types:
   - Circle card (1x1) — circular progress indicator
 ```
 
-- `DateRangeFilter` on teacher + admin dashboards for time-scoped data
+- `DateRangeFilter` on teacher dashboard for time-scoped data. **Not** used on the admin dashboard — admin widgets each define their own window (today / week / month / all-time / last-30-days).
 - Charts use Recharts via `next/dynamic` with `ssr: false` (client components only)
 - Chart colors pulled from CSS variables via shadcn `chart.tsx` for theme consistency
+
+#### Admin dashboard (`/admin`) widget composition
+
+Server Component. Every KPI card is a `<Link>` that drills down to its detail page. Five rows on a 12-col grid:
+
+| Row | Widget | Data source | Drills to |
+|-----|--------|-------------|-----------|
+| 1   | Hero MRR card (col-span-6) — gradient, big number, MoM trend pill, active subscribers + all-time totals | `lib/db/admin-earnings.getEarningsKpi()` | `/admin/earnings` |
+| 1   | Signups this week (col-span-2) — count + WoW trend | `lib/db/admin.getAdminDashboardStats()` | `/admin/teachers` |
+| 1   | Active cohorts (col-span-2) | `lib/db/admin.getOperationsStats()` | `/admin/operations` |
+| 1   | Pending payments (col-span-2) — destructive accent when > 0 | `lib/db/admin.getOperationsStats()` | `/admin/payments` |
+| 2   | Today's ticker (full-width) — signups, sub approvals, student payments, classes (PKT day) + revenue-today pill | `lib/db/admin-dashboard.getTodayTicker()` | — |
+| 3   | Teacher Activity 30-day chart (col-span-8) — today live, history from `teacher_activity_snapshots` | `lib/db/admin.getTeacherActivityCard()` | — |
+| 3   | Alerts feed (col-span-4) — multi-source list (stale payments, in-grace, trial expiring, plan expiring, stalled onboarding), severity-colored, click-through | `lib/db/admin-dashboard.getAdminAlerts()` | per-alert href |
+| 4   | Conversion funnel (col-span-4) — 4 stages with drop-off % | `lib/db/admin-dashboard.getConversionFunnel()` | — |
+| 4   | Recent signups (col-span-5) — last 4 teachers + "View all" | `lib/db/admin.getRecentTeachers()` | `/admin/teachers/[id]` |
+| 4   | Plan Mix (col-span-3) — donut + legend with counts and % | `lib/db/admin.getAdminDashboardStats().planDistribution` | — |
+| 5   | Top Teachers (full-width) — ranked by lifetime gross student-payment volume | `lib/db/admin-dashboard.getTopTeachers(5)` | `/admin/teachers/[id]` |
+
+The admin top-bar Cmd+K command palette also runs **global search** (teachers by name/email/subdomain, students by name/email, cohorts by name) via `lib/actions/admin-search.searchAdminEntitiesAction`. `SidebarShell` accepts an optional `searchAction` prop; admin layout passes the action, other roles pass nothing (palette falls back to nav-only).
 
 ### Shared Component Patterns
 
