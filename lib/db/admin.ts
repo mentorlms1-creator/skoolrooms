@@ -1143,6 +1143,64 @@ export async function getPendingSubscriptions(): Promise<PendingSubscriptionRow[
 }
 
 // -----------------------------------------------------------------------------
+// getSubscriptionHistory — Approved + rejected subscriptions (audit log)
+// Most-recent-submission first. Includes approved_at + rejection_reason
+// so the admin can see who decided what and why.
+// -----------------------------------------------------------------------------
+export type SubscriptionHistoryRow = PendingSubscriptionRow & {
+  approved_at: string | null
+  rejection_reason: string | null
+}
+
+export async function getSubscriptionHistory(
+  limit: number = 100,
+): Promise<SubscriptionHistoryRow[]> {
+  const supabase = createAdminClient()
+
+  const { data: subs, error } = await supabase
+    .from('teacher_subscriptions')
+    .select('*')
+    .in('status', ['active', 'rejected'])
+    .order('created_at', { ascending: false })
+    .limit(limit)
+
+  if (error || !subs || subs.length === 0) return []
+
+  const teacherIds = subs.map((s) => s.teacher_id as string)
+  const { data: teachers } = await supabase
+    .from('teachers')
+    .select('id, name, email')
+    .in('id', teacherIds)
+
+  const teacherMap: Record<string, { name: string; email: string }> = {}
+  if (teachers) {
+    for (const t of teachers) {
+      teacherMap[t.id as string] = { name: t.name as string, email: t.email as string }
+    }
+  }
+
+  return subs.map((s) => {
+    const teacher = teacherMap[s.teacher_id as string] ?? { name: 'Unknown', email: '' }
+    return {
+      id: s.id as string,
+      teacher_id: s.teacher_id as string,
+      teacher_name: teacher.name,
+      teacher_email: teacher.email,
+      plan: s.plan as string,
+      amount_pkr: s.amount_pkr as number,
+      payment_method: s.payment_method as string,
+      screenshot_url: s.screenshot_url as string | null,
+      status: s.status as string,
+      period_start: s.period_start as string,
+      period_end: s.period_end as string,
+      created_at: s.created_at as string,
+      approved_at: s.approved_at as string | null,
+      rejection_reason: s.rejection_reason as string | null,
+    }
+  })
+}
+
+// -----------------------------------------------------------------------------
 // getTopAdminAlert — Smart priority alert for the admin dashboard
 // Checks multiple conditions and returns the most urgent one
 // -----------------------------------------------------------------------------
