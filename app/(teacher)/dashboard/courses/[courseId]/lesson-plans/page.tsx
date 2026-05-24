@@ -1,20 +1,23 @@
 /**
  * app/(teacher)/dashboard/courses/[courseId]/lesson-plans/page.tsx
- * Server Component — Lists AI lesson plans for a course.
+ * Server Component — Lesson plans workspace landing.
+ *
+ * Auto-redirects into the most recent plan when one exists; otherwise renders
+ * the three-pane shell with an empty hint nudging the teacher to generate
+ * their first plan.
  */
 
 import type { Metadata } from 'next'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { requireTeacher } from '@/lib/auth/guards'
 import { getCourseById } from '@/lib/db/courses'
 import { getLessonPlansForCourse } from '@/lib/db/lessonPlans'
 import { countGenerationsThisMonth } from '@/lib/db/lessonPlanUsage'
 import { getLimit } from '@/lib/plans/limits'
 import { getProviderConfig } from '@/lib/ai/config'
-import { PageHeader } from '@/components/ui/PageHeader'
 import { ROUTES } from '@/constants/routes'
-import { LessonPlanList } from '@/components/teacher/LessonPlanList'
-import { NewLessonPlanDialog } from '@/components/teacher/NewLessonPlanDialog'
+import { LessonPlanInboxShell } from '@/components/teacher/LessonPlanInboxShell'
+import { mapPlansToSidebarItems } from '@/lib/lesson-plan/sidebar-helpers'
 
 export const metadata: Metadata = {
   title: 'Lesson Plans — Skool Rooms',
@@ -40,38 +43,27 @@ export default async function LessonPlansListPage({ params }: PageProps) {
     getProviderConfig(),
   ])
 
+  if (plans.length > 0) {
+    redirect(ROUTES.TEACHER.lessonPlanDetail(courseId, plans[0].id))
+  }
+
   const isUnlimited = limit >= 9999
   const quotaText = isUnlimited
     ? 'Unlimited'
-    : `${used} of ${limit} used this month`
+    : `${used}/${limit} this month`
   const canCreate = providerCfg.enabled && (isUnlimited || used < limit)
   const disabledReason = !providerCfg.enabled
     ? 'AI lesson planning is currently unavailable.'
     : 'Monthly limit reached. Upgrade for more.'
 
   return (
-    <>
-      <PageHeader
-        title="Lesson Plans"
-        description={`${course.title} · ${quotaText}`}
-        backHref={ROUTES.TEACHER.courseDetail(courseId)}
-        action={
-          <NewLessonPlanDialog
-            courseId={courseId}
-            disabled={!canCreate}
-            disabledReason={disabledReason}
-          />
-        }
-      />
-      <LessonPlanList
-        courseId={courseId}
-        plans={plans.map((p) => ({
-          id: p.id,
-          title: p.title,
-          scope: p.scope as 'session' | 'unit',
-          updated_at: p.updated_at,
-        }))}
-      />
-    </>
+    <LessonPlanInboxShell
+      courseId={courseId}
+      plans={mapPlansToSidebarItems(plans)}
+      totalCount={plans.length}
+      quotaText={quotaText}
+      canCreate={canCreate}
+      disabledReason={disabledReason}
+    />
   )
 }

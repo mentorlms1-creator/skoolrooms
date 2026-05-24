@@ -60,9 +60,11 @@ type Props = {
   courseId: string
   disabled?: boolean
   disabledReason?: string
+  /** Optional custom trigger; defaults to a "New plan" button. */
+  trigger?: React.ReactNode
 }
 
-export function NewLessonPlanDialog({ courseId, disabled, disabledReason }: Props) {
+export function NewLessonPlanDialog({ courseId, disabled, disabledReason, trigger }: Props) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const navigateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -145,12 +147,14 @@ export function NewLessonPlanDialog({ courseId, disabled, disabledReason }: Prop
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button
-          disabled={disabled}
-          title={disabled ? disabledReason : undefined}
-        >
-          New plan
-        </Button>
+        {trigger ?? (
+          <Button
+            disabled={disabled}
+            title={disabled ? disabledReason : undefined}
+          >
+            New plan
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent
         className={isStreaming ? 'max-w-3xl' : 'max-w-lg'}
