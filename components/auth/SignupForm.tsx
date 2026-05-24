@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { User, Mail, Lock } from 'lucide-react'
+import { User, Mail, Lock, Eye, EyeOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { signUpTeacher } from '@/lib/auth/actions'
 import { cn } from '@/lib/utils'
@@ -17,6 +17,10 @@ type FieldProps = {
 }
 
 function Field({ id, name, type, placeholder, autoComplete, icon, error }: FieldProps) {
+  const isPassword = type === 'password'
+  const [visible, setVisible] = useState(false)
+  const inputType = isPassword && visible ? 'text' : type
+
   return (
     <div>
       <div
@@ -32,12 +36,30 @@ function Field({ id, name, type, placeholder, autoComplete, icon, error }: Field
         <input
           id={id}
           name={name}
-          type={type}
+          type={inputType}
           placeholder={placeholder}
           required
           autoComplete={autoComplete}
-          className="peer h-12 w-full bg-transparent pr-4 text-sm text-foreground placeholder:text-muted-foreground/80 outline-none"
+          className={cn(
+            'peer h-12 w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground/80 outline-none',
+            isPassword ? 'pr-12' : 'pr-4',
+          )}
         />
+        {isPassword && (
+          <button
+            type="button"
+            onClick={() => setVisible((v) => !v)}
+            aria-label={visible ? 'Hide password' : 'Show password'}
+            aria-pressed={visible}
+            className="absolute right-0 flex h-12 w-12 items-center justify-center rounded-r-2xl text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:text-foreground"
+          >
+            {visible ? (
+              <EyeOff className="h-5 w-5" strokeWidth={1.75} />
+            ) : (
+              <Eye className="h-5 w-5" strokeWidth={1.75} />
+            )}
+          </button>
+        )}
       </div>
       {error && <p className="mt-1.5 pl-1 text-xs text-destructive">{error}</p>}
     </div>

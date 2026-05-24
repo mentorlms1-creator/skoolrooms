@@ -3,8 +3,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { PasswordInput } from '@/components/ui/PasswordInput'
 import { updatePassword } from '@/lib/auth/actions'
 import { ROUTES } from '@/constants/routes'
 
@@ -97,10 +97,9 @@ export function ResetPasswordForm() {
 
       <div className="space-y-2">
         <Label htmlFor="password">New password</Label>
-        <Input
+        <PasswordInput
           id="password"
           name="password"
-          type="password"
           placeholder="At least 8 characters"
           required
           autoComplete="new-password"
@@ -110,10 +109,9 @@ export function ResetPasswordForm() {
 
       <div className="space-y-2">
         <Label htmlFor="confirmPassword">Confirm new password</Label>
-        <Input
+        <PasswordInput
           id="confirmPassword"
           name="confirmPassword"
-          type="password"
           placeholder="Re-enter your new password"
           required
           autoComplete="new-password"

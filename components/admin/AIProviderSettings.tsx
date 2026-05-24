@@ -12,6 +12,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { PasswordInput } from '@/components/ui/PasswordInput'
 import { Switch } from '@/components/ui/switch'
 import {
   saveAIProviderAction,
@@ -135,15 +136,16 @@ export function AIProviderSettings({
           </div>
         ) : (
           <div className="flex items-center gap-2">
-            <Input
-              id="ai-key"
-              type="password"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              placeholder="Paste new key"
-              autoComplete="off"
-              disabled={pending}
-            />
+            <div className="flex-1">
+              <PasswordInput
+                id="ai-key"
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                placeholder="Paste new key"
+                autoComplete="off"
+                disabled={pending}
+              />
+            </div>
             {hasKey && (
               <Button
                 variant="ghost"
