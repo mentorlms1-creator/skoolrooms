@@ -1699,6 +1699,7 @@ export type Database = {
           period_end: string
           period_start: string
           plan: string
+          rejected_at: string | null
           rejection_reason: string | null
           screenshot_url: string | null
           status: string
@@ -1714,6 +1715,7 @@ export type Database = {
           period_end: string
           period_start: string
           plan: string
+          rejected_at?: string | null
           rejection_reason?: string | null
           screenshot_url?: string | null
           status: string
@@ -1729,6 +1731,7 @@ export type Database = {
           period_end?: string
           period_start?: string
           plan?: string
+          rejected_at?: string | null
           rejection_reason?: string | null
           screenshot_url?: string | null
           status?: string

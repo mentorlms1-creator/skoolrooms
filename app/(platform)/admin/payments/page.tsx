@@ -186,6 +186,9 @@ function SubscriptionHistoryCard({ sub }: { sub: SubscriptionHistoryRow }) {
             {isApproved && sub.approved_at && (
               <Info label="Approved" value={formatPKT(sub.approved_at, 'datetime')} muted />
             )}
+            {!isApproved && sub.rejected_at && (
+              <Info label="Rejected" value={formatPKT(sub.rejected_at, 'datetime')} muted />
+            )}
           </div>
 
           {/* Screenshot link */}
@@ -222,7 +225,14 @@ function SubscriptionHistoryCard({ sub }: { sub: SubscriptionHistoryRow }) {
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-sm text-destructive">
               <XCircle className="h-4 w-4 shrink-0" />
-              <span>Rejected</span>
+              <span>
+                Rejected
+                {sub.rejected_at && (
+                  <span className="text-muted-foreground">
+                    {' '}· {formatPKT(sub.rejected_at, 'datetime')}
+                  </span>
+                )}
+              </span>
             </div>
             {sub.rejection_reason && (
               <p className="rounded-xl bg-destructive/5 px-3 py-2 text-xs text-muted-foreground">

@@ -165,6 +165,7 @@ export async function rejectSubscription(
     .update({
       status: 'rejected',
       rejection_reason: reason,
+      rejected_at: new Date().toISOString(),
     })
     .eq('id', id)
     .eq('status', 'pending_verification')

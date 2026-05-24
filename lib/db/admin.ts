@@ -1149,6 +1149,7 @@ export async function getPendingSubscriptions(): Promise<PendingSubscriptionRow[
 // -----------------------------------------------------------------------------
 export type SubscriptionHistoryRow = PendingSubscriptionRow & {
   approved_at: string | null
+  rejected_at: string | null
   rejection_reason: string | null
 }
 
@@ -1195,6 +1196,7 @@ export async function getSubscriptionHistory(
       period_end: s.period_end as string,
       created_at: s.created_at as string,
       approved_at: s.approved_at as string | null,
+      rejected_at: s.rejected_at as string | null,
       rejection_reason: s.rejection_reason as string | null,
     }
   })
