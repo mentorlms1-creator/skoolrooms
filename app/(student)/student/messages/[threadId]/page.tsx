@@ -3,15 +3,15 @@
 // =============================================================================
 
 import { redirect } from 'next/navigation'
-import { createClient } from '@/supabase/server'
+import { createClient, createAdminClient } from '@/supabase/server'
 import { getStudentByAuthId } from '@/lib/db/students'
 import {
   getThreadsForStudentWithNames,
   getThreadMessages,
   getThreadParticipants,
 } from '@/lib/db/messages'
-import { ThreadList } from '@/components/messaging/ThreadList'
-import { MessagingPanel } from '@/components/messaging/MessagingPanel'
+import { InboxShell } from '@/components/messaging/InboxShell'
+import { ConversationView } from '@/components/messaging/ConversationView'
 import { ROUTES } from '@/constants/routes'
 
 type Props = {
@@ -43,38 +43,42 @@ export default async function StudentThreadPage({ params }: Props) {
 
   const teacherId = participants.teacherId
 
+  // Resolve teacher display info from the threads summary (always available
+  // since the thread must have at least one existing message).
+  const summary = threads.find((t) => t.thread_id === threadId)
+  let teacherName = summary?.other_party_name
+  let teacherPhoto = summary?.other_party_photo_url ?? null
+  if (!teacherName) {
+    const admin = createAdminClient()
+    const { data: teacherRow } = await admin
+      .from('teachers')
+      .select('name, profile_photo_url')
+      .eq('id', teacherId)
+      .single()
+    teacherName = (teacherRow?.name as string | undefined) ?? 'Teacher'
+    teacherPhoto = (teacherRow?.profile_photo_url as string | null | undefined) ?? null
+  }
+
   return (
-    <div className="max-w-5xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">Messages</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Direct messages with your teachers.
-        </p>
-      </div>
-
-      <div className="bg-card rounded-2xl border border-border/60 overflow-hidden">
-        <div className="flex h-[calc(100vh-280px)] min-h-[400px]">
-          {/* Thread list sidebar */}
-          <div className="w-72 flex-shrink-0 border-r border-border/60 overflow-y-auto">
-            <ThreadList
-              threads={threads}
-              baseHref={ROUTES.STUDENT.messages}
-            />
-          </div>
-
-          {/* Thread + composer */}
-          <div className="flex-1 flex flex-col min-w-0">
-            <MessagingPanel
-              initialMessages={messages}
-              threadId={threadId}
-              currentUserId={studentId}
-              currentUserType="student"
-              recipientId={teacherId}
-              recipientType="teacher"
-            />
-          </div>
-        </div>
-      </div>
-    </div>
+    <InboxShell
+      threads={threads}
+      baseHref={ROUTES.STUDENT.messages}
+      currentUserId={studentId}
+    >
+      <ConversationView
+        threadId={threadId}
+        initialMessages={messages}
+        currentUserId={studentId}
+        currentUserType="student"
+        recipientId={teacherId}
+        recipientType="teacher"
+        backHref={ROUTES.STUDENT.messages}
+        otherParty={{
+          id: teacherId,
+          name: teacherName,
+          photoUrl: teacherPhoto,
+        }}
+      />
+    </InboxShell>
   )
 }

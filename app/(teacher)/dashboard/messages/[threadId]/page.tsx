@@ -2,18 +2,17 @@
 // app/(teacher)/dashboard/messages/[threadId]/page.tsx — Teacher thread view
 // =============================================================================
 
-import { Link } from 'next-view-transitions'
 import { redirect } from 'next/navigation'
-import { PenSquare } from 'lucide-react'
 import { requireTeacher } from '@/lib/auth/guards'
+import { createAdminClient } from '@/supabase/server'
 import {
   getThreadsForTeacherWithNames,
   getThreadMessages,
   getThreadParticipants,
 } from '@/lib/db/messages'
 import { teacherHasEnrollmentWithStudent } from '@/lib/db/enrollments'
-import { ThreadList } from '@/components/messaging/ThreadList'
-import { MessagingPanel } from '@/components/messaging/MessagingPanel'
+import { InboxShell } from '@/components/messaging/InboxShell'
+import { ConversationView } from '@/components/messaging/ConversationView'
 import { ROUTES } from '@/constants/routes'
 
 type Props = {
@@ -47,45 +46,44 @@ export default async function TeacherThreadPage({ params, searchParams }: Props)
     getThreadMessages(threadId),
   ])
 
+  // Resolve the other-party (student) display info. Prefer the threads
+  // summary; fall back to a direct query for brand-new empty threads.
+  const summary = threads.find((t) => t.thread_id === threadId)
+  let studentName = summary?.other_party_name
+  let studentPhoto = summary?.other_party_photo_url ?? null
+  if (!studentName) {
+    const supabase = createAdminClient()
+    const { data: studentRow } = await supabase
+      .from('students')
+      .select('name, profile_photo_url')
+      .eq('id', studentId)
+      .single()
+    studentName = (studentRow?.name as string | undefined) ?? 'Student'
+    studentPhoto = (studentRow?.profile_photo_url as string | null | undefined) ?? null
+  }
+
   return (
-    <div className="max-w-5xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">Messages</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Direct messages with your students.
-        </p>
-      </div>
-
-      <div className="bg-card rounded-2xl border border-border/60 overflow-hidden">
-        <div className="flex h-[calc(100vh-280px)] min-h-[400px]">
-          {/* Thread list sidebar */}
-          <div className="w-72 flex-shrink-0 border-r border-border/60 overflow-y-auto">
-            <Link
-              href={ROUTES.TEACHER.messagesNew}
-              className="flex items-center gap-2 px-4 py-3 border-b border-border/40 text-sm font-medium text-primary hover:bg-primary/5 transition-colors"
-            >
-              <PenSquare className="h-4 w-4" />
-              New message
-            </Link>
-            <ThreadList
-              threads={threads}
-              baseHref={ROUTES.TEACHER.messages}
-            />
-          </div>
-
-          {/* Thread + composer */}
-          <div className="flex-1 flex flex-col min-w-0">
-            <MessagingPanel
-              initialMessages={messages}
-              threadId={threadId}
-              currentUserId={teacherId}
-              currentUserType="teacher"
-              recipientId={studentId}
-              recipientType="student"
-            />
-          </div>
-        </div>
-      </div>
-    </div>
+    <InboxShell
+      threads={threads}
+      baseHref={ROUTES.TEACHER.messages}
+      currentUserId={teacherId}
+      newHref={ROUTES.TEACHER.messagesNew}
+    >
+      <ConversationView
+        threadId={threadId}
+        initialMessages={messages}
+        currentUserId={teacherId}
+        currentUserType="teacher"
+        recipientId={studentId}
+        recipientType="student"
+        backHref={ROUTES.TEACHER.messages}
+        otherParty={{
+          id: studentId,
+          name: studentName,
+          photoUrl: studentPhoto,
+          profileHref: ROUTES.TEACHER.studentDetail(studentId),
+        }}
+      />
+    </InboxShell>
   )
 }

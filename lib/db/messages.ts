@@ -29,6 +29,7 @@ export type ThreadSummary = {
   other_party_id: string
   other_party_type: 'teacher' | 'student'
   other_party_name: string
+  other_party_photo_url: string | null
   last_message_body: string
   last_message_at: string
   unread_count: number
@@ -222,6 +223,7 @@ function buildThreadSummaries(
       other_party_id: otherId,
       other_party_type: otherType,
       other_party_name: '', // filled by caller after name lookup
+      other_party_photo_url: null, // filled by caller after name lookup
       last_message_body: row.body,
       last_message_at: row.created_at,
       unread_count: isUnreadForMe ? 1 : 0,
@@ -247,15 +249,24 @@ export async function getThreadsForTeacherWithNames(
   const studentIds = summaries.map((s) => s.other_party_id)
   const { data: students } = await supabase
     .from('students')
-    .select('id, name')
+    .select('id, name, profile_photo_url')
     .in('id', studentIds)
 
-  const nameMap = new Map((students ?? []).map((s: { id: string; name: string }) => [s.id, s.name]))
+  const infoMap = new Map(
+    (students ?? []).map((s: { id: string; name: string; profile_photo_url: string | null }) => [
+      s.id,
+      { name: s.name, photo: s.profile_photo_url ?? null },
+    ]),
+  )
 
-  return summaries.map((s) => ({
-    ...s,
-    other_party_name: nameMap.get(s.other_party_id) ?? 'Unknown',
-  }))
+  return summaries.map((s) => {
+    const info = infoMap.get(s.other_party_id)
+    return {
+      ...s,
+      other_party_name: info?.name ?? 'Unknown',
+      other_party_photo_url: info?.photo ?? null,
+    }
+  })
 }
 
 // -----------------------------------------------------------------------------
@@ -273,15 +284,24 @@ export async function getThreadsForStudentWithNames(
   const teacherIds = summaries.map((s) => s.other_party_id)
   const { data: teachers } = await supabase
     .from('teachers')
-    .select('id, name')
+    .select('id, name, profile_photo_url')
     .in('id', teacherIds)
 
-  const nameMap = new Map((teachers ?? []).map((t: { id: string; name: string }) => [t.id, t.name]))
+  const infoMap = new Map(
+    (teachers ?? []).map((t: { id: string; name: string; profile_photo_url: string | null }) => [
+      t.id,
+      { name: t.name, photo: t.profile_photo_url ?? null },
+    ]),
+  )
 
-  return summaries.map((s) => ({
-    ...s,
-    other_party_name: nameMap.get(s.other_party_id) ?? 'Unknown',
-  }))
+  return summaries.map((s) => {
+    const info = infoMap.get(s.other_party_id)
+    return {
+      ...s,
+      other_party_name: info?.name ?? 'Unknown',
+      other_party_photo_url: info?.photo ?? null,
+    }
+  })
 }
 
 // -----------------------------------------------------------------------------

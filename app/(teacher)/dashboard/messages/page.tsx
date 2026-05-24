@@ -1,13 +1,14 @@
 // =============================================================================
-// app/(teacher)/dashboard/messages/page.tsx — Teacher messages list
+// app/(teacher)/dashboard/messages/page.tsx — Teacher messages inbox
+//
+// Auto-opens the most recent conversation when one exists. Otherwise renders
+// the empty inbox shell with a compose CTA.
 // =============================================================================
 
-import { Link } from 'next-view-transitions'
-import { PenSquare } from 'lucide-react'
+import { redirect } from 'next/navigation'
 import { requireTeacher } from '@/lib/auth/guards'
 import { getThreadsForTeacherWithNames } from '@/lib/db/messages'
-import { ThreadList } from '@/components/messaging/ThreadList'
-import { Button } from '@/components/ui/button'
+import { InboxShell } from '@/components/messaging/InboxShell'
 import { ROUTES } from '@/constants/routes'
 
 export default async function TeacherMessagesPage() {
@@ -16,29 +17,18 @@ export default async function TeacherMessagesPage() {
 
   const threads = await getThreadsForTeacherWithNames(teacherId)
 
-  return (
-    <div className="max-w-4xl mx-auto">
-      <div className="mb-6 flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Messages</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Direct messages with your students.
-          </p>
-        </div>
-        <Button asChild size="sm">
-          <Link href={ROUTES.TEACHER.messagesNew}>
-            <PenSquare className="mr-1.5 h-4 w-4" />
-            New message
-          </Link>
-        </Button>
-      </div>
+  if (threads.length > 0) {
+    redirect(ROUTES.TEACHER.messageThread(threads[0].thread_id))
+  }
 
-      <div className="bg-card rounded-2xl border border-border/60 overflow-hidden">
-        <ThreadList
-          threads={threads}
-          baseHref={ROUTES.TEACHER.messages}
-        />
-      </div>
-    </div>
+  return (
+    <InboxShell
+      threads={threads}
+      baseHref={ROUTES.TEACHER.messages}
+      currentUserId={teacherId}
+      newHref={ROUTES.TEACHER.messagesNew}
+      emptyTitle="No messages yet"
+      emptyBody="Start a conversation with any student enrolled in your cohorts."
+    />
   )
 }
