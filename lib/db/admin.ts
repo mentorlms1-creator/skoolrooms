@@ -1020,71 +1020,98 @@ export async function getRecentTeachers(): Promise<RecentTeacherRow[]> {
   }))
 }
 
-// -----------------------------------------------------------------------------
-// getRevenueByCohort — Top cohorts by revenue (platform-wide) for admin dashboard
-// Returns up to 6 cohorts with the most confirmed revenue.
-// -----------------------------------------------------------------------------
-export type RevenueByCohortRow = {
-  cohortName: string
-  revenue: number
+// Teacher activity card — WAU/DAU today plus 29 days of history from snapshots.
+export type TeacherActivitySeriesPoint = {
+  date: string         // ISO date (YYYY-MM-DD)
+  weeklyActive: number
+  dailyActive: number
 }
 
-export async function getRevenueByCohort(): Promise<RevenueByCohortRow[]> {
+export type TeacherActivityCard = {
+  weeklyActive: number
+  dailyActive: number
+  totalTeachers: number
+  /** % of total currently active in past 7d. 0 when totalTeachers is 0. */
+  weeklyActiveSharePct: number
+  /** Last 30 days, oldest → newest. Today is live-computed; rest from snapshots. */
+  series: TeacherActivitySeriesPoint[]
+}
+
+// -----------------------------------------------------------------------------
+// getTeacherActivityCard — Big-number + 30-day sparkline for admin dashboard.
+// Today is live-computed from teachers.last_seen_at; the previous 29 days come
+// from teacher_activity_snapshots (populated by the daily cron).
+// -----------------------------------------------------------------------------
+export async function getTeacherActivityCard(): Promise<TeacherActivityCard> {
   const supabase = createAdminClient()
+  const now = new Date()
+  const day = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString()
+  const week = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString()
 
-  // Get all cohorts
-  const { data: cohorts } = await supabase
-    .from('cohorts')
-    .select('id, name')
-    .is('deleted_at', null)
+  const [{ count: dailyActive }, { count: weeklyActive }, { count: totalTeachers }] =
+    await Promise.all([
+      supabase
+        .from('teachers')
+        .select('id', { count: 'exact', head: true })
+        .gte('last_seen_at', day),
+      supabase
+        .from('teachers')
+        .select('id', { count: 'exact', head: true })
+        .gte('last_seen_at', week),
+      supabase.from('teachers').select('id', { count: 'exact', head: true }),
+    ])
 
-  if (!cohorts || cohorts.length === 0) return []
+  const wau = weeklyActive ?? 0
+  const dau = dailyActive ?? 0
+  const total = totalTeachers ?? 0
 
-  const cohortIds = cohorts.map((c) => c.id as string)
-  const cohortNames: Record<string, string> = {}
-  for (const c of cohorts) {
-    cohortNames[c.id as string] = c.name as string
+  // Fetch the last 29 snapshot rows so we don't overlap today.
+  const pktNow = new Date(now.getTime() + 5 * 60 * 60 * 1000)
+  const todayKey = pktNow.toISOString().split('T')[0]
+
+  const { data: snapshots } = await supabase
+    .from('teacher_activity_snapshots')
+    .select('snapshot_date, weekly_active, daily_active')
+    .lt('snapshot_date', todayKey)
+    .order('snapshot_date', { ascending: false })
+    .limit(29)
+
+  const snapshotByDate = new Map<string, { weekly_active: number; daily_active: number }>()
+  for (const row of (snapshots ?? []) as Array<{
+    snapshot_date: string
+    weekly_active: number
+    daily_active: number
+  }>) {
+    snapshotByDate.set(row.snapshot_date, {
+      weekly_active: row.weekly_active,
+      daily_active: row.daily_active,
+    })
   }
 
-  // Get enrollments for these cohorts
-  const { data: enrollments } = await supabase
-    .from('enrollments')
-    .select('id, cohort_id')
-    .in('cohort_id', cohortIds)
-
-  if (!enrollments || enrollments.length === 0) return []
-
-  const enrollmentIds = enrollments.map((e) => e.id as string)
-  const enrollmentCohortMap: Record<string, string> = {}
-  for (const e of enrollments) {
-    enrollmentCohortMap[e.id as string] = e.cohort_id as string
-  }
-
-  // Get confirmed payments
-  const { data: payments } = await supabase
-    .from('student_payments')
-    .select('amount_pkr, enrollment_id')
-    .in('enrollment_id', enrollmentIds)
-    .eq('status', 'confirmed')
-
-  if (!payments || payments.length === 0) return []
-
-  const cohortRevenue: Record<string, number> = {}
-  for (const p of payments) {
-    const cohortId = enrollmentCohortMap[p.enrollment_id as string]
-    if (cohortId) {
-      cohortRevenue[cohortId] = (cohortRevenue[cohortId] ?? 0) + (p.amount_pkr as number)
+  // Build 30 contiguous days ending today (oldest first).
+  const series: TeacherActivitySeriesPoint[] = []
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date(pktNow.getTime() - i * 24 * 60 * 60 * 1000)
+    const key = d.toISOString().split('T')[0]
+    if (i === 0) {
+      series.push({ date: key, weeklyActive: wau, dailyActive: dau })
+    } else {
+      const snap = snapshotByDate.get(key)
+      series.push({
+        date: key,
+        weeklyActive: snap?.weekly_active ?? 0,
+        dailyActive: snap?.daily_active ?? 0,
+      })
     }
   }
 
-  // Sort by revenue descending, take top 6
-  return Object.entries(cohortRevenue)
-    .map(([cohortId, revenue]) => ({
-      cohortName: cohortNames[cohortId] ?? 'Unknown',
-      revenue,
-    }))
-    .sort((a, b) => b.revenue - a.revenue)
-    .slice(0, 6)
+  return {
+    weeklyActive: wau,
+    dailyActive: dau,
+    totalTeachers: total,
+    weeklyActiveSharePct: total > 0 ? Math.round((wau / total) * 100) : 0,
+    series,
+  }
 }
 
 // -----------------------------------------------------------------------------

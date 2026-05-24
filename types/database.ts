@@ -1636,6 +1636,30 @@ export type Database = {
           },
         ]
       }
+      teacher_activity_snapshots: {
+        Row: {
+          created_at: string
+          daily_active: number
+          snapshot_date: string
+          total_teachers: number
+          weekly_active: number
+        }
+        Insert: {
+          created_at?: string
+          daily_active: number
+          snapshot_date: string
+          total_teachers: number
+          weekly_active: number
+        }
+        Update: {
+          created_at?: string
+          daily_active?: number
+          snapshot_date?: string
+          total_teachers?: number
+          weekly_active?: number
+        }
+        Relationships: []
+      }
       teacher_student_notes: {
         Row: {
           body: string

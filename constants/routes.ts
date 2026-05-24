@@ -164,6 +164,7 @@ export const ROUTES = {
       gracePeriod: '/api/cron/grace-period',
       enrollmentNudge: '/api/cron/enrollment-nudge',
       subscriptionNudge: '/api/cron/subscription-nudge',
+      activitySnapshot: '/api/cron/activity-snapshot',
     },
     // NOTE: Per CLAUDE.md rule 12, all CRUD mutations use Server Actions
     // (in lib/actions/*.ts), NOT API routes. Only webhooks, crons, and

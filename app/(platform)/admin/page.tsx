@@ -16,7 +16,7 @@ import {
   getAdminDashboardStats,
   getOperationsStats,
   getRecentTeachers,
-  getRevenueByCohort,
+  getTeacherActivityCard,
   getTopAdminAlert,
 } from '@/lib/db/admin'
 import { Link } from 'next-view-transitions'
@@ -31,19 +31,19 @@ import {
   CardDescription,
 } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
-import { RevenueChart } from './RevenueChart'
 import { PlanChart } from './PlanChart'
+import { TeacherActivityChart } from './TeacherActivityChart'
 
 export const metadata: Metadata = {
   title: 'Admin Dashboard — Skool Rooms',
 }
 
 export default async function AdminDashboardPage() {
-  const [stats, ops, recentTeachers, revenueByCohort, alert] = await Promise.all([
+  const [stats, ops, recentTeachers, activity, alert] = await Promise.all([
     getAdminDashboardStats(),
     getOperationsStats(),
     getRecentTeachers(),
-    getRevenueByCohort(),
+    getTeacherActivityCard(),
     getTopAdminAlert(),
   ])
 
@@ -118,22 +118,34 @@ export default async function AdminDashboardPage() {
 
         {/* Row 2: Main Content Bento */}
         <div className="col-span-12 lg:col-span-8 grid grid-cols-1 gap-5">
-          {/* Revenue Chart Card */}
+          {/* Teacher activity card */}
           <Card className="border-none shadow-sm ring-1 ring-foreground/5 rounded-[2rem] overflow-hidden bg-card">
             <CardHeader className="px-8 pt-8 pb-4">
-              <div className="flex items-center justify-between">
+              <div className="flex items-start justify-between gap-4">
                 <div>
-                  <CardTitle className="text-xl font-bold">Revenue by Cohort</CardTitle>
-                  <CardDescription className="text-sm font-medium mt-1">Confirmed payments performance</CardDescription>
+                  <CardTitle className="text-xl font-bold">Teacher Activity</CardTitle>
+                  <CardDescription className="text-sm font-medium mt-1">
+                    Weekly active teachers · last 30 days
+                  </CardDescription>
                 </div>
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-foreground text-background text-[10px] font-bold">
-                  4 hours
+                <div className="text-right">
+                  <div className="flex items-baseline justify-end gap-1.5">
+                    <span className="text-3xl font-extrabold tracking-tight text-foreground leading-none">
+                      {activity.weeklyActive}
+                    </span>
+                    <span className="text-sm font-semibold text-muted-foreground">
+                      / {activity.totalTeachers}
+                    </span>
+                  </div>
+                  <p className="mt-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/60">
+                    {activity.dailyActive} active today · {activity.weeklyActiveSharePct}%
+                  </p>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="px-8 pb-8">
-              <div className="h-[300px]">
-                <RevenueChart data={revenueByCohort} />
+              <div className="h-[260px]">
+                <TeacherActivityChart data={activity.series} />
               </div>
             </CardContent>
           </Card>
