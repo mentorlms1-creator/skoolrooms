@@ -20,6 +20,7 @@ All routes live under `app/api/cron/*` and self-authorize with the
 | `/api/cron/enrollment-nudge` | `0 14 * * *` daily 14:00 | Email students who never completed payment | Medium — lost enrollments |
 | `/api/cron/subscription-nudge` | `0 9 * * *` daily 09:00 | Email teachers with stuck screenshot subs | Medium — pending subs rot |
 | `/api/cron/reconcile` | `0 2 * * *` daily 02:00 | Backfill `teacher_balances` from payments | Low — recoverable manually |
+| `/api/cron/activity-snapshot` | `5 19 * * *` daily 19:05 UTC (00:05 PKT) | Snapshot teacher WAU/DAU into `teacher_activity_snapshots` | Low — admin dashboard chart works today (live) but no history accrues |
 
 ## Options to fix
 
