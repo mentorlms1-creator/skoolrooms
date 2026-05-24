@@ -12,7 +12,9 @@ import {
   BookOpen,
   GraduationCap,
   CreditCard,
-  CalendarDays,
+  Wallet,
+  TrendingUp,
+  TrendingDown,
 } from 'lucide-react'
 import { requireTeacher } from '@/lib/auth/guards'
 import {
@@ -61,16 +63,17 @@ export default async function DashboardPage({
       getRecentEnrollmentsByTeacher(teacherId, 5),
     ])
 
-  // Calculate active days since account creation
-  const createdAt = new Date(stats.accountCreatedAt)
-  const now = new Date()
-  const daysSinceCreation = Math.max(
-    1,
-    Math.floor((now.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24))
-  )
-  // Cap at 90-day display ring
-  const activeDaysPeriod = 90
-  const activeDaysPercent = Math.min(100, (daysSinceCreation / activeDaysPeriod) * 100)
+  // Derive this-month + last-month revenue from the 6-month series already
+  // fetched for the Revenue Trends chart. The series is ordered oldest → newest,
+  // so the final entry is the current month.
+  const thisMonthRevenue =
+    monthlyRevenue[monthlyRevenue.length - 1]?.revenue ?? 0
+  const lastMonthRevenue =
+    monthlyRevenue[monthlyRevenue.length - 2]?.revenue ?? 0
+  const revenueDeltaPct =
+    lastMonthRevenue > 0
+      ? Math.round(((thisMonthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100)
+      : null
 
   // Build plan usage items
   const usageItems = [
@@ -134,47 +137,44 @@ export default async function DashboardPage({
           linkText="Review now"
         />
 
-        {/* Active Days Circle */}
+        {/* This Month's Revenue */}
         <Card>
-          <CardContent className="flex items-center gap-4 p-8">
-            <div className="relative h-16 w-16 shrink-0">
-              <svg
-                viewBox="0 0 64 64"
-                className="h-16 w-16 -rotate-90"
-                aria-hidden="true"
-              >
-                {/* Background ring */}
-                <circle
-                  cx="32"
-                  cy="32"
-                  r="28"
-                  fill="none"
-                  stroke="hsl(var(--border))"
-                  strokeWidth="5"
-                />
-                {/* Progress ring */}
-                <circle
-                  cx="32"
-                  cy="32"
-                  r="28"
-                  fill="none"
-                  stroke="hsl(var(--primary))"
-                  strokeWidth="5"
-                  strokeLinecap="round"
-                  strokeDasharray={`${2 * Math.PI * 28}`}
-                  strokeDashoffset={`${2 * Math.PI * 28 * (1 - activeDaysPercent / 100)}`}
-                />
-              </svg>
-              <span className="absolute inset-0 flex items-center justify-center text-sm font-bold text-foreground">
-                {Math.min(daysSinceCreation, activeDaysPeriod)}
+          <CardContent className="p-7">
+            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-success/10">
+              <Wallet className="h-5 w-5 text-success" />
+            </div>
+            <p className="text-3xl font-extrabold text-foreground tabular-nums">
+              <span className="mr-1 text-sm font-semibold text-muted-foreground">
+                PKR
               </span>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground/70">Active Days</p>
-              <p className="text-xs text-muted-foreground">
-                of {activeDaysPeriod}-day period
+              {thisMonthRevenue.toLocaleString()}
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground/70">This Month</p>
+            {revenueDeltaPct !== null ? (
+              <p
+                className={cn(
+                  'mt-1 inline-flex items-center gap-1 text-xs font-medium',
+                  revenueDeltaPct > 0
+                    ? 'text-success'
+                    : revenueDeltaPct < 0
+                      ? 'text-destructive'
+                      : 'text-muted-foreground',
+                )}
+              >
+                {revenueDeltaPct > 0 && <TrendingUp className="h-3 w-3" />}
+                {revenueDeltaPct < 0 && <TrendingDown className="h-3 w-3" />}
+                {revenueDeltaPct > 0 ? '+' : ''}
+                {revenueDeltaPct}% vs last month
               </p>
-            </div>
+            ) : thisMonthRevenue > 0 ? (
+              <p className="mt-1 text-xs font-medium text-success">
+                First revenue this month
+              </p>
+            ) : (
+              <p className="mt-1 text-xs text-muted-foreground/70">
+                No revenue yet
+              </p>
+            )}
           </CardContent>
         </Card>
 
