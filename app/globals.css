@@ -204,3 +204,73 @@
     transition: opacity 200ms ease-in-out;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Marketing site (mk-*) — brand-styled public pages (/, /teachers, /pricing,
+   /students, /explore). Fixed light palette by design; intentionally outside
+   the OKLCH token system. Hover effects live here (not JS state) so the
+   pages can stay Server Components.
+--------------------------------------------------------------------------- */
+@keyframes mk-marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-33.33%); }
+}
+
+.mk-marquee {
+  display: flex;
+  gap: 48px;
+  animation: mk-marquee 18s linear infinite;
+  white-space: nowrap;
+}
+
+/* Entry split screen — hovered panel grows, sibling shrinks */
+.mk-split { display: flex; min-height: 100vh; }
+.mk-panel { flex: 1; transition: flex 0.5s cubic-bezier(0.77, 0, 0.175, 1); }
+@media (hover: hover) {
+  .mk-split:hover .mk-panel { flex: 0.88; }
+  .mk-split .mk-panel:hover { flex: 1.12; }
+}
+
+/* Card hover lifts */
+.mk-lift { transition: transform 0.2s; }
+.mk-lift:hover { transform: translateY(-4px); }
+.mk-lift-lg { transition: transform 0.2s; }
+.mk-lift-lg:hover { transform: translateY(-6px); }
+
+/* Step-card border highlight */
+.mk-border-hover { border: 2px solid transparent; transition: border-color 0.2s; }
+.mk-border-hover-lime:hover { border-color: #C1F539; }
+.mk-border-hover-purple:hover { border-color: #7C57FC; }
+
+/* Footer links */
+.mk-flink { color: rgba(255, 255, 255, 0.35); transition: color 0.15s; cursor: pointer; }
+.mk-flink:hover { color: #C1F539; }
+
+/* Horizontal section padding (56px desktop, tighter on phones) */
+.mk-px { padding-left: 56px; padding-right: 56px; }
+
+/* Responsive grids — desktop matches the mock exactly, collapses on phones */
+.mk-cols-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
+.mk-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); }
+.mk-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); }
+.mk-grid-6 { display: grid; grid-template-columns: repeat(6, 1fr); }
+
+@media (max-width: 1024px) {
+  .mk-grid-4 { grid-template-columns: repeat(2, 1fr); }
+  .mk-grid-6 { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 900px) {
+  .mk-cols-2 { grid-template-columns: 1fr; gap: 40px; }
+  .mk-hero-visual { display: none; }
+  .mk-grid-3 { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 640px) {
+  .mk-px { padding-left: 20px; padding-right: 20px; }
+  .mk-grid-4 { grid-template-columns: 1fr; }
+  .mk-grid-6 { grid-template-columns: repeat(2, 1fr); }
+  .mk-split { flex-direction: column; }
+  .mk-panel { min-height: 50vh; }
+  .mk-split-divider { display: none; }
+}

@@ -11,6 +11,8 @@ export const ROUTES = {
   // ═══════════════════════════════════════════
   PLATFORM: {
     home: '/',
+    teachers: '/teachers',
+    students: '/students',
     explore: '/explore',
     pricing: '/pricing',
     login: '/login',

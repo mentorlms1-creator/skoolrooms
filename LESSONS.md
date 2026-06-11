@@ -5,6 +5,18 @@
 
 ---
 
+### 2026-06-11 — Dev server served stale CSS after globals.css edit
+**What happened:** New `mk-*` marketing classes appended to `app/globals.css` were missing from the CSS chunk the dev server served — even after restarting `next dev`. The production build contained them fine.
+**Root cause:** Next 16's persistent Turbopack cache (under `.next`) kept serving the pre-edit compiled CSS chunk. A `npm run build` running concurrently with the dev server likely poisoned the cache. Restarting the server alone doesn't invalidate it.
+**Fix:** Stopped the dev server, deleted `.next`, restarted. CSS compiled fresh and rendered correctly.
+**Rule going forward:** If dev styles don't match the source (especially after running `next build` while `next dev` was up), delete `.next` and restart before debugging the CSS itself. Verify by grepping the served chunk for the new selector.
+
+### 2026-06-11 — Featured-teachers query returned IDs that hydrate to nothing
+**What happened:** `/students` "Top Tutors" section rendered empty even though `/explore` showed a teacher.
+**Root cause:** `getExplorableTeacherIds` filters only on teacher-level flags (listed, not suspended, not downgraded). `getExplorableTeacherDetails` then drops teachers with no published courses. Fetching only 3 IDs returned the 3 newest teachers, none of which survived details hydration.
+**Fix:** Fetch a full explore page of IDs (`EXPLORE_PAGE_SIZE`), hydrate details, then sort by `student_count` and take the top 3.
+**Rule going forward:** Never call `getExplorableTeacherIds` with a small limit expecting that many renderable teachers — details hydration can drop rows. Over-fetch, hydrate, then trim.
+
 ### 2026-05-20 — Profile photo upload showed "Failed to fetch"
 **What happened:** Tester uploaded a profile photo on `/onboarding/step-3`; the local FileReader preview rendered but the upload bar shifted to error state with the message "Failed to fetch".
 **Root cause:** `FileUpload.tsx` does a cross-origin `PUT` to the R2 presigned URL. The R2 bucket's CORS rules only listed the platform domain that was set in env when `scripts/set-r2-cors.mjs` was last run. During the `.site` → `.com` cutover, the live origin no longer matches the configured CORS, so browsers reject the preflight and `fetch()` throws "Failed to fetch" — which we surfaced verbatim to the user.

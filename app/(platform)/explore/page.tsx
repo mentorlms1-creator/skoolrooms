@@ -1,8 +1,9 @@
 /**
  * app/(platform)/explore/page.tsx — Explore Page (Teacher Directory)
  *
- * Server Component with ISR (revalidates every hour).
- * Cursor-paginated: 24 cards per page, infinite scroll on the client.
+ * Server Component with ISR (revalidates every hour), now in the marketing
+ * design. Cursor-paginated: 24 cards per page, infinite scroll on the client
+ * (see components/public/marketing/ExploreBrowse.tsx).
  */
 
 import {
@@ -11,8 +12,13 @@ import {
   getExploreFacets,
 } from '@/lib/db/explore'
 import { getTeacherRatingsMap } from '@/lib/db/feedback'
-import { ExploreFilters } from '@/components/public/ExploreFilters'
-import { PublicNavbar } from '@/components/public/PublicNavbar'
+import { ROUTES } from '@/constants/routes'
+import { Btn } from '@/components/public/marketing/Btn'
+import { ExploreBrowse } from '@/components/public/marketing/ExploreBrowse'
+import { MarketingFooter } from '@/components/public/marketing/MarketingFooter'
+import { MarketingNav } from '@/components/public/marketing/MarketingNav'
+import { WhatsAppButton } from '@/components/public/marketing/WhatsAppButton'
+import { C, FONT_BODY, FONT_HEAD } from '@/components/public/marketing/tokens'
 import { platformDomain } from '@/lib/platform/domain'
 import { EXPLORE_PAGE_SIZE } from '@/lib/pagination/limits'
 
@@ -50,28 +56,34 @@ export default async function ExplorePage({
   const domain = platformDomain()
 
   return (
-    <div>
-      <PublicNavbar />
-      <main className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground">Find a Teacher</h1>
-          <p className="mt-2 text-lg text-muted-foreground">
-            Browse our directory of teachers and tutors. Filter by subject, level, or fee range.
-          </p>
-        </div>
+    <div style={{ background: C.white, minHeight: '100vh' }}>
+      <MarketingNav variant="student" />
 
-        <ExploreFilters
-          teachers={teachers}
-          allSubjects={facets.subjects}
-          allLevels={facets.levels}
-          allCities={facets.cities}
-          initialCity={city ?? ''}
-          initialCursor={cursor ?? null}
-          nextCursor={nextCursor}
-          ratings={ratings}
-          platformDomain={domain}
-        />
-      </main>
+      <ExploreBrowse
+        teachers={teachers}
+        allSubjects={facets.subjects}
+        allLevels={facets.levels}
+        allCities={facets.cities}
+        initialCity={city ?? ''}
+        initialCursor={cursor ?? null}
+        nextCursor={nextCursor}
+        ratings={ratings}
+        platformDomain={domain}
+      />
+
+      {/* ── Are you a tutor? ── */}
+      <section className="mk-px" style={{ background: C.offwhite, paddingTop: 60, paddingBottom: 60, textAlign: 'center' }}>
+        <h3 style={{ fontFamily: FONT_HEAD, fontWeight: 900, fontSize: 24, textTransform: 'uppercase', color: C.black, marginBottom: 12 }}>
+          Are You a Tutor?
+        </h3>
+        <p style={{ fontFamily: FONT_BODY, color: '#888', fontSize: 14, marginBottom: 24 }}>
+          List your courses for free and reach hundreds of students.
+        </p>
+        <Btn variant="purple" href={ROUTES.PLATFORM.teachers}>Build Your Skool Room →</Btn>
+      </section>
+
+      <MarketingFooter />
+      <WhatsAppButton />
     </div>
   )
 }

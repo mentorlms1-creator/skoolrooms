@@ -1,145 +1,102 @@
 /**
- * app/(platform)/page.tsx — Marketing homepage for skoolrooms.com
- * Server Component. Hero, features, and footer.
+ * app/(platform)/page.tsx — Entry split screen for skoolrooms.com
+ *
+ * Teacher panel → /teachers, Student panel → /students. The grow/shrink
+ * hover animation is pure CSS (.mk-split/.mk-panel in globals.css) so this
+ * stays a Server Component.
  */
 
+import type { Metadata } from 'next'
 import { Link } from 'next-view-transitions'
 import { ROUTES } from '@/constants/routes'
-import { PublicNavbar } from '@/components/public/PublicNavbar'
-import { platformDomain } from '@/lib/platform/domain'
+import { Btn } from '@/components/public/marketing/Btn'
+import { C, FONT_BODY, FONT_HEAD } from '@/components/public/marketing/tokens'
 
-export default function HomePage() {
+export const metadata: Metadata = {
+  title: 'Skool Rooms — Your Classroom, Your Brand',
+  description:
+    'Teachers: get a branded online classroom with courses, students, and payments. Students: find verified tutors across Pakistan and enroll in minutes.',
+}
+
+const panelBase: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  justifyContent: 'center',
+  cursor: 'pointer',
+  padding: '60px 40px',
+  position: 'relative',
+  overflow: 'hidden',
+  textDecoration: 'none',
+}
+
+export default function EntryPage() {
   return (
-    <div className="min-h-dvh bg-background">
-      {/* ── Header ── */}
-      <PublicNavbar />
+    <div className="mk-split" style={{ position: 'relative', fontFamily: FONT_HEAD, overflow: 'hidden', background: C.black }}>
+      {/* Centre logo */}
+      <div style={{ position: 'absolute', top: 32, left: '50%', transform: 'translateX(-50%)', zIndex: 30, textAlign: 'center' }}>
+        <div style={{ fontSize: 11, fontWeight: 400, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>Skool</div>
+        <div style={{ fontSize: 22, fontWeight: 900, color: C.lime, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Rooms</div>
+      </div>
 
-      <main>
-      {/* ── Hero ── */}
-      <section className="mx-auto max-w-4xl px-4 py-12 sm:py-24 text-center">
-        <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
-          Your Teaching, Your Brand, One Platform
-        </h1>
-        <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
-          Skool Rooms gives independent tutors and coaching centers a branded LMS
-          with course management, scheduling, payments, and a public profile
-          &mdash; all in one place.
+      {/* Divider */}
+      <div className="mk-split-divider" style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, width: 1, background: 'rgba(255,255,255,0.12)', zIndex: 10 }} />
+      <div className="mk-split-divider" style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', zIndex: 20, background: C.black, border: '1px solid rgba(255,255,255,0.15)', borderRadius: '50%', width: 48, height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.45)', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em' }}>
+        OR
+      </div>
+
+      {/* TEACHER PANEL */}
+      <Link
+        href={ROUTES.PLATFORM.teachers}
+        className="mk-panel"
+        style={{ ...panelBase, background: `linear-gradient(145deg, ${C.dark} 0%, ${C.purple} 100%)` }}
+      >
+        {/* Deco */}
+        <div style={{ position: 'absolute', width: 320, height: 320, borderRadius: '50%', background: C.lime, opacity: 0.08, bottom: -100, left: -80 }} />
+        <div style={{ position: 'absolute', width: 160, height: 160, borderRadius: '50%', background: C.white, opacity: 0.05, top: 60, right: 40 }} />
+
+        <div style={{ background: 'rgba(193,245,57,0.15)', border: '1px solid rgba(193,245,57,0.3)', borderRadius: 50, padding: '6px 18px', fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase', color: C.lime, fontFamily: FONT_BODY, fontWeight: 600, marginBottom: 24 }}>
+          For Educators
+        </div>
+
+        <h2 style={{ fontSize: 'clamp(2rem,4.5vw,3.6rem)', fontWeight: 900, color: C.white, textTransform: 'uppercase', lineHeight: 1.05, textAlign: 'center', marginBottom: 14 }}>
+          Build Your<br /><span style={{ color: C.lime }}>Skool Room</span>
+        </h2>
+        <p style={{ fontFamily: FONT_BODY, fontSize: 14, fontWeight: 300, color: 'rgba(255,255,255,0.7)', textAlign: 'center', maxWidth: 260, lineHeight: 1.7, marginBottom: 36 }}>
+          Your brand. Your students. Your income. No tech headache.
         </p>
-        <div className="mt-8 flex flex-wrap justify-center gap-4">
-          <Link
-            href={ROUTES.PLATFORM.signup}
-            className="inline-flex items-center rounded-md bg-primary px-6 py-3 text-base font-medium text-white hover:bg-primary/90 transition-colors"
-          >
-            Start Free
-          </Link>
-          <Link
-            href={ROUTES.PLATFORM.explore}
-            className="inline-flex items-center rounded-md border border-primary bg-transparent px-6 py-3 text-base font-medium text-primary hover:bg-primary/10 transition-colors"
-          >
-            Find a Teacher
-          </Link>
+        <Btn variant="lime" size="lg" asSpan>I&apos;m a Teacher →</Btn>
+
+        <div style={{ position: 'absolute', bottom: 24, left: 24, fontFamily: FONT_BODY, fontSize: 10, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
+          Tutors · Academies · Coaches
         </div>
-      </section>
+      </Link>
 
-      {/* ── Features ── */}
-      <section className="border-t border-border bg-card py-20">
-        <div className="mx-auto max-w-6xl px-4">
-          <h2 className="text-center text-2xl font-bold text-foreground">
-            Everything you need to teach online
-          </h2>
-          <p className="mx-auto mt-2 max-w-xl text-center text-muted-foreground">
-            Set up in minutes. No coding, no hassle.
-          </p>
+      {/* STUDENT PANEL */}
+      <Link
+        href={ROUTES.PLATFORM.students}
+        className="mk-panel"
+        style={{ ...panelBase, background: C.white }}
+      >
+        <div style={{ position: 'absolute', width: 280, height: 280, borderRadius: '50%', background: C.purple, opacity: 0.05, top: -80, right: -60 }} />
+        <div style={{ position: 'absolute', width: 200, height: 200, borderRadius: '50%', background: C.lime, opacity: 0.12, bottom: 30, left: 40 }} />
 
-          <div className="mt-12 grid gap-8 sm:grid-cols-3">
-            {FEATURES.map((feature) => (
-              <div
-                key={feature.title}
-                className="rounded-lg border border-border bg-background p-6"
-              >
-                <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary/10 text-primary">
-                  {feature.icon}
-                </div>
-                <h3 className="mt-4 text-lg font-semibold text-foreground">
-                  {feature.title}
-                </h3>
-                <p className="mt-2 text-sm text-muted-foreground">{feature.description}</p>
-              </div>
-            ))}
-          </div>
+        <div style={{ background: 'rgba(124,87,252,0.08)', border: '1px solid rgba(124,87,252,0.2)', borderRadius: 50, padding: '6px 18px', fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase', color: C.purple, fontFamily: FONT_BODY, fontWeight: 600, marginBottom: 24 }}>
+          For Learners
         </div>
-      </section>
-      </main>
 
-      {/* ── Footer ── */}
-      <footer className="border-t border-border bg-background py-8 text-center text-sm text-muted-foreground">
-        Skool Rooms &mdash; LMS for Tutors
-      </footer>
+        <h2 style={{ fontSize: 'clamp(2rem,4.5vw,3.6rem)', fontWeight: 900, color: C.black, textTransform: 'uppercase', lineHeight: 1.05, textAlign: 'center', marginBottom: 14, fontFamily: FONT_HEAD }}>
+          Find a<br /><span style={{ color: C.purple }}>Teacher</span>
+        </h2>
+        <p style={{ fontFamily: FONT_BODY, fontSize: 14, fontWeight: 300, color: '#777', textAlign: 'center', maxWidth: 260, lineHeight: 1.7, marginBottom: 36 }}>
+          Browse verified tutors. Enroll and pay in 5 minutes.
+        </p>
+        <Btn variant="purple" size="lg" asSpan>I&apos;m a Student →</Btn>
+
+        <div style={{ position: 'absolute', bottom: 24, right: 24, fontFamily: FONT_BODY, fontSize: 10, color: '#ccc', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
+          Students · Parents · Learners
+        </div>
+      </Link>
     </div>
   )
 }
-
-// ── Feature data ──
-
-type Feature = {
-  title: string
-  description: string
-  icon: React.ReactNode
-}
-
-const FEATURES: Feature[] = [
-  {
-    title: 'Branded Subdomain',
-    description:
-      `Get your own yourname.${platformDomain()} page where students can discover your courses and enroll instantly.`,
-    icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        className="h-5 w-5"
-        viewBox="0 0 20 20"
-        fill="currentColor"
-      >
-        <path
-          fillRule="evenodd"
-          d="M10 18a8 8 0 100-16 8 8 0 000 16zM4.332 8.027a6.012 6.012 0 011.912-2.706C6.512 5.73 6.974 6 7.5 6A1.5 1.5 0 019 7.5V8a2 2 0 004 0 2 2 0 011.523-1.943A5.977 5.977 0 0116 10c0 .34-.028.675-.083 1H15a2 2 0 00-2 2v2.197A5.973 5.973 0 0110 16v-2a2 2 0 00-2-2 2 2 0 01-2-2 2 2 0 00-1.668-1.973z"
-          clipRule="evenodd"
-        />
-      </svg>
-    ),
-  },
-  {
-    title: 'Course Management',
-    description:
-      'Create courses, organize cohorts, set schedules, track attendance, and share materials from one dashboard.',
-    icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        className="h-5 w-5"
-        viewBox="0 0 20 20"
-        fill="currentColor"
-      >
-        <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z" />
-      </svg>
-    ),
-  },
-  {
-    title: 'Simple Payments',
-    description:
-      'Students pay via bank transfer, JazzCash, or EasyPaisa. You verify screenshot receipts and get paid directly.',
-    icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        className="h-5 w-5"
-        viewBox="0 0 20 20"
-        fill="currentColor"
-      >
-        <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" />
-        <path
-          fillRule="evenodd"
-          d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z"
-          clipRule="evenodd"
-        />
-      </svg>
-    ),
-  },
-]
